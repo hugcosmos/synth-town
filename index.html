@@ -575,7 +575,7 @@ const BUILDINGS = [
   {id:"manor",n:"豪宅",  i:"🏯", cost:{brick:20, jade:5, flower:10},      income:5},
   {id:"hospital",n:"宠物医院",i:"🏥", cost:{brick:10, flower:5},          income:0},
   {id:"station",n:"宠物驿站",i:"🛖", cost:{wood:5, coin:20},              income:0},
-  {id:"hall", n:"市政厅",i:"🏛️", cost:{brick:50, jade:20, coin:100},     income:10},
+  {id:"hall", n:"市政厅",i:"🏛️", cost:{brick:50, jade:20, coin:100},     income:0, passive:"全镇产出+10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
 const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
@@ -905,6 +905,7 @@ function petBonus(){
     return s+(d?d.bonus:0);
   },0);
 }
+function hallBonus(){ return hasB("hall")?10:0; }
 function bestLifeHp(){ return S.lifePool.length ? Math.max(...S.lifePool) : 0; }
 function renderPets(){
   const panel=$("#petPanel"), list=$("#petList");
@@ -1368,7 +1369,7 @@ function renderShop(){
     const tag = mapUnlocked() ? ` <small style="color:var(--dim)">@${r.i}${r.n}</small>` : "";
     div.innerHTML=`
       <div class="top"><span class="ico">${b.i}</span><span class="nm">${b.n}${tag}</span>
-        <span class="built">已建 ${built} · 💰+${Math.round(incPer)}/${INCOME_INTERVAL}s</span></div>
+        <span class="built">已建 ${built} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div>
       <div class="cost">${costHtml}</div>
       <button class="buildBtn" ${canAfford(cost)?"":"disabled"}>建造</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b, cost, region));
@@ -1400,9 +1401,13 @@ function tick(){
     BUILDINGS.forEach(b=>{
       if(S.buildings[b.id]) inc+=buildingIncome(b);
     });
-    const bonus=petBonus();
-    const earn=Math.round(inc*(1+bonus/100)*cycles);
-    if(earn>0){ S.coin+=earn; S.totalEarned+=earn; toast(`🏘️ 小镇产出 💰+${earn}${bonus>0?`（含🐾+${bonus}%）`:""}`); }
+    const petB=petBonus(),hallB=hallBonus();
+    const earn=Math.round(inc*(1+(petB+hallB)/100)*cycles);
+    if(earn>0){
+      S.coin+=earn; S.totalEarned+=earn;
+      let bt=(petB>0?("🐾+"+petB+"%"):"")+(hallB>0?((petB>0?" ":"")+"🏛️+"+hallB+"%"):"");
+      toast("🏘️ 小镇产出 💰+"+earn+(bt?"（含"+bt+"）":""));
+    }
     // 2) 宠物状态：每 5 分钟饱食 -10；饱食 0 后 HP -1；HP 0 → 生病（停止衰减，可治疗，不会死亡）
     const dCycles=Math.floor(elapsed/DECAY_INTERVAL);
     for(let i=0;i<dCycles;i++){
