@@ -730,14 +730,22 @@ function count(id){ return S.unlocked[id]||0; }
 
 /* ============ 顶部状态 ============ */
 function renderStats(){
-  $("#stats").innerHTML = `
-    <div class="stat">💰 <b>${S.coin}</b></div>
-    <div class="stat">💎 <b>${count("jade")}</b></div>
-    <div class="stat">🌸 <b>${count("flower")}</b></div>
-    <div class="stat">🧱 <b>${count("brick")}</b></div>
-    <div class="stat">🪵 <b>${count("wood")}</b></div>
-    <div class="stat">🪨 <b>${count("stone")}</b></div>
-    <div class="stat">🧰 <b>${S.chest}</b></div>`;
+  const el=$("#stats"); if(!el) return;
+  let html=`<div class="stat">💰 <b>${S.coin}</b></div>`;
+  if(currentTab==="craft"){
+    const disc=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length;
+    const total=new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest").concat(BASE)).size;
+    html+=`<div class="stat">🔬 <b>${disc}</b>/${total}</div><div class="stat">🧰 <b>${S.chest}</b></div>`;
+  }else if(currentTab==="town"){
+    let bld=0,out=0;
+    Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{if(p&&p!==null){bld++;const b=BUILDINGS.find(x=>x.id===p);if(b)out+=b.income;}}));
+    html+=`<div class="stat">🏘️ <b>${bld}</b></div><div class="stat">📈 +<b>${Math.round(out)}</b>/10s</div>`;
+  }else if(currentTab==="shop"){
+    html+=`<div class="stat">🧰 <b>${S.chest}</b></div>`;
+  }else if(currentTab==="pet"){
+    html+=`<div class="stat">🐾 <b>${S.petList?.length||0}</b></div>`;
+  }
+  el.innerHTML=html;
 }
 
 /* ============ 元素库 ============ */
@@ -842,10 +850,7 @@ function updateCraftBtn(){
 function updateBatchInput(){
   const wrap=$("#batchWrap"),input=$("#batchInput");
   if(!wrap||!input) return;
-  let mx=0;
-  if(S.coin>10000) mx=100;
-  else if(S.coin>1000) mx=20;
-  else if(S.coin>100) mx=5;
+  const mx=batchMax();
   if(mx>0){
     wrap.style.display="inline-flex";
     input.max=mx;
@@ -853,6 +858,21 @@ function updateBatchInput(){
     if(+input.value<1) input.value=1;
   } else { wrap.style.display="none"; }
 }
+/* 批量上限：金币>100→5, >1000→20, >10000→100, 否则0(未解锁) */
+function batchMax(){
+  if(S.coin>10000) return 100;
+  if(S.coin>1000) return 20;
+  if(S.coin>100) return 5;
+  return 0;
+}
+/* 批量输入实时 clamp，防止超过上限 */
+document.addEventListener("input",ev=>{
+  const t=ev.target;
+  if(t && t.id==="batchInput"){
+    const mx=+t.max||1, v=Math.floor(+t.value)||1;
+    t.value=Math.max(1,Math.min(mx,v));
+  }
+});
 
 /* 点击槽位清空 */
 document.querySelectorAll(".slot").forEach(function(el){
@@ -918,26 +938,45 @@ function renderElShop(){
   if(!box) return;
   const ids=Object.keys(S.unlocked).filter(k=>ELEMENTS[k] && shopSellable(k)).sort((a,b)=>tierOf(a)-tierOf(b));
   if(!ids.length){ box.innerHTML=`<span style="color:var(--dim);font-size:12px">还没有可买元素</span>`; return; }
+  const mx=batchMax();
   box.innerHTML="";
   ids.forEach(id=>{
     const e=ELEMENTS[id], price=tierOf(id)*BUY_RATE;
     const row=document.createElement("div");
     row.style.cssText="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;";
+    const qtyInput = mx>0 ? `<input type="number" class="shopQty" data-id="${id}" min="1" max="${mx}" value="1" style="width:44px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text);font-size:12px;text-align:center;">` : "";
     row.innerHTML=`
       <span style="font-size:18px">${e.i}</span>
       <span style="font-size:13px">${e.n}</span>
       <span style="font-size:10px;color:var(--dim)">${tierOf(id)}级·×${count(id)}</span>
-      <button style="margin-left:auto;background:${S.coin>=price?'var(--gold)':'var(--line)'};border:none;color:${S.coin>=price?'#3a2a00':'var(--dim)'};border-radius:6px;padding:3px 10px;font-size:12px;cursor:${S.coin>=price?'pointer':'not-allowed'};font-weight:700;">💰${price}</button>`;
+      ${qtyInput}
+      <button data-id="${id}" style="margin-left:auto;background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰<span class="btnPrice">${price}</span></button>`;
     const btn=row.querySelector("button");
-    if(S.coin>=price){
-      btn.addEventListener("click",()=>{
-        S.coin-=price;
-        S.unlocked[id]=(S.unlocked[id]||0)+1;
-        if(id==="life") S.lifePool.push(tierOf("life")); // 商店买的生命按基础生命值入池
-        toast(`🛒 购买了 ${e.i}${e.n} ×1（-💰${price}）`);
-        renderAll(); save();
+    const qty=row.querySelector(".shopQty");
+    const priceEl=row.querySelector(".btnPrice");
+    // 数量变化时更新按钮总价
+    if(qty){
+      qty.addEventListener("input",()=>{
+        const v=Math.max(1,Math.min(+qty.max||1,Math.floor(+qty.value)||1));
+        qty.value=v;
+        priceEl.textContent=price*v;
+        btn.style.opacity = S.coin>=price*v ? "1" : ".4";
+        btn.style.cursor = S.coin>=price*v ? "pointer" : "not-allowed";
       });
     }
+    btn.addEventListener("click",()=>{
+      const n = qty ? Math.max(1,Math.min(+qty.max||1,Math.floor(+qty.value)||1)) : 1;
+      const total=price*n;
+      if(S.coin<total){ toast(`💰 金币不足（需要 ${total}）`); return; }
+      S.coin-=total;
+      S.unlocked[id]=(S.unlocked[id]||0)+n;
+      if(id==="life"){ for(let i=0;i<n;i++) S.lifePool.push(tierOf("life")); }
+      toast(`🛒 购买了 ${e.i}${e.n} ×${n}（-💰${total}）`);
+      renderAll(); save();
+    });
+    // 初始按钮状态
+    btn.style.opacity = S.coin>=price ? "1" : ".4";
+    btn.style.cursor = S.coin>=price ? "pointer" : "not-allowed";
     box.appendChild(row);
   });
 }
@@ -1318,9 +1357,12 @@ $("#bgResetBtn").addEventListener("click",async ()=>{
   toast("↩️ 已移除自定义背景");
 });
 /* ============ 页面切换 ============ */
+let currentTab="craft";
 function switchTab(tab){
+  currentTab=tab;
   document.querySelectorAll(".tabBtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id==="view-"+tab));
+  renderStats();
 }
 document.querySelectorAll(".tabBtn").forEach(b=>{
   b.addEventListener("click", ()=>switchTab(b.dataset.tab));
