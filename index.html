@@ -577,10 +577,10 @@ const BUILDINGS = [
   {id:"hut",  n:"小屋",  i:"🏠", cost:{brick:5, wood:3},                 income:1},
   {id:"shop", n:"商铺",  i:"🏪", cost:{brick:8, wood:5, coin:20},         income:3},
   {id:"garden",n:"花园", i:"🌸", cost:{flower:15, coin:10},               income:2},
-  {id:"manor",n:"豪宅",  i:"🏯", cost:{brick:20, jade:5, flower:10},      income:5},
+  {id:"manor",n:"豪宅",  i:"🏯", cost:{brick:20, jade:5, flower:10, chest:1}, income:5},
   {id:"hospital",n:"宠物医院",i:"🏥", cost:{brick:10, flower:5},          income:0},
   {id:"station",n:"宠物驿站",i:"🛖", cost:{wood:5, coin:20},              income:0},
-  {id:"hall", n:"市政厅",i:"🏛️", cost:{brick:50, jade:20, coin:100},     income:0, passive:"全镇产出+10%"},
+  {id:"hall", n:"市政厅",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:3}, income:0, passive:"全镇产出+10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
 const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
@@ -1431,7 +1431,7 @@ function renderMap(){
 /* ============ 商店 & 小镇 ============ */
 function canAfford(cost){
   return Object.entries(cost).every(([k,v])=>{
-    const have = k==="coin"?S.coin:count(k);
+    const have = k==="coin"?S.coin : k==="chest"?S.chest : count(k);
     return have>=v;
   });
 }
@@ -1458,7 +1458,7 @@ function renderShop(){
     div.className="shopItem";
     const built=S.buildings[b.id]||0;
     const incPer=buildingIncome(b);
-    const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?ELEMENTS[k].n:"金币"}×${v}</span>`;}).join("");
+    const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:k==="chest"?S.chest:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?ELEMENTS[k].n:"金币"}×${v}</span>`;}).join("");
     const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked());
     div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${b.n}</span><span class="built">已建 ${built} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>建造</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
@@ -1501,6 +1501,7 @@ function build(b,cost){
   const {region,index}=selectedPlot;
   Object.entries(cost).forEach(([k,v])=>{
     if(k==="coin"){ S.coin-=v; return; }
+    if(k==="chest"){ S.chest=Math.max(0,(S.chest||0)-v); return; }
     S.unlocked[k]=Math.max(0,(S.unlocked[k]||0)-v);
   });
   S.plots[region][index]=b.id;
@@ -1537,6 +1538,7 @@ function demolishPlot(region,index){
   Object.entries(cost).forEach(([k,v])=>{
     const refund=Math.floor(v/2);
     if(k==="coin") S.coin+=refund;
+    else if(k==="chest") S.chest=(S.chest||0)+refund;
     else S.unlocked[k]=(S.unlocked[k]||0)+refund;
   });
   S.plots[region][index]=null;
