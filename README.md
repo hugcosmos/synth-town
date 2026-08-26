@@ -9,7 +9,7 @@ A cozy alchemy-and-city-building game that runs entirely in **one zero-dependenc
 - 🎰 **Lucky Draw Start** — draw your initial elements (Earth/Water/Fire/Air, 10–99 each) plus a handful of starter coins
 - ⚗️ **Drag & Drop Alchemy** — combine two elements to discover 20+ recipes (Earth+Water=Mud, Mud+Fire=Brick…). Crafting is free!
 - 🏗️ **Build Your Town** — gather materials to construct huts, shops, gardens, manors and a town hall that generate coins
-- 🗺️ **Town Map Mode** — unlocked after building a Hut + Shop; 5 regions (Plain / Hillside / Forest / Riverside / Downtown), each with its own cost & output multipliers
+- 🗺️ **Town Map** — unlocked after building a Hut + Shop; visual map with 5 regions (Plain / Hillside / Forest / Riverside / Downtown), each with cost & output multipliers. Includes a stats bar (total buildings / coin output / developed regions), building badges, and a per-region building grid
 - 🧬 **The Hidden Life Line** — Energy + high-tier "dead-end" elements = 🧬 Life, whose tier depends on the recipe; hatch pets from it. **Max-tier Life has a 1/100 chance to hatch the legendary 🐼 Panda**
 - 🐾 **Pet Raising** — per-species diets, hunger & HP per pet, a pet hospital (pets get sick but never die), and town-wide production bonuses from +1% to +5%
 - 🧙‍♂️ **Summon the Elder** — stuck? Get a random hint for a craftable recipe you haven't discovered yet
