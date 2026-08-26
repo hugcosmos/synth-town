@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元素合成小镇</title>
+<style>
+  :root{
+    --bg:#1b1430; --panel:#2a2044; --panel2:#352a55; --line:#4a3d73;
+    --text:#f0eaff; --dim:#a99cc9; --gold:#ffd75e; --accent:#7c5cff; --ok:#4cd97b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    color:var(--text); font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  /* ===== 主题花纹背景（纯 CSS，无图片资源） ===== */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-repeat:repeat;
+  }
+  body[data-theme="night"]{
+    background:
+      radial-gradient(900px 420px at 78% -8%, rgba(124,92,255,.28), transparent 65%),
+      radial-gradient(700px 380px at 8% 12%, rgba(91,60,180,.22), transparent 60%),
+      radial-gradient(520px 300px at 50% 108%, rgba(124,92,255,.14), transparent 60%),
+      linear-gradient(160deg,#3a2a63 0%,#1b1430 55%,#120d24 100%);
+  }
+  body[data-theme="night"]::before{
+    background-image:
+      radial-gradient(2.2px 2.2px at 12px 18px, rgba(255,255,255,.95) 50%, transparent 51%),
+      radial-gradient(1.8px 1.8px at 68px 44px, rgba(255,255,255,.7) 50%, transparent 51%),
+      radial-gradient(2.6px 2.6px at 120px 12px, rgba(255,230,150,.9) 50%, transparent 51%),
+      radial-gradient(1.8px 1.8px at 160px 66px, rgba(255,255,255,.6) 50%, transparent 51%),
+      radial-gradient(2.2px 2.2px at 208px 30px, rgba(200,180,255,.8) 50%, transparent 51%);
+    background-size:240px 96px;
+  }
+  body[data-theme="forest"]{
+    background:
+      radial-gradient(800px 400px at 20% -5%, rgba(120,200,140,.16), transparent 60%),
+      radial-gradient(600px 320px at 85% 20%, rgba(80,160,100,.14), transparent 60%),
+      linear-gradient(165deg,#2a5c40 0%,#12291c 55%,#0b1c13 100%);
+  }
+  body[data-theme="forest"]::before{
+    background-image:
+      radial-gradient(ellipse 7px 3px at 20px 20px, rgba(150,230,160,.22) 50%, transparent 51%),
+      radial-gradient(ellipse 7px 3px at 72px 52px, rgba(150,230,160,.16) 50%, transparent 51%),
+      radial-gradient(ellipse 5px 2.5px at 52px 84px, rgba(200,250,190,.18) 50%, transparent 51%),
+      radial-gradient(ellipse 8px 3px at 128px 28px, rgba(150,230,160,.15) 50%, transparent 51%);
+    background-size:170px 110px; transform:rotate(-18deg) scale(1.4);
+  }
+  body[data-theme="sand"]{
+    background:
+      radial-gradient(900px 380px at 60% -10%, rgba(255,210,120,.2), transparent 60%),
+      radial-gradient(620px 340px at 10% 85%, rgba(255,190,110,.1), transparent 62%),
+      linear-gradient(170deg,#8a6a3c 0%,#3a2c18 55%,#241a0e 100%);
+  }
+  body[data-theme="sand"]::before{
+    background-image:
+      radial-gradient(ellipse 90px 26px at 40px 30px, rgba(255,215,140,.15) 46%, transparent 52%),
+      radial-gradient(ellipse 130px 30px at 210px 90px, rgba(255,200,120,.13) 46%, transparent 52%),
+      radial-gradient(ellipse 70px 20px at 120px 140px, rgba(255,225,160,.15) 46%, transparent 52%);
+    background-size:320px 170px;
+  }
+  body[data-theme="snow"]{
+    background:
+      radial-gradient(900px 400px at 70% -10%, rgba(200,220,255,.25), transparent 62%),
+      radial-gradient(700px 340px at 12% 18%, rgba(160,190,240,.16), transparent 60%),
+      linear-gradient(165deg,#54709c 0%,#232f47 55%,#161e30 100%);
+  }
+  body[data-theme="snow"]::before{
+    background-image:
+      radial-gradient(2.6px 2.6px at 24px 20px, rgba(255,255,255,.9) 50%, transparent 51%),
+      radial-gradient(2px 2px at 90px 58px, rgba(255,255,255,.7) 50%, transparent 51%),
+      radial-gradient(3px 3px at 150px 26px, rgba(220,235,255,.85) 50%, transparent 51%),
+      radial-gradient(1.6px 1.6px at 196px 88px, rgba(255,255,255,.45) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 60px 108px, rgba(255,255,255,.5) 50%, transparent 51%);
+    background-size:220px 120px;
+  }
+  /* 默认（未设置 data-theme 时）回落紫夜 */
+  body:not([data-theme]){
+    background:radial-gradient(1200px 600px at 70% -10%, #3a2a63 0%, #1b1430 60%);
+  }
+  header{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:12px 18px; background:rgba(20,14,40,.7); border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:10; backdrop-filter:blur(6px);
+  }
+  header h1{font-size:18px; letter-spacing:1px;}
+  .stats{display:flex; gap:8px; flex-wrap:wrap; margin-left:auto;}
+  .stat{
+    background:var(--panel); border:1px solid var(--line); border-radius:20px;
+    padding:4px 12px; font-size:14px; white-space:nowrap;
+  }
+  .stat b{color:var(--gold);}
+  #resetBtn{
+    background:none; border:1px solid var(--line); color:var(--dim); border-radius:20px;
+    padding:4px 10px; font-size:12px; cursor:pointer;
+  }
+  #resetBtn:hover{color:var(--text);}
+
+  main{
+    flex:1; padding:14px 18px; width:100%; max-width:1200px; margin:0 auto;
+  }
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px;}
+  .panel h2{font-size:14px; color:var(--dim); margin-bottom:10px; font-weight:600;}
+
+  /* 元素库 */
+  #elementGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-height:65vh; overflow-y:auto;}
+  .el{
+    background:var(--panel2); border:1px solid var(--line); border-radius:10px;
+    padding:8px 2px; text-align:center; cursor:grab; user-select:none;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .el:hover{transform:translateY(-2px); box-shadow:0 4px 14px rgba(124,92,255,.35); border-color:var(--accent);}
+  .el .ico{font-size:26px; display:block;}
+  .el .name{font-size:11px; color:var(--dim); display:block; margin-top:2px;}
+  .el .cnt{font-size:10px; color:var(--gold);}
+  .el.empty{opacity:.35; filter:grayscale(1); cursor:not-allowed;}
+  .el.empty:hover{transform:none; box-shadow:none; border-color:var(--line);}
+
+  /* 合成台 */
+  #craftPanel{display:flex; flex-direction:column; align-items:center; gap:16px; min-height:380px; justify-content:center;}
+  #slots{display:flex; align-items:center; gap:18px;}
+  .slot{
+    width:110px; height:110px; border:2px dashed var(--line); border-radius:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:var(--panel2); font-size:40px; transition:border-color .15s, background .15s;
+  }
+  .slot .lbl{font-size:11px; color:var(--dim); margin-top:4px;}
+  .slot.hover{border-color:var(--accent); background:#463a6e;}
+  #plus{font-size:30px; color:var(--dim);}
+  #craftBtn{
+    background:linear-gradient(135deg,#7c5cff,#5c3fd6); border:none; color:#fff;
+    border-radius:12px; padding:12px 36px; font-size:16px; cursor:pointer; font-weight:600;
+    transition:opacity .15s, transform .1s;
+  }
+  #craftBtn:disabled{opacity:.35; cursor:not-allowed;}
+  #craftBtn:not(:disabled):active{transform:scale(.96);}
+  #result{height:70px; display:flex; align-items:center; justify-content:center; font-size:22px;}
+  #result .new{color:var(--gold); font-weight:700;}
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  .pop{animation:pop .45s;}
+  @keyframes pop{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+  #discovered{font-size:12px; color:var(--dim); margin-top:6px;}
+
+  /* 商店 */
+  .shopItem{
+    background:var(--panel2); border:1px solid var(--line); border-radius:10px;
+    padding:10px; margin-bottom:10px;
+  }
+  .shopItem .top{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .shopItem .ico{font-size:24px;}
+  .shopItem .nm{font-weight:600; font-size:14px;}
+  .shopItem .built{margin-left:auto; font-size:11px; color:var(--dim);}
+  .cost{font-size:12px; color:var(--dim); margin-bottom:8px;}
+  .cost span{margin-right:8px;}
+  .cost .lack{color:#ff7a7a;}
+  .buildBtn{
+    width:100%; background:var(--accent); border:none; color:#fff; border-radius:8px;
+    padding:7px; font-size:13px; cursor:pointer;
+  }
+  .buildBtn:disabled{background:var(--line); cursor:not-allowed;}
+  #townList{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
+  .townItem{
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    padding:4px 8px; font-size:18px; position:relative;
+  }
+  .townItem .n{font-size:10px; color:var(--gold); position:absolute; top:-6px; right:-4px; background:var(--bg); border-radius:8px; padding:0 4px;}
+
+  /* toast */
+  #toast{
+    position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px);
+    background:var(--accent); color:#fff; padding:10px 22px; border-radius:24px;
+    font-size:14px; opacity:0; pointer-events:none; transition:all .3s; z-index:99; box-shadow:0 6px 20px rgba(124,92,255,.5);
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* 拖拽幽灵 */
+  .ghost{position:fixed; pointer-events:none; z-index:999; font-size:34px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));}
+
+  /* 开局抽奖遮罩 */
+  #drawOverlay{
+    position:fixed; inset:0; background:rgba(12,8,26,.92); z-index:1000;
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  }
+  #drawOverlay.show{display:flex;}
+  #drawOverlay h2{font-size:26px; letter-spacing:2px;}
+  #drawOverlay .sub{color:var(--dim); font-size:13px; margin-top:-16px;}
+  #drawCards{display:flex; gap:16px; flex-wrap:wrap; justify-content:center;}
+  .drawCard{
+    width:100px; height:130px; background:var(--panel2); border:2px solid var(--line);
+    border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; opacity:0; transform:translateY(20px) scale(.8);
+    transition:all .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  .drawCard.on{opacity:1; transform:translateY(0) scale(1);}
+  .drawCard.lucky{border-color:var(--gold); box-shadow:0 0 18px rgba(255,215,94,.4);}
+  .drawCard .di{font-size:40px;}
+  .drawCard .dn{font-size:13px;}
+  .drawCard .dc{font-size:22px; font-weight:800; color:var(--gold); font-variant-numeric:tabular-nums;}
+  #drawBtn{
+    background:linear-gradient(135deg,#ffd75e,#e8a820); border:none; color:#3a2a00;
+    border-radius:14px; padding:14px 44px; font-size:18px; font-weight:800; cursor:pointer;
+    opacity:0; transition:opacity .4s;
+  }
+  #drawBtn.on{opacity:1;}
+  #drawBtn:not(.on){pointer-events:none;}
+  #drawBtn:active{transform:scale(.96);}
+
+  /* 开场引导 */
+  #introOverlay{
+    position:fixed; inset:0; background:radial-gradient(900px 500px at 50% 20%, #3a2a63, #14102a 70%);
+    z-index:1001; display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;
+  }
+  #introOverlay.show{display:flex;}
+  #introOverlay .npc{
+    width:96px; height:96px; border-radius:50%; background:var(--panel2); border:2px solid var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:52px;
+    box-shadow:0 0 30px rgba(255,215,94,.35); animation:float 2.6s ease-in-out infinite;
+  }
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  #introOverlay h2{font-size:24px; letter-spacing:2px;}
+  #introOverlay .bubble{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 18px;
+    max-width:460px; font-size:14px; line-height:1.9;
+  }
+  #introOverlay .bubble b{color:var(--gold);}
+  #introOverlay .bubble .step{color:var(--text); display:block;}
+  #introOverlay .bubble .step small{color:var(--dim);}
+  #introBtn{
+    background:linear-gradient(135deg,#7c5cff,#5c3fd6); border:none; color:#fff;
+    border-radius:14px; padding:13px 40px; font-size:17px; font-weight:700; cursor:pointer;
+    transition:transform .12s;
+  }
+  #introBtn:hover{transform:scale(1.04);}
+
+  /* 召唤长老 */
+  #npcBtn{
+    position:fixed; right:18px; bottom:18px; z-index:50;
+    width:56px; height:56px; border-radius:50%; border:2px solid var(--gold);
+    background:var(--panel2); font-size:28px; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,.45); transition:transform .12s;
+  }
+  #npcBtn:hover{transform:scale(1.1);}
+  #npcBtn:active{transform:scale(.95);}
+
+  /* 设置面板 */
+  #settingsBtn{
+    background:none; border:1px solid var(--line); color:var(--dim); border-radius:20px;
+    padding:4px 10px; font-size:12px; cursor:pointer;
+  }
+  #settingsBtn:hover{color:var(--text);}
+  #settingsOverlay{
+    position:fixed; inset:0; background:rgba(12,8,26,.85); z-index:1002;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #settingsOverlay.show{display:flex;}
+  #settingsBox{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:420px; max-height:86vh; overflow-y:auto; padding:18px;
+  }
+  #settingsBox h2{font-size:16px; margin-bottom:12px;}
+  #settingsBox h3{font-size:13px; color:var(--gold); margin:14px 0 6px;}
+  .setBtn{
+    display:block; width:100%; text-align:left; background:var(--panel2); border:1px solid var(--line);
+    color:var(--text); border-radius:8px; padding:9px 12px; font-size:13px; cursor:pointer; margin-bottom:6px;
+  }
+  .setBtn:hover{border-color:var(--accent);}
+  .setBtn small{color:var(--dim); display:block; margin-top:2px;}
+  .themeChip{
+    display:inline-flex; flex-direction:column; align-items:center; gap:4px; margin:0 6px 6px 0;
+    padding:8px 10px; border:2px solid var(--line); border-radius:10px; cursor:pointer; font-size:11px;
+  }
+  .themeChip.sel{border-color:var(--gold);}
+  .themeChip .sw{width:44px; height:26px; border-radius:6px;}
+
+  /* 页面导航 */
+  #tabs{
+    display:flex; gap:6px; padding:10px 18px 0; max-width:1200px; margin:0 auto; width:100%;
+  }
+  .tabBtn{
+    background:var(--panel); border:1px solid var(--line); border-bottom:none; color:var(--dim);
+    border-radius:12px 12px 0 0; padding:9px 22px; font-size:14px; cursor:pointer; font-weight:600;
+    transition:background .15s,color .15s;
+  }
+  .tabBtn:hover{color:var(--text);}
+  .tabBtn.active{background:var(--panel2); color:var(--gold); border-color:var(--accent);}
+  .view{display:none !important;}
+  .view.active{display:grid !important;}
+  #view-craft.active{grid-template-columns:250px 1fr; gap:14px; align-items:start;}
+  #view-town.active{grid-template-columns:1fr; gap:14px;}
+  #view-shop.active{grid-template-columns:1fr 1fr; gap:14px; align-items:start;}
+  #view-pet.active{grid-template-columns:1fr; gap:14px;}
+
+  /* 底图模式 */
+  #mapPanel{display:none; width:100%; margin-top:4px;}
+  #mapPanel.show{display:block;}
+  .mapGrid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
+    border-radius:12px; overflow:hidden; border:1px solid var(--line);
+  }
+  .tile{
+    position:relative; min-height:74px; border-radius:6px; padding:6px 4px;
+    cursor:pointer; transition:filter .15s, outline .15s;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:2px;
+    outline:2px solid transparent;
+  }
+  .tile:hover{filter:brightness(1.15);}
+  .tile.sel{outline-color:var(--gold); box-shadow:0 0 12px rgba(255,215,94,.35) inset;}
+  .tile .rn{font-size:11px; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,.5);}
+  .tile .rm{font-size:9px; opacity:.85;}
+  .tile .bld{display:flex; flex-wrap:wrap; gap:2px; justify-content:center; font-size:16px; line-height:1.2; margin-top:2px;}
+  .tile .more{font-size:9px; opacity:.8;}
+  .tile.locked{filter:grayscale(.9) brightness(.6); cursor:not-allowed;}
+
+  @media (max-width:860px){
+    #view-craft.active, #view-shop.active{grid-template-columns:1fr;}
+    #elementGrid{grid-template-columns:repeat(4,1fr); max-height:200px;}
+    #craftPanel{min-height:280px;}
+    .mapGrid{grid-template-columns:repeat(2,1fr);}
+    .mapGrid .tile{grid-area:auto !important; min-height:60px;}
+    .tabBtn{padding:8px 12px; font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚗️ 元素合成小镇</h1>
+  <div class="stats" id="stats"></div>
+  <button id="resetBtn">重置存档</button>
+  <button id="settingsBtn">⚙️ 设置</button>
+</header>
+
+<nav id="tabs">
+  <button class="tabBtn active" data-tab="craft">⚗️ 合成</button>
+  <button class="tabBtn" data-tab="town">🗺️ 小镇</button>
+  <button class="tabBtn" data-tab="shop">🛒 商店</button>
+  <button class="tabBtn" data-tab="pet">🐾 宠物</button>
+</nav>
+
+<main>
+  <!-- 合成页 -->
+  <section id="view-craft" class="view active">
+    <section class="panel">
+      <h2>元素库（拖到合成台）</h2>
+      <div id="elementGrid"></div>
+      <div id="discovered">已发现 4 / <span id="totalRecipes">?</span></div>
+    </section>
+    <section class="panel" id="craftPanel">
+      <h2 style="align-self:stretch">🧪 合成台</h2>
+      <div id="slots">
+        <div class="slot" id="slotA"><span class="lbl">拖入元素</span></div>
+        <div id="plus">+</div>
+        <div class="slot" id="slotB"><span class="lbl">拖入元素</span></div>
+      </div>
+      <button id="craftBtn" disabled>✨ 合成</button>
+      <div id="result"></div>
+    </section>
+  </section>
+
+  <!-- 小镇页（底图） -->
+  <section id="view-town" class="view">
+    <section class="panel" id="mapPanelOuter">
+      <div id="mapPanel"></div>
+      <div id="mapLockedHint" style="font-size:12px;color:var(--dim);padding:8px;border:1px dashed var(--line);border-radius:8px;display:none">
+        🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，这里会出现小镇底图（分区建造，各区域成本/产出不同）
+      </div>
+    </section>
+    <section class="panel">
+      <h2>🏘️ 我的建筑</h2>
+      <div id="townList"></div>
+    </section>
+  </section>
+
+  <!-- 商店页 -->
+  <section id="view-shop" class="view">
+    <section class="panel">
+      <h2>💰 元素商店</h2>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px">只卖 3 级及以下常见元素 · 价格 = 层级 × 5 金币</div>
+      <div id="elShop"></div>
+    </section>
+    <section class="panel">
+      <h2>🏗️ 建筑商店</h2>
+      <div id="shop"></div>
+    </section>
+  </section>
+
+  <!-- 宠物页 -->
+  <section id="view-pet" class="view">
+    <section class="panel">
+      <h2>🐾 宠物园</h2>
+      <div id="petPanel" style="font-size:12px;color:var(--dim);margin-bottom:8px"></div>
+      <div id="petList"></div>
+    </section>
+  </section>
+</main>
+
+<div id="toast"></div>
+<button id="npcBtn" title="召唤长老：随机提示一条原料已齐的隐藏配方">🧙‍♂️</button>
+
+<div id="settingsOverlay">
+  <div id="settingsBox">
+    <h2>⚙️ 设置</h2>
+
+    <h3>📦 存档副本</h3>
+    <button class="setBtn" id="exportBtn">📤 导出存档为文件<small>下载 JSON 副本，可保存多个，随时回来继续</small></button>
+    <button class="setBtn" id="importBtn">📥 导入存档<small>选择之前导出的 JSON 副本，覆盖当前进度</small></button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+
+    <h3>🎨 配色主题</h3>
+    <div id="themeChips"></div>
+
+    <h3>🖼️ 自定义素材包（高级）</h3>
+    <div style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">
+      上传 theme.json：{ "pets":{…}, "elements":{…}, "regions":{…} }，值为 data:image/png;base64 图片。<br>
+      规格：宠物/元素 128×128、地块 512×256、单张 ≤200KB（自动压缩到规格内）。图片存 IndexedDB，不占存档空间；未替换的回落 emoji。
+    </div>
+    <button class="setBtn" id="packBtn">📂 上传素材包 theme.json</button>
+    <button class="setBtn" id="packResetBtn">↩️ 恢复默认外观</button>
+    <input type="file" id="packFile" accept="application/json" style="display:none">
+
+    <div style="text-align:right;margin-top:10px">
+      <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" id="settingsClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="introOverlay">
+  <h2>欢迎来到 元素合成小镇 ⚗️</h2>
+  <div class="npc">🧙‍♂️</div>
+  <div class="bubble">
+    <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
+    <span class="step"><b>① 合成</b>　拖两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
+    <span class="step"><b>② 建造</b>　攒够建材建房屋商铺，持续产出金币；金币可在商店补货常见元素 <small>（本次抽取含少量启动金币）</small></span>
+    <span class="step"><b>③ 卡住了？</b>　随时点右下角 <b>🧙‍♂️召唤长老</b>，我会告诉你一条手头原料就能做的隐藏配方 🐾</span>
+  </div>
+  <button id="introBtn">接受指引，开始冒险 ▶</button>
+</div>
+
+<div id="drawOverlay">
+  <h2>🎰 开局幸运抽取</h2>
+  <div class="sub">抽取四大基础元素的初始数量（每个 10~99，金色为高运 50+）</div>
+  <div id="drawCards"></div>
+  <button id="drawBtn">开始游戏 ▶</button>
+</div>
+
+<script>
+/* ============ 数据定义 ============ */
+const ELEMENTS = {
+  earth:{n:"土",i:"🟫"}, water:{n:"水",i:"💧"}, fire:{n:"火",i:"🔥"}, air:{n:"气",i:"💨"},
+  mud:{n:"泥",i:"🟤"}, brick:{n:"砖",i:"🧱"}, rain:{n:"雨",i:"🌧️"}, seed:{n:"种子",i:"🌱"},
+  flower:{n:"花",i:"🌸"}, bunch:{n:"花丛",i:"💮"}, energy:{n:"能量",i:"⚡"}, tree:{n:"树",i:"🌲"},
+  wood:{n:"木材",i:"🪵"}, stone:{n:"石头",i:"🪨"}, metal:{n:"金属",i:"🔩"}, coin:{n:"金币",i:"💰"},
+  chest:{n:"金币宝箱",i:"🧰"}, jade:{n:"玉石",i:"💎"}, ash:{n:"灰烬",i:"🌋"}, fertilizer:{n:"肥料",i:"💩"},
+  garden_flowers:{n:"花海",i:"🌺"}, glass:{n:"玻璃",i:"🪟"}, sand:{n:"沙",i:"🏖️"}, cloud:{n:"云",i:"☁️"},
+  steam:{n:"蒸汽",i:"♨️"}, life:{n:"生命",i:"🧬"}, charocal:{n:"木炭",i:"🖤"}, tower:{n:"塔楼",i:"🗼"},
+};
+// 基础元素（开局解锁）
+const BASE = ["earth","water","fire","air"];
+
+const RECIPES = [
+  ["earth","water","mud"],
+  ["mud","fire","brick"],
+  ["air","water","rain"],
+  ["earth","rain","seed"],
+  ["seed","earth","flower"],
+  ["flower","flower","bunch"],
+  ["air","fire","energy"],
+  ["energy","seed","tree"],
+  ["stone","fire","metal"],
+  ["metal","fire","coin"],
+  ["metal","metal","chest"],
+  ["stone","water","jade"],
+  ["fire","earth","ash"],
+  ["ash","seed","fertilizer"],
+  ["flower","fertilizer","garden_flowers"],
+  ["stone","stone","sand"], // 简化：石头碎成沙
+  ["sand","fire","glass"],
+  ["water","fire","steam"],
+  ["steam","air","cloud"],
+  ["mud","air","stone"],
+  // 生命线：能量 + 死路元素（没有更高阶去路的元素）= 生命，生命值=材料层级之和
+  ["energy","jade","life"],
+  ["energy","brick","life"],
+  ["energy","glass","life"],
+  ["energy","cloud","life"],
+  ["energy","wood","life"],
+  ["energy","bunch","life"],
+  ["energy","garden_flowers","life"],
+];
+// 清理无效占位配方
+for(let i=RECIPES.length-1;i>=0;i--){
+  if(!ELEMENTS[RECIPES[i][2]]) RECIPES.splice(i,1);
+}
+// 修正：树→木材 用 树+能量；石头→沙 用 石+石
+RECIPES.push(["tree","energy","wood"]);
+// 去重
+const seen=new Set();
+const R = RECIPES.filter(r=>{const k=r[0]+'|'+r[1]+'|'+r[2]; if(seen.has(k))return false; seen.add(k); return true;});
+
+// 元素层级：基础=1级，合成结果的层级 = 两材料层级之和（即合成费用）
+// 用松弛法从配方树推导，天然满足"以此类推"
+const TIER={};
+BASE.forEach(id=>TIER[id]=1);
+let changed=true;
+while(changed){
+  changed=false;
+  R.forEach(([a,b,out])=>{
+    if(TIER[a]&&TIER[b]){
+      const t=TIER[a]+TIER[b];
+      if(!TIER[out]||t<TIER[out]){ TIER[out]=t; changed=true; }
+    }
+  });
+}
+const tierOf = id => TIER[id]||1;
+const craftCost = (a,b) => tierOf(a)+tierOf(b);
+window.tierOf=tierOf; // 供控制台调试
+const BUY_RATE = 5; // 商店购买价 = 层级 × 5 金币
+
+const BUILDINGS = [
+  {id:"hut",  n:"小屋",  i:"🏠", cost:{brick:5, wood:3},                 income:1},
+  {id:"shop", n:"商铺",  i:"🏪", cost:{brick:8, wood:5, coin:20},         income:3},
+  {id:"garden",n:"花园", i:"🌸", cost:{flower:15, coin:10},               income:2},
+  {id:"manor",n:"豪宅",  i:"🏯", cost:{brick:20, jade:5, flower:10},      income:5},
+  {id:"hospital",n:"宠物医院",i:"🏥", cost:{brick:10, flower:5},          income:0},
+  {id:"station",n:"宠物驿站",i:"🛖", cost:{wood:5, coin:20},              income:0},
+  {id:"hall", n:"市政厅",i:"🏛️", cost:{brick:50, jade:20, coin:100},     income:10},
+];
+const INCOME_INTERVAL = 10;   // 秒：金币产出周期
+const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
+const OFFLINE_CAP = 3600;     // 秒：离线结算封顶 1 小时（收入与衰减共用）
+
+// 底图区域：成本/产出双系数，建造时选区域
+// 地图布局（4列×3行网格）：山脚在北、林间东侧、市中心居中、平原西侧、河岸沿南
+const REGIONS = [
+  {id:"hill",   n:"山脚",    i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜"},
+  {id:"forest", n:"林间",    i:"🌲", cm:1.0, im:1.2, area:"2/4/4/5",      bg:"#3e5c3a", desc:"产出略高"},
+  {id:"center", n:"市中心",  i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产"},
+  {id:"plain",  n:"郊外平原", i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产"},
+  {id:"river",  n:"河岸",    i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产"},
+];
+const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
+// 解锁条件：小屋 + 商铺 各建成 1 个
+const mapUnlocked = () => (S.buildings.hut||0)>=1 && (S.buildings.shop||0)>=1;
+let curRegion = "plain";
+// 区域化成本：单项向上取整
+function regionCost(b, region){
+  const r=regionOf(region);
+  const c={};
+  Object.entries(b.cost).forEach(([k,v])=>{ c[k]=Math.ceil(v*r.cm); });
+  return c;
+}
+// 某建筑总产出/10s（跨区域汇总；无分区记录的旧建筑按系数 1 计）
+function buildingIncome(b){
+  const dist=S.regions[b.id]||{};
+  let inc=0, regionSum=0;
+  Object.entries(dist).forEach(([rid,n])=>{
+    inc+=Math.round(b.income*regionOf(rid).im)*n;
+    regionSum+=n;
+  });
+  const legacy=(S.buildings[b.id]||0)-regionSum; // 旧档未记录分区的部分
+  if(legacy>0) inc+=b.income*legacy;
+  return inc;
+}
+
+// 宠物食物：分物种口味，只能金币购买（驿站上架后），不可合成
+const FOODS = {
+  meat:  {n:"肉块",   i:"🥩", price:8},
+  carrot:{n:"胡萝卜", i:"🥕", price:5},
+  grass: {n:"牧草",   i:"🌾", price:5},
+  bamboo:{n:"竹笋",   i:"🎍", price:20},
+};
+// 宠物：由 🧬生命 孕育；bonus = 该物种给全镇产出的加成 %
+// 获取难度与加成严格正相关：猫兔(+1%) < 狗牛(+2%) < 小马(+3%) < 熊猫(+5%, 仅满级生命1/100)
+const PETS = [
+  {id:"cat",   n:"猫",   i:"🐈", bonus:1, food:"meat"},
+  {id:"rabbit",n:"兔子", i:"🐇", bonus:1, food:"carrot"},
+  {id:"dog",   n:"狗",   i:"🐕", bonus:2, food:"meat"},
+  {id:"cow",   n:"小牛", i:"🐮", bonus:2, food:"grass"},
+  {id:"horse", n:"小马", i:"🐴", bonus:3, food:"grass"},
+  {id:"panda", n:"熊猫", i:"🐼", bonus:5, food:"bamboo"},
+];
+const MAX_LIFE_HP = 11;
+function petPoolFor(hp){
+  // 权重按同档拉平（猫:兔=3:3，狗:牛=2:2），难度只由生命值门槛决定，与加成一致
+  if(hp<=5)  return [["cat",3],["rabbit",3]];
+  if(hp<=8)  return [["cat",3],["rabbit",3],["dog",2],["cow",2]];
+  if(hp<=10) return [["dog",2],["cow",2],["horse",3]];
+  return [["cow",2],["horse",3]]; // 满级走熊猫判定，未中则在此挑
+}
+function rollPet(hp){
+  if(hp>=MAX_LIFE_HP && Math.random()<1/100) return "panda";
+  const pool=petPoolFor(hp);
+  const total=pool.reduce((s,[,w])=>s+w,0);
+  let r=Math.random()*total;
+  for(const [id,w] of pool){ if((r-=w)<0) return id; }
+  return pool[0][0];
+}
+
+/* ============ 状态 ============ */
+const SAVE_KEY = "synth-town-save";
+let S = load();
+
+function fresh(){
+  return {
+    unlocked:{},         // id -> 数量（基础元素由开局抽奖决定）
+    drawn:false,         // 是否已完成开局抽奖
+    coin:0, chest:0,
+    lifePool:[],        // 每个 🧬生命 的生命值
+    pets:{},            // 旧版兼容（迁移用）
+    petList:[],         // 宠物实例 [{id,hp,maxHp,sat,sick}]
+    food:{},            // 食物库存 foodId -> 数量
+    buildings:{},        // id -> 总数量
+    regions:{},          // id -> {regionId -> 数量}
+    theme:"night",      // 配色主题
+    totalEarned:0,
+    lastTick:Date.now(),
+  };
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    let s = raw ? Object.assign(fresh(), JSON.parse(raw)) : fresh();
+    // 旧版宠物计数 → 迁移为实例（基础生命值 5、满饱食）
+    Object.entries(s.pets||{}).forEach(([id,n])=>{
+      for(let i=0;i<n;i++) s.petList.push({id, hp:5, maxHp:5, sat:100, sick:false});
+    });
+    if(s.petList.some(p=>p.maxHp===undefined)) s.petList.forEach(p=>{p.maxHp=p.maxHp||p.hp||5;});
+    s.pets={};
+    return s;
+  }catch(e){ return fresh(); }
+}
+function save(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }
+  catch(e){ toast("⚠️ 存档写入失败（存储空间不足），进度可能无法保存！"); }
+}
+
+/* ============ 工具 ============ */
+const $ = s=>document.querySelector(s);
+function toast(msg, dur=2200){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),dur);
+}
+function count(id){ return S.unlocked[id]||0; }
+
+/* ============ 顶部状态 ============ */
+function renderStats(){
+  $("#stats").innerHTML = `
+    <div class="stat">💰 <b>${S.coin}</b></div>
+    <div class="stat">💎 <b>${count("jade")}</b></div>
+    <div class="stat">🌸 <b>${count("flower")}</b></div>
+    <div class="stat">🧱 <b>${count("brick")}</b></div>
+    <div class="stat">🪵 <b>${count("wood")}</b></div>
+    <div class="stat">🪨 <b>${count("stone")}</b></div>
+    <div class="stat">🧰 <b>${S.chest}</b></div>`;
+}
+
+/* ============ 元素库 ============ */
+function renderElements(){
+  const g=$("#elementGrid");
+  g.innerHTML="";
+  Object.keys(S.unlocked).forEach(id=>{
+    const e=ELEMENTS[id]; if(!e) return;
+    const d=document.createElement("div");
+    d.className="el"+(count(id)<=0?" empty":""); d.dataset.id=id;
+    d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${e.n}<small style="color:#7c6bb0">${tierOf(id)}级</small></span><span class="cnt">×${count(id)}</span>`;
+    makeDraggable(d, id);
+    g.appendChild(d);
+  });
+  $("#discovered").firstChild.textContent = `已发现 ${Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length} / `;
+  $("#totalRecipes").textContent = new Set(R.map(r=>r[2]).concat(BASE)).size;
+}
+
+/* ============ 拖拽（Pointer Events，兼容触屏） ============ */
+let dragId=null, ghost=null;
+function makeDraggable(el, id){
+  el.addEventListener("pointerdown", ev=>{
+    if(count(id)<=0){ toast(`${ELEMENTS[id].n} 已用完，再去合成一些吧`); return; }
+    ev.preventDefault();
+    dragId=id;
+    ghost=document.createElement("div");
+    ghost.className="ghost"; ghost.textContent=ELEMENTS[id].i;
+    document.body.appendChild(ghost);
+    moveGhost(ev);
+    try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+  });
+  el.addEventListener("pointermove", ev=>{ if(dragId) moveGhost(ev); });
+  el.addEventListener("pointerup", ev=>{
+    if(!dragId) return;
+    const target=document.elementFromPoint(ev.clientX, ev.clientY);
+    const slot=target && target.closest(".slot");
+    if(slot) dropToSlot(slot, dragId);
+    cleanupDrag();
+  });
+}
+// 任何指针中断（切窗口、系统手势、触屏取消）都清理幽灵，防止 emoji 卡在页面上
+["pointerup","pointercancel","lostpointercapture"].forEach(evt=>{
+  window.addEventListener(evt, ()=>{ if(!dragId && ghost) cleanupDrag(); });
+});
+window.addEventListener("blur", cleanupDrag);
+function moveGhost(ev){ ghost.style.left=(ev.clientX-17)+"px"; ghost.style.top=(ev.clientY-17)+"px"; }
+function cleanupDrag(){ dragId=null; if(ghost){ghost.remove(); ghost=null;} }
+
+let selA=null, selB=null;
+function dropToSlot(slot, id){
+  if(count(id)<=0) return;
+  setSlot(slot, id);
+  updateCraftBtn();
+}
+function setSlot(slot, id){
+  if(slot.id==="slotA") selA=id; else selB=id;
+  slot.innerHTML=`<span style="font-size:40px">${ELEMENTS[id].i}</span><span class="lbl">${ELEMENTS[id].n}</span>`;
+  slot.dataset.filled=id;
+  slot.classList.add("pop"); setTimeout(()=>slot.classList.remove("pop"),450);
+}
+function clearSlots(){
+  selA=selB=null;
+  [["#slotA",selA],["#slotB",selB]].forEach(([s])=>{
+    const el=$(s); el.innerHTML='<span class="lbl">拖入元素</span>'; delete el.dataset.filled;
+  });
+}
+function updateCraftBtn(){
+  const btn=$("#craftBtn");
+  btn.disabled = !(selA&&selB);
+}
+
+/* 点击槽位清空 */
+[".slot"].forEach(s=>{
+  $(s).addEventListener("click", function(){
+    if(this.dataset.filled && !dragId){
+      delete this.dataset.filled;
+      if(this.id==="slotA") selA=null; else selB=null;
+      this.innerHTML='<span class="lbl">拖入元素</span>';
+      updateCraftBtn();
+    }
+  });
+});
+
+/* ============ 合成 ============ */
+$("#craftBtn").addEventListener("click", ()=>{
+  if(!selA||!selB) return;
+  // 层级和（合成免费，此值用于：生命的生命值）
+  const cost=craftCost(selA,selB);
+  // 消耗：相同元素需要 2 个
+  if(selA===selB && count(selA)<2){ toast(`${ELEMENTS[selA].n} 数量不够（需要2个）`); return; }
+  if(selA!==selB && (count(selA)<1||count(selB)<1)) return;
+
+  const recipe = R.find(r=>(r[0]===selA&&r[1]===selB)||(r[0]===selB&&r[1]===selA));
+  const res=$("#result");
+
+  if(!recipe){
+    res.innerHTML=`<span style="color:var(--dim)">❌ 无效组合，换个思路试试</span>`;
+    $("#slots").classList.add("shake");
+    setTimeout(()=>$("#slots").classList.remove("shake"),400);
+    return;
+  }
+  // 扣料（数量归 0 保留占位变灰，基础元素永远至少 1 个）
+  S.unlocked[selA]--; S.unlocked[selB]--;
+  [selA, selB].forEach(k=>{
+    if(BASE.includes(k)) S.unlocked[k]=Math.max(1, S.unlocked[k]);
+    else S.unlocked[k]=Math.max(0, S.unlocked[k]);
+  });
+
+  const out=recipe[2];
+  // 金币/宝箱是货币不入元素库，不算"新元素"（否则每次都弹提示）
+  const isNew = !["coin","chest"].includes(out) && !(out in S.unlocked) && count(out)===0;
+  let suffix="";
+  if(out==="coin"){ S.coin+=1; }
+  else if(out==="chest"){ S.chest+=1; S.coin+=10; }
+  else if(out==="life"){
+    S.unlocked.life=(S.unlocked.life||0)+1;
+    S.lifePool.push(cost);
+    suffix=` <small style="color:var(--ok)">生命值 ${cost}</small>`;
+  }
+  else { S.unlocked[out]=(S.unlocked[out]||0)+1; }
+
+  res.innerHTML = `<span class="pop">${ELEMENTS[out].i} ${ELEMENTS[out].n}${out==="coin"?"（+1金币）":out==="chest"?"（+10金币）":""}</span>${suffix}`;
+  if(isNew){ res.innerHTML=`<span class="new pop">🎉 新元素！</span> ${res.innerHTML}`; toast(`🎉 发现新元素：${ELEMENTS[out].n} ${ELEMENTS[out].i}`); }
+  clearSlots(); updateCraftBtn();
+  renderAll(); save();
+});
+
+/* ============ 元素商店 ============ */
+// 商店只卖 3 级及以下的常见元素（补原材料）；高级元素和 🧬生命 必须自己合成
+const SHOP_MAX_TIER = 3;
+const shopSellable = id => tierOf(id)<=SHOP_MAX_TIER && id!=="life";
+function renderElShop(){
+  const box=$("#elShop");
+  if(!box) return;
+  const ids=Object.keys(S.unlocked).filter(k=>ELEMENTS[k] && shopSellable(k)).sort((a,b)=>tierOf(a)-tierOf(b));
+  if(!ids.length){ box.innerHTML=`<span style="color:var(--dim);font-size:12px">还没有可买元素</span>`; return; }
+  box.innerHTML="";
+  ids.forEach(id=>{
+    const e=ELEMENTS[id], price=tierOf(id)*BUY_RATE;
+    const row=document.createElement("div");
+    row.style.cssText="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;";
+    row.innerHTML=`
+      <span style="font-size:18px">${e.i}</span>
+      <span style="font-size:13px">${e.n}</span>
+      <span style="font-size:10px;color:var(--dim)">${tierOf(id)}级·×${count(id)}</span>
+      <button style="margin-left:auto;background:${S.coin>=price?'var(--gold)':'var(--line)'};border:none;color:${S.coin>=price?'#3a2a00':'var(--dim)'};border-radius:6px;padding:3px 10px;font-size:12px;cursor:${S.coin>=price?'pointer':'not-allowed'};font-weight:700;">💰${price}</button>`;
+    const btn=row.querySelector("button");
+    if(S.coin>=price){
+      btn.addEventListener("click",()=>{
+        S.coin-=price;
+        S.unlocked[id]=(S.unlocked[id]||0)+1;
+        if(id==="life") S.lifePool.push(tierOf("life")); // 商店买的生命按基础生命值入池
+        toast(`🛒 购买了 ${e.i}${e.n} ×1（-💰${price}）`);
+        renderAll(); save();
+      });
+    }
+    box.appendChild(row);
+  });
+}
+
+/* ============ 宠物系统 ============ */
+const hasB = id => (S.buildings[id]||0)>0;
+function petBonus(){
+  // 物种加成：健康且饱食度>50 的宠物生效，可叠加（猫兔+1% 狗牛+2% 马+3% 熊猫+5%）
+  return S.petList.reduce((s,p)=>{
+    if(p.sick || p.sat<=50) return s;
+    const d=PETS.find(x=>x.id===p.id);
+    return s+(d?d.bonus:0);
+  },0);
+}
+function bestLifeHp(){ return S.lifePool.length ? Math.max(...S.lifePool) : 0; }
+function renderPets(){
+  const panel=$("#petPanel"), list=$("#petList");
+  if(!panel) return;
+  const n=count("life");
+  // 顶部：生命与孕育
+  let html=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
+  html+=`🧬生命 ×${n}${n>0?`｜最高生命值 <b style="color:var(--ok)">${bestLifeHp()}</b>（${MAX_LIFE_HP} 满级，1/100 出 🐼）`:''}<br>`;
+  if(hasB("hut")){
+    html+=`<button id="hatchBtn" ${n>0?"":"disabled style='opacity:.4;cursor:not-allowed'"} style="margin-top:6px;background:linear-gradient(135deg,#4cd97b,#2aa858);border:none;color:#fff;border-radius:8px;padding:8px 20px;font-size:14px;cursor:pointer;font-weight:700;">🐾 孕育宠物（消耗1个🧬）</button>`;
+  }else{
+    html+=`<span style="font-size:11px">🔒 需先建成 🏠小屋，宠物才有地方住</span>`;
+  }
+  html+=`</div>`;
+  // 产出加成
+  html+=`<div style="font-size:12px;margin-bottom:10px">当前宠物加成：<b style="color:var(--gold)">+${petBonus()}%</b> 全镇金币产出（健康且饱食度&gt;50 时按物种计：猫兔+1% 狗牛+2% 马+3% 熊猫+5%）</div>`;
+  // 食物商店（需驿站）
+  html+=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
+  html+=`<b style="font-size:13px">🍽️ 宠物口粮</b>${hasB("station")?"":" <span style='font-size:11px;color:var(--dim)'>🔒 需建 🛖宠物驿站</span>"}`;
+  html+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">`;
+  Object.entries(FOODS).forEach(([fid,f])=>{
+    const own=S.food[fid]||0;
+    html+=`<div style="text-align:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;">
+      <div>${f.i}${f.n} <b style="color:var(--gold)">×${own}</b></div>
+      <button data-buyfood="${fid}" ${hasB("station")&&S.coin>=f.price?"":"disabled style='opacity:.4'"} style="margin-top:4px;background:var(--gold);border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:700;">💰${f.price}</button>
+    </div>`;
+  });
+  html+=`</div></div>`;
+  panel.innerHTML=html;
+  // 孕育按钮
+  const hb=$("#hatchBtn");
+  if(hb) hb.addEventListener("click", hatch);
+  panel.querySelectorAll("[data-buyfood]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const f=FOODS[b.dataset.buyfood];
+      if(S.coin<f.price) return;
+      S.coin-=f.price; S.food[b.dataset.buyfood]=(S.food[b.dataset.buyfood]||0)+1;
+      toast(`🛒 买了 ${f.i}${f.n}（-💰${f.price}）`);
+      renderAll(); save();
+    });
+  });
+  // 宠物卡片
+  list.innerHTML="";
+  if(!S.petList.length){
+    list.innerHTML=`<span style="color:var(--dim);font-size:12px">还没有宠物${n>0&&hasB("hut")?"，点上方按钮孕育":""}</span>`;
+  }
+  S.petList.forEach((p,idx)=>{
+    const d=PETS.find(x=>x.id===p.id);
+    const f=FOODS[d.food];
+    const card=document.createElement("div");
+    card.style.cssText="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;margin-bottom:8px;";
+    const sickTag=p.sick?`<span style="color:#ff7a7a;font-weight:700">🤒生病中</span>`:"";
+    const cureCost=(p.maxHp-p.hp)*2;
+    card.innerHTML=`
+      <span style="font-size:34px">${assetHtml("pets",p.id,d.i,"38px")}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700">${d.n} ${sickTag} <small style="color:var(--gold)">+${d.bonus}%</small></div>
+        <div style="font-size:10px;color:var(--dim)">HP ${p.hp}/${p.maxHp}｜饱食 ${p.sat}｜吃 ${f.i}${f.n}</div>
+        <div style="height:5px;background:#00000055;border-radius:3px;margin-top:3px;overflow:hidden;display:flex">
+          <div style="width:${p.hp/p.maxHp*100}%;background:${p.sick?'#ff7a7a':'#4cd97b'}"></div>
+        </div>
+        <div style="height:5px;background:#00000055;border-radius:3px;margin-top:2px;overflow:hidden">
+          <div style="width:${p.sat}%;background:#ffd75e"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${!p.sick?`<button data-feed="${idx}" ${(S.food[d.food]||0)>0?"":"disabled style='opacity:.4'"} style="background:#4cd97b;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700;">喂${f.i}</button>`:""}
+        ${(p.hp<p.maxHp)?`<button data-cure="${idx}" ${hasB("hospital")&&S.coin>=cureCost?"":"disabled style='opacity:.4'"} style="background:#7cc7ff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700;">🏥治疗💰${cureCost}</button>`:""}
+        ${!hasB("hospital")&&p.hp<p.maxHp?`<small style="font-size:9px;color:var(--dim)">需建🏥医院</small>`:""}
+      </div>`;
+    list.appendChild(card);
+  });
+  list.querySelectorAll("[data-feed]").forEach(b=>{
+    b.addEventListener("click",()=>feedPet(+b.dataset.feed));
+  });
+  list.querySelectorAll("[data-cure]").forEach(b=>{
+    b.addEventListener("click",()=>curePet(+b.dataset.cure));
+  });
+}
+function hatch(){
+  if(count("life")<1) return;
+  if(!hasB("hut")){ toast("🔒 先建一座 🏠小屋，宠物才有地方住"); return; }
+  // 消耗生命值最高的那个生命（自动用最好的机会）
+  const maxHp=Math.max(...S.lifePool);
+  S.lifePool.splice(S.lifePool.indexOf(maxHp),1);
+  S.unlocked.life--;
+  const pid=rollPet(maxHp);
+  const d=PETS.find(x=>x.id===pid);
+  S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false});
+  if(pid==="panda") toast(`🎊 传说降临！满级生命孕育出 🐼熊猫！！`);
+  else toast(`🐾 孕育出 ${d.i}${d.n}（HP ${maxHp}，+${d.bonus}% 加成）`);
+  renderAll(); save();
+}
+function feedPet(idx){
+  const p=S.petList[idx]; if(!p||p.sick) return;
+  const d=PETS.find(x=>x.id===p.id);
+  if((S.food[d.food]||0)<1){ toast(`缺 ${FOODS[d.food].i}${FOODS[d.food].n}，去驿站买`); return; }
+  S.food[d.food]--;
+  p.sat=Math.min(100, p.sat+40);
+  toast(`🍽️ ${d.i}${d.n} 吃了 ${FOODS[d.food].i}（饱食 ${p.sat}）`);
+  renderAll(); save();
+}
+function curePet(idx){
+  const p=S.petList[idx]; if(!p) return;
+  if(!hasB("hospital")){ toast("🔒 需先建 🏥宠物医院"); return; }
+  const cost=(p.maxHp-p.hp)*2;
+  if(S.coin<cost){ toast(`💰 治疗需要 ${cost} 金币`); return; }
+  S.coin-=cost;
+  p.hp=p.maxHp; p.sick=false;
+  toast(`🏥 ${PETS.find(x=>x.id===p.id).n} 康复了！（-💰${cost}）`);
+  renderAll(); save();
+}
+
+/* ============ 主题与素材系统 ============ */
+const THEMES = {
+  night:  {n:"紫夜", bg1:"#3a2a63", bg2:"#1b1430", panel:"#2a2044", panel2:"#352a55", line:"#4a3d73"},
+  forest: {n:"森绿", bg1:"#1e3a2a", bg2:"#0e1f16", panel:"#1c3326", panel2:"#254533", line:"#3a5c46"},
+  sand:   {n:"暖沙", bg1:"#5c4a2e", bg2:"#2e2416", panel:"#443621", panel2:"#584729", line:"#75603c"},
+  snow:   {n:"雪境", bg1:"#3d4a63", bg2:"#1a2230", panel:"#28324a", panel2:"#384663", line:"#52628a"},
+};
+function applyTheme(){
+  const t=THEMES[S.theme]||THEMES.night;
+  const r=document.documentElement.style;
+  r.setProperty("--bg",t.bg2); r.setProperty("--panel",t.panel);
+  r.setProperty("--panel2",t.panel2); r.setProperty("--line",t.line);
+  document.body.dataset.theme=S.theme||"night"; // 花纹背景由 CSS 按主题绘制
+}
+function renderThemeChips(){
+  const box=$("#themeChips"); if(!box) return;
+  box.innerHTML="";
+  Object.entries(THEMES).forEach(([id,t])=>{
+    const c=document.createElement("div");
+    c.className="themeChip"+(S.theme===id?" sel":"");
+    c.innerHTML=`<span class="sw" style="background:linear-gradient(135deg,${t.bg1},${t.panel2})"></span>${t.n}`;
+    c.addEventListener("click",()=>{ S.theme=id; applyTheme(); renderThemeChips(); save(); });
+    box.appendChild(c);
+  });
+}
+
+/* ---- IndexedDB 素材（宠物/元素/地块图片，不占 localStorage） ---- */
+const assetCache=new Map(); // "pets:cat" -> dataURL
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open("synth-town-assets",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("assets");
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function assetsLoad(){
+  try{
+    const db=await idbOpen();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction("assets","readonly").objectStore("assets").openCursor();
+      tx.onsuccess=e=>{ const c=e.target.result; if(c){ assetCache.set(c.key,c.value); c.continue(); } else res(); };
+      tx.onerror=()=>rej();
+    });
+  }catch(e){ /* 无 IDB 环境静默回落 emoji */ }
+}
+async function assetPut(key,dataURL){
+  const db=await idbOpen();
+  await new Promise((res,rej)=>{
+    const tx=db.transaction("assets","readwrite").objectStore("assets").put(dataURL,key);
+    tx.onsuccess=res; tx.onerror=()=>rej(tx.error);
+  });
+  assetCache.set(key,dataURL);
+}
+async function assetsClear(){
+  assetCache.clear();
+  try{
+    const db=await idbOpen();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction("assets","readwrite").objectStore("assets").clear();
+      tx.onsuccess=res; tx.onerror=()=>rej();
+    });
+  }catch(e){}
+}
+// 素材 HTML：有自定义图用图，否则回落 emoji
+function assetHtml(kind, id, emoji, size){
+  const url=assetCache.get(kind+":"+id);
+  if(url) return `<img src="${url}" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" alt="${emoji}">`;
+  return emoji;
+}
+// dataURL → 压缩重采样到规格（canvas）
+function compressImage(dataURL, w, h){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement("canvas"); c.width=w; c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      res(c.toDataURL("image/png"));
+    };
+    img.onerror=()=>rej(new Error("图片解析失败"));
+    img.src=dataURL;
+  });
+}
+// 素材包处理：{pets:{},elements:{},regions:{}}，值 dataURL
+async function importPack(pack){
+  if(typeof pack!=="object") throw new Error("格式错误：应为 JSON 对象");
+  const SPEC={pets:[128,128], elements:[128,128], regions:[512,256]};
+    const VALID={
+    pets:new Set(PETS.map(p=>p.id)),
+    elements:new Set(Object.keys(ELEMENTS)),
+    regions:new Set(REGIONS.map(r=>r.id)),
+  };
+  let count=0;
+  for(const kind of Object.keys(SPEC)){
+    const src=pack[kind]; if(!src) continue;
+    for(const [id,dataURL] of Object.entries(src)){
+      if(!VALID[kind].has(id)) continue; // 未知 id 忽略（向前兼容）
+      if(typeof dataURL!=="string"||!dataURL.startsWith("data:image/")) continue;
+      if(dataURL.length>200*1024*1.4) throw new Error(`${kind}:${id} 超过 200KB 限制`);
+      const [w,h]=SPEC[kind];
+      const out=await compressImage(dataURL,w,h);
+      await assetPut(kind+":"+id,out);
+      count++;
+    }
+  }
+  if(!count) throw new Error("没有可用素材（检查 id 与图片格式）");
+  return count;
+}
+
+/* ============ 设置面板 ============ */
+$("#settingsBtn").addEventListener("click", ()=>{
+  renderThemeChips();
+  $("#settingsOverlay").classList.add("show");
+});
+$("#settingsClose").addEventListener("click", ()=>$("#settingsOverlay").classList.remove("show"));
+$("#settingsOverlay").addEventListener("click", e=>{
+  if(e.target.id==="settingsOverlay") $("#settingsOverlay").classList.remove("show");
+});
+// 导出存档副本
+$("#exportBtn").addEventListener("click", ()=>{
+  const data=JSON.stringify({game:"synth-town", version:2, exportedAt:new Date().toISOString(), save:S}, null, 2);
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));
+  a.download=`synth-town-副本-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("📤 存档已导出，妥善保管你的副本文件");
+});
+// 导入存档副本
+$("#importBtn").addEventListener("click", ()=>$("#importFile").click());
+$("#importFile").addEventListener("change", async e=>{
+  const f=e.target.files[0]; e.target.value="";
+  if(!f) return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(data.game!=="synth-town"||!data.save||!data.save.unlocked) throw new Error("不是有效的游戏存档");
+    if(!confirm("导入将覆盖当前进度，确定？")) return;
+    S=Object.assign(fresh(), data.save);
+    S.petList=S.petList||[]; S.food=S.food||{}; S.regions=S.regions||{};
+    applyTheme(); clearSlots(); renderAll(); save();
+    $("#settingsOverlay").classList.remove("show");
+    toast("📥 副本已导入，继续冒险！");
+  }catch(err){ toast("❌ 导入失败："+err.message); }
+});
+// 素材包
+$("#packBtn").addEventListener("click", ()=>$("#packFile").click());
+$("#packFile").addEventListener("change", async e=>{
+  const f=e.target.files[0]; e.target.value="";
+  if(!f) return;
+  try{
+    const n=await importPack(JSON.parse(await f.text()));
+    renderAll();
+    toast(`🖼️ 素材包生效：替换了 ${n} 张图`);
+  }catch(err){ toast("❌ 素材包导入失败："+err.message); }
+});
+$("#packResetBtn").addEventListener("click", async ()=>{
+  await assetsClear(); renderAll();
+  toast("↩️ 已恢复默认 emoji 外观");
+});
+/* ============ 页面切换 ============ */
+function switchTab(tab){
+  document.querySelectorAll(".tabBtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id==="view-"+tab));
+}
+document.querySelectorAll(".tabBtn").forEach(b=>{
+  b.addEventListener("click", ()=>switchTab(b.dataset.tab));
+});
+
+/* ============ 底图 ============ */
+function renderMap(){
+  const panel=$("#mapPanel"), hint=$("#mapLockedHint");
+  if(!panel) return;
+  if(!mapUnlocked()){
+    panel.classList.remove("show"); panel.innerHTML="";
+    if(hint) hint.style.display="block";
+    return;
+  }
+  if(hint) hint.style.display="none";
+  panel.classList.add("show");
+  const head=`<h2 style="font-size:14px;color:var(--dim);margin-bottom:8px;font-weight:600">🗺️ 小镇底图（点击地块选区建造）</h2>`;
+  const grid=document.createElement("div");
+  grid.className="mapGrid";
+  REGIONS.forEach(r=>{
+    const tile=document.createElement("div");
+    tile.className="tile"+(curRegion===r.id?" sel":"");
+    const tileImg=assetCache.get("regions:"+r.id);
+    tile.style.cssText=`grid-area:${r.area}; ${tileImg
+      ?`background:url(${tileImg}) center/cover;`
+      :`background:linear-gradient(160deg,${r.bg},rgba(0,0,0,.35)), ${r.bg};`}`;
+    // 该区域的建筑
+    const blds=[];
+    BUILDINGS.forEach(b=>{
+      const n=(S.regions[b.id]||{})[r.id]||0;
+      for(let k=0;k<Math.min(n,6);k++) blds.push(b.i);
+      if(n>6) blds.push(`<span class="more">+${n-6}</span>`);
+    });
+    tile.innerHTML=`
+      <span class="rn">${r.i} ${r.n}</span>
+      <span class="rm">💰×${r.cm} 产×${r.im}</span>
+      <div class="bld">${blds.join("")||'<span style="font-size:9px;opacity:.6">空地</span>'}</div>`;
+    tile.addEventListener("click",()=>{
+      curRegion=r.id;
+      toast(`📍 已选区：${r.i}${r.n}（成本×${r.cm} 产出×${r.im}）`);
+      renderMap(); renderShop();
+    });
+    grid.appendChild(tile);
+  });
+  panel.innerHTML=head;
+  panel.appendChild(grid);
+}
+
+/* ============ 商店 & 小镇 ============ */
+function canAfford(cost){
+  return Object.entries(cost).every(([k,v])=>{
+    const have = k==="coin"?S.coin:count(k);
+    return have>=v;
+  });
+}
+function renderShop(){
+  const box=$("#shop"); box.innerHTML="";
+  // 底图模式：显示当前选区（在中央地图上点击切换）
+  if(mapUnlocked()){
+    const r=regionOf(curRegion);
+    const bar=document.createElement("div");
+    bar.style.cssText="font-size:11px;color:var(--dim);margin-bottom:10px;";
+    bar.innerHTML=`当前选区：<b style="color:var(--gold)">${r.i}${r.n}</b>（成本×${r.cm} 产出×${r.im}）—— 点击中央地图切换`;
+    box.appendChild(bar);
+  }else{
+    const hint=document.createElement("div");
+    hint.style.cssText="font-size:11px;color:var(--dim);margin-bottom:10px;padding:6px;border:1px dashed var(--line);border-radius:8px;";
+    hint.innerHTML="🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个，解锁底图模式（分区建造，各区域成本/产出不同）";
+    box.appendChild(hint);
+  }
+  const region=mapUnlocked()?curRegion:"plain";
+  const r=regionOf(region);
+  BUILDINGS.forEach(b=>{
+    const cost=regionCost(b, region);
+    const div=document.createElement("div");
+    div.className="shopItem";
+    const built=S.buildings[b.id]||0;
+    const incPer=buildingIncome(b);
+    const costHtml=Object.entries(cost).map(([k,v])=>{
+      const have=k==="coin"?S.coin:count(k);
+      return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?ELEMENTS[k].n:"金币"}×${v}</span>`;
+    }).join("");
+    const tag = mapUnlocked() ? ` <small style="color:var(--dim)">@${r.i}${r.n}</small>` : "";
+    div.innerHTML=`
+      <div class="top"><span class="ico">${b.i}</span><span class="nm">${b.n}${tag}</span>
+        <span class="built">已建 ${built} · 💰+${incPer}/${INCOME_INTERVAL}s</span></div>
+      <div class="cost">${costHtml}</div>
+      <button class="buildBtn" ${canAfford(cost)?"":"disabled"}>建造</button>`;
+    div.querySelector(".buildBtn").addEventListener("click",()=>build(b, cost, region));
+    box.appendChild(div);
+  });
+}
+function build(b, cost, region){
+  if(!canAfford(cost)) return;
+  Object.entries(cost).forEach(([k,v])=>{
+    if(k==="coin"){ S.coin-=v; return; }
+    S.unlocked[k]=Math.max(0, (S.unlocked[k]||0)-v);
+  });
+  S.buildings[b.id]=(S.buildings[b.id]||0)+1;
+  if(!S.regions[b.id]) S.regions[b.id]={};
+  S.regions[b.id][region]=(S.regions[b.id][region]||0)+1;
+  toast(`${b.i} 在${regionOf(region).i}${regionOf(region).n}建造了${b.n}！`);
+  switchTab("town"); // 建完跳到小镇页看效果
+  renderAll(); save();
+}
+function renderTown(){
+  const t=$("#townList");
+  const items=Object.entries(S.buildings).filter(([,n])=>n>0)
+    .map(([id,n])=>{
+      const b=BUILDINGS.find(x=>x.id===id);
+      const dist=S.regions[id]||{};
+      const ds=Object.entries(dist).filter(([,c])=>c>0)
+        .map(([rid,c])=>`${regionOf(rid).i}${c}`).join(" ");
+      return `<div class="townItem">${b.i}<span class="n">×${n}</span><span style="font-size:9px;color:var(--dim)">${ds}</span></div>`;
+    }).join("");
+  t.innerHTML = items || `<span style="color:var(--dim);font-size:12px">还没建筑，先去合成建材吧</span>`;
+}
+
+/* ============ 产出与宠物状态循环（离线也结算，封顶 1 小时） ============ */
+function tick(){
+  const now=Date.now();
+  const elapsed=Math.min((now-S.lastTick)/1000, OFFLINE_CAP);
+  if(elapsed>=INCOME_INTERVAL){
+    // 1) 金币产出（含宠物物种加成）
+    const cycles=Math.floor(elapsed/INCOME_INTERVAL);
+    let inc=0;
+    BUILDINGS.forEach(b=>{
+      if(S.buildings[b.id]) inc+=buildingIncome(b);
+    });
+    const bonus=petBonus();
+    const earn=Math.round(inc*(1+bonus/100))*cycles;
+    if(earn>0){ S.coin+=earn; S.totalEarned+=earn; toast(`🏘️ 小镇产出 💰+${earn}${bonus>0?`（含🐾+${bonus}%）`:""}`); }
+    // 2) 宠物状态：每 5 分钟饱食 -10；饱食 0 后 HP -1；HP 0 → 生病（停止衰减，可治疗，不会死亡）
+    const dCycles=Math.floor(elapsed/DECAY_INTERVAL);
+    for(let i=0;i<dCycles;i++){
+      S.petList.forEach(p=>{
+        if(p.sick) return;
+        if(p.sat>0) p.sat=Math.max(0,p.sat-10);
+        else { p.hp=Math.max(0,p.hp-1); if(p.hp<=0) p.sick=true; }
+      });
+    }
+    S.lastTick=now;
+    renderAll(); save();
+  }
+}
+
+/* ============ 重置 ============ */
+$("#resetBtn").addEventListener("click", ()=>{
+  if(confirm("确定重置全部进度吗？不可恢复。")){
+    localStorage.removeItem(SAVE_KEY);
+    S=fresh(); clearSlots(); renderAll();
+    $("#introOverlay").classList.add("show");
+  }
+});
+
+/* ============ 召唤长老：随机提示一条"原料已齐但还没合成过"的配方 ============ */
+function npcHint(){
+  const candidates=R.filter(([a,b,out])=>{
+    if(out==="coin"||out==="chest") return false;      // 货币不算隐藏配方
+    if(count(out)>0 || (out in S.unlocked)) return false; // 已合成过/已拥有
+    return count(a)>0 && count(b)>0 && (a!==b || count(a)>=2); // 原料已齐
+  });
+  if(!candidates.length){
+    toast("🧙‍♂️「你的原料我一时也变不出新东西，去商店补点货或多攒些元素吧」");
+    return;
+  }
+  const [a,b,out]=candidates[Math.floor(Math.random()*candidates.length)];
+  toast(`🧙‍♂️「试试 ${ELEMENTS[a].i}${ELEMENTS[a].n} + ${ELEMENTS[b].i}${ELEMENTS[b].n}，会有惊喜…」`, 4200);
+}
+$("#npcBtn").addEventListener("click", npcHint);
+
+/* ============ 开局幸运抽奖 ============ */
+let drawnCounts=null;
+function showDraw(){
+  const ov=$("#drawOverlay"), cards=$("#drawCards");
+  cards.innerHTML="";
+  drawnCounts={};
+  BASE.forEach(id=>{ drawnCounts[id]=10+Math.floor(Math.random()*90); }); // 10~99
+  drawnCounts.coin=10+Math.floor(Math.random()*40); // 少量启动金币 10~50
+  const DRAW_ITEMS=BASE.concat("coin");
+  const CARD_META={coin:{n:"金币",i:"🪙"}};
+
+  DRAW_ITEMS.forEach((id,idx)=>{
+    const m=CARD_META[id]||ELEMENTS[id];
+    const c=document.createElement("div");
+    c.className="drawCard";
+    c.innerHTML=`<span class="di">${m.i}</span><span class="dn">${m.n}</span><span class="dc">?</span>`;
+    cards.appendChild(c);
+    // 翻牌 + 数字滚动
+    setTimeout(()=>{
+      c.classList.add("on");
+      const luckyLine = id==="coin" ? drawnCounts.coin>=30 : drawnCounts[id]>=50;
+      if(luckyLine) c.classList.add("lucky");
+      const numEl=c.querySelector(".dc");
+      const target=drawnCounts[id]; const t0=Date.now();
+      const roll=setInterval(()=>{
+        const p=(Date.now()-t0)/600;
+        numEl.textContent=Math.floor(target*Math.min(1,p));
+        if(p>=1){ clearInterval(roll); numEl.textContent=target; }
+      },40);
+    }, 300+idx*350);
+  });
+  setTimeout(()=>$("#drawBtn").classList.add("on"), 300+DRAW_ITEMS.length*350+400);
+  ov.classList.add("show");
+}
+$("#drawBtn").addEventListener("click", ()=>{
+  if(!drawnCounts) return;
+  BASE.forEach(id=>{ S.unlocked[id]=drawnCounts[id]; });
+  S.coin=drawnCounts.coin;
+  S.drawn=true;
+  S.lastTick=Date.now();
+  $("#drawOverlay").classList.remove("show");
+  renderAll(); save();
+  toast(`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
+});
+
+/* ============ 总渲染 ============ */
+function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderTown(); renderPets(); renderMap(); }
+renderAll();
+assetsLoad().then(renderAll); // 自定义素材加载完成后重绘一次
+if(!S.drawn){
+  // 流程：NPC 引导 → 幸运抽取 → 游戏
+  $("#introOverlay").classList.add("show");
+}
+$("#introBtn").addEventListener("click", ()=>{
+  $("#introOverlay").classList.remove("show");
+  showDraw();
+});
+setInterval(tick, 2000);
+</script>
+</body>
+</html>
