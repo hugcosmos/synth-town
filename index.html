@@ -1486,7 +1486,7 @@ let moveMode=null;       // {fromRegion,fromIndex,bid} 移动模式
 
 function buyPlot(region,index){
   const r=regionOf(region), plots=S.plots[region];
-  if(!plots||plots[index]!==undefined) return;
+  if(!plots||plots[index]!==false) return;
   if(S.coin<r.land){ toast(`💰 买地需要 ${r.land} 金币`); return; }
   S.coin-=r.land; plots[index]=null;
   toast(`🏞️ 在${r.i}${r.n}买下一块地（-💰${r.land}）`);
