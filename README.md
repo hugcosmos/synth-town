@@ -19,7 +19,8 @@ A cozy alchemy-and-city-building game that runs entirely in **one zero-dependenc
 - Single HTML file, fully static — deploy to GitHub Pages / Cloudflare Pages
 - Auto-save in localStorage; offline income capped at 1 hour
 - 📦 Save snapshots — JSON export/import for multiple playthroughs
-- 🎨 4 built-in color themes (Night / Forest / Sand / Snow) with pure-CSS patterned backgrounds
+- 🎨 4 built-in themes with AI-generated background art (Night / Forest / Sand / Snow), plus a 5th **Custom** slot — upload any image and it becomes your game background
+- 🖼️ Custom background upload — pick any image, auto-compressed to ≤1920px, stored in IndexedDB (no save-file bloat)
 - 🖼️ Custom asset packs — upload `theme.json` to replace pet/element/region art (stored in IndexedDB, auto-resized, falls back to emoji)
 - Full touch support (Pointer Events) — plays great on mobile
 
