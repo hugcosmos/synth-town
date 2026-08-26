@@ -589,13 +589,33 @@ const OFFLINE_CAP = 3600;     // 秒：离线结算封顶 1 小时（收入与�
 // 底图区域：成本/产出双系数，建造时选区域
 // 地图布局（4列×3行网格）：山脚在北、林间东侧、市中心居中、平原西侧、河岸沿南
 const REGIONS = [
-  {id:"hill",   n:"山脚",    i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜"},
-  {id:"forest", n:"林间",    i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高"},
-  {id:"center", n:"市中心",  i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产"},
-  {id:"plain",  n:"郊外平原", i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产"},
-  {id:"river",  n:"河岸",    i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产"},
+  {id:"hill",   n:"山脚",    i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", plots:6,  land:50},
+  {id:"forest", n:"林间",    i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", plots:8,  land:80},
+  {id:"center", n:"市中心",  i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", plots:12, land:300},
+  {id:"plain",  n:"郊外平原", i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", plots:8,  land:20},
+  {id:"river",  n:"河岸",    i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", plots:8,  land:150},
 ];
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
+function initPlots(){
+  if(!S.plots) S.plots={};
+  REGIONS.forEach(r=>{
+    if(!Array.isArray(S.plots[r.id])) S.plots[r.id]=new Array(r.plots).fill(undefined);
+  });
+}
+function migratePlots(){
+  // 旧档 S.regions[buildingId][regionId]=count → 转为地块系统
+  if(!S.regions || !Object.keys(S.regions).length) return;
+  initPlots();
+  Object.entries(S.regions).forEach(([bid,dist])=>{
+    Object.entries(dist).forEach(([rid,n])=>{
+      const plots=S.plots[rid]; if(!plots) return;
+      for(let i=0;i<n && i<plots.length;i++){
+        if(plots[i]===undefined) plots[i]=bid;
+      }
+    });
+  });
+  S.regions={}; // 迁移后清空旧数据
+}
 // 解锁条件：小屋 + 商铺 各建成 1 个
 const mapUnlocked = () => (S.buildings.hut||0)>=1 && (S.buildings.shop||0)>=1;
 let curRegion = "plain";
@@ -608,14 +628,10 @@ function regionCost(b, region){
 }
 // 某建筑总产出/10s（跨区域汇总；无分区记录的旧建筑按系数 1 计）
 function buildingIncome(b){
-  const dist=S.regions[b.id]||{};
-  let inc=0, regionSum=0;
-  Object.entries(dist).forEach(([rid,n])=>{
-    inc+=b.income*regionOf(rid).im*n;
-    regionSum+=n;
+  let inc=0;
+  Object.entries(S.plots||{}).forEach(([rid,plots])=>{
+    plots.forEach(p=>{ if(p===b.id) inc+=b.income*regionOf(rid).im; });
   });
-  const legacy=(S.buildings[b.id]||0)-regionSum; // 旧档未记录分区的部分
-  if(legacy>0) inc+=b.income*legacy;
   return inc;
 }
 
@@ -667,7 +683,8 @@ function fresh(){
     petList:[],         // 宠物实例 [{id,hp,maxHp,sat,sick}]
     food:{},            // 食物库存 foodId -> 数量
     buildings:{},        // id -> 总数量
-    regions:{},          // id -> {regionId -> 数量}
+    regions:{},          // id -> {regionId -> 数量}（旧档兼容）
+    plots:{},            // regionId -> [undefined|null|"buildingId"]，undefined=未购,null=空地
     theme:"night",      // 配色主题
     totalEarned:0,
     lastTick:Date.now(),
@@ -683,6 +700,18 @@ function load(){
     });
     if(s.petList.some(p=>p.maxHp===undefined)) s.petList.forEach(p=>{p.maxHp=p.maxHp||p.hp||5;});
     s.pets={};
+    // 地块系统迁移（旧档→新档）
+    if(!s.plots || !Object.keys(s.plots).length){
+      const _s=s;
+      REGIONS.forEach(r=>{ if(!_s.plots[r.id]) _s.plots[r.id]=new Array(r.plots).fill(undefined); });
+      Object.entries(s.regions||{}).forEach(([bid,dist])=>{
+        Object.entries(dist).forEach(([rid,n])=>{
+          const plots=_s.plots[rid]; if(!plots) return;
+          for(let i=0;i<n&&i<plots.length;i++){ if(plots[i]===undefined) plots[i]=bid; }
+        });
+      });
+      s.regions={};
+    }
     return s;
   }catch(e){ return fresh(); }
 }
@@ -1230,6 +1259,17 @@ $("#importFile").addEventListener("change", async e=>{
     });
     if(S.petList.some(p=>p.maxHp===undefined)) S.petList.forEach(p=>{p.maxHp=p.maxHp||p.hp||5; p.sat=p.sat??100;});
     S.pets={};
+    if(!S.plots || !Object.keys(S.plots).length){
+      const _s=S;
+      REGIONS.forEach(r=>{ if(!_s.plots[r.id]) _s.plots[r.id]=new Array(r.plots).fill(undefined); });
+      Object.entries(S.regions||{}).forEach(([bid,dist])=>{
+        Object.entries(dist).forEach(([rid,n])=>{
+          const plots=_s.plots[rid]; if(!plots) return;
+          for(let i=0;i<n&&i<plots.length;i++){ if(plots[i]===undefined) plots[i]=bid; }
+        });
+      });
+      S.regions={};
+    }
     applyTheme(); clearSlots(); renderAll(); save();
     $("#settingsOverlay").classList.remove("show");
     toast("📥 副本已导入，继续冒险！");
@@ -1290,61 +1330,57 @@ document.querySelectorAll(".tabBtn").forEach(b=>{
 function renderMap(){
   const outer=$("#mapPanelOuter");
   if(!outer) return;
-  // ---- 统计 ----
-  let totalBld=0, totalOut=0;
+  initPlots();
+  let totalBld=0,totalOut=0,bought=0;
   const regionSet=new Set();
-  BUILDINGS.forEach(b=>{
-    const n=S.buildings[b.id]||0;
-    totalBld+=n;
-    if(n>0) totalOut+=buildingIncome(b);
-    Object.entries(S.regions[b.id]||{}).forEach(([rid,c])=>{ if(c>0) regionSet.add(rid); });
+  Object.entries(S.plots).forEach(([rid,plots])=>{
+    plots.forEach(p=>{
+      if(p!==undefined){bought++;regionSet.add(rid);}
+      if(p&&p!==null){totalBld++;const b=BUILDINGS.find(x=>x.id===p);if(b)totalOut+=b.income*regionOf(rid).im;}
+    });
   });
-  // ---- 建筑徽章（总量）----
-  const badges=BUILDINGS.filter(b=>(S.buildings[b.id]||0)>0).map(b=>
-    `<span class="mapBadge">${b.i}<b>${S.buildings[b.id]}</b></span>`
-  ).join("") || '<span style="font-size:11px;color:var(--dim)">还没有建筑，先去合成建材吧</span>';
-
-  let html=`
-    <div class="mapStats">
-      <span>🏘️ 总建筑 <b>${totalBld}</b></span>
-      <span>💰 产出 <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span>
-      <span>🗺️ 已开发 <b>${regionSet.size}</b>/${REGIONS.length}</span>
-    </div>
-    <div class="mapBadges">${badges}</div>`;
-
+  const bc={};
+  Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
+  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);return `<span class="mapBadge">${b?b.i:"❓"}<b>${n}</b></span>`;}).join("")||'<span style="font-size:11px;color:var(--dim)">还没有建筑</span>';
+  let hint="";
+  if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">🏗️ 移动模式：点一块 🟫 空地移入，或 <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">取消</button></div>`;
+  else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">📍 已选 ${regionOf(selectedPlot.region).i}${regionOf(selectedPlot.region).n} 空地，下方选建筑建造，或 <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">取消</button></div>`;
+  let html=`<div class="mapStats"><span>🏘️ 总建筑 <b>${totalBld}</b></span><span>💰 产出 <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>🗺️ 已购地 <b>${bought}</b>/42</span></div><div class="mapBadges">${badges}</div>${hint}`;
   if(!mapUnlocked()){
-    html+=`<div class="mapLocked">🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，解锁小镇全景图（分区建造，各区域成本/产出不同）</div>`;
-    outer.innerHTML=html;
-    return;
+    html+=`<div class="mapLocked">🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，解锁小镇全景图（买地建造，各区域成本/产出不同）</div>`;
+    outer.innerHTML=html; return;
   }
-
-  html+=`<div class="mapHead"><span>🗺️ 小镇全景图</span><span class="compass">🧭 N</span></div>`;
-  html+=`<div class="mapGrid"></div>`;
+  html+=`<div class="mapHead"><span>🗺️ 小镇全景图</span><span class="compass">🧭 N</span></div><div class="mapGrid"></div>`;
   outer.innerHTML=html;
   const grid=outer.querySelector(".mapGrid");
-
   REGIONS.forEach(r=>{
     const tile=document.createElement("div");
-    tile.className="tile"+(curRegion===r.id?" sel":"");
-    const tileImg=assetCache.get("regions:"+r.id);
-    tile.style.cssText=`grid-area:${r.area}; ${tileImg
-      ?`background:url(${tileImg}) center/cover;`
-      :`background:linear-gradient(160deg,${r.bg},rgba(0,0,0,.35)), ${r.bg};`}`;
-    // 该区域建筑 — 小网格展示，最多 12 个图标
-    const blds=[];
-    BUILDINGS.forEach(b=>{
-      const n=(S.regions[b.id]||{})[r.id]||0;
-      for(let k=0;k<Math.min(n,12);k++) blds.push(`<span class="bldIcon">${b.i}</span>`);
-      if(n>12) blds.push(`<span class="more">+${n-12}</span>`);
+    tile.className="tile";
+    const ti=assetCache.get("regions:"+r.id);
+    tile.style.cssText=`grid-area:${r.area};${ti?`background:url(${ti}) center/cover;`:`background:linear-gradient(160deg,${r.bg},rgba(0,0,0,.35)),${r.bg};`}`;
+    const plots=S.plots[r.id]||[];
+    let ph=`<div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px;">`;
+    plots.forEach((p,i)=>{
+      const sel=selectedPlot&&selectedPlot.region===r.id&&selectedPlot.index===i;
+      const ms=moveMode&&moveMode.fromRegion===r.id&&moveMode.fromIndex===i;
+      let c="",t="";
+      if(p===undefined){c="🔒";t=`买地💰${r.land}`;}
+      else if(p===null){c="";t="空地-点击选中";}
+      else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";t=b?b.n:"";}
+      ph+=`<div data-r="${r.id}" data-i="${i}" title="${t}" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:4px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:${p===undefined?'#00000055':p===null?'#ffffff15':'#ffffff30'};${sel?'outline:2px solid var(--gold);':''}${ms?'outline:2px solid #4cd97b;':''}">${c}</div>`;
     });
-    tile.innerHTML=`
-      <div class="tileHd"><span class="rn">${r.i} ${r.n}</span></div>
-      <span class="rm">💰×${r.cm} 产×${r.im}</span>
-      <div class="bld">${blds.join("")||'<span class="emptyTile">空地</span>'}</div>`;
-    tile.addEventListener("click",()=>{
-      curRegion=r.id;
-      toast(`📍 已选区：${r.i}${r.n}（成本×${r.cm} 产出×${r.im}）`);
-      renderMap(); renderShop();
+    ph+="</div>";
+    const bc2=plots.filter(p=>p&&p!==null).length;
+    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${r.n}</span></div><span class="rm">💰×${r.cm} 产×${r.im} 地💰${r.land}</span>${ph}<span style="font-size:9px;color:var(--dim);margin-top:2px;">${bc2}/${r.plots}</span>`;
+    tile.querySelectorAll("[data-r]").forEach(cell=>{
+      cell.addEventListener("click",ev=>{
+        ev.stopPropagation();
+        const rid=cell.dataset.r,idx=+cell.dataset.i,p=S.plots[rid][idx];
+        if(moveMode){if(p===null)completeMove(rid,idx);else toast("只能移到空地");return;}
+        if(p===undefined)buyPlot(rid,idx);
+        else if(p===null)selectPlot(rid,idx);
+        else{const b=BUILDINGS.find(x=>x.id===p);if(confirm(`${b?b.i+b.n:"建筑"}\n\n确定 = 🏗️ 移动到空地\n取消 = 💥 拆除(退50%)`))startMove(rid,idx);else demolishPlot(rid,idx);}
+      });
     });
     grid.appendChild(tile);
   });
@@ -1359,52 +1395,111 @@ function canAfford(cost){
 }
 function renderShop(){
   const box=$("#shop"); box.innerHTML="";
-  // 底图模式：显示当前选区（在中央地图上点击切换）
   if(mapUnlocked()){
-    const r=regionOf(curRegion);
     const bar=document.createElement("div");
     bar.className="shopBar";
-    bar.innerHTML=`当前选区：<b style="color:var(--gold)">${r.i}${r.n}</b>（成本×${r.cm} 产出×${r.im}）—— 点击中央地图切换`;
+    if(selectedPlot){const r=regionOf(selectedPlot.region);bar.innerHTML=`📍 已选地块：<b style="color:var(--gold)">${r.i}${r.n}</b>（成本×${r.cm} 产出×${r.im}）—— 在地图上点其他空地切换`;}
+    else if(moveMode){bar.innerHTML=`🏗️ 移动模式：在地图上点一块 🟫 空地移入建筑`;}
+    else{bar.innerHTML=`👆 先在地图上点一块 🟫 空地（或 🔒 买地），再选建筑建造`;}
     box.appendChild(bar);
   }else{
     const hint=document.createElement("div");
     hint.className="shopBar";
-    hint.innerHTML="🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个，解锁底图模式（分区建造，各区域成本/产出不同）";
+    hint.innerHTML=`🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个，解锁底图模式（买地建造，各区域成本/产出不同）`;
     box.appendChild(hint);
   }
-  const region=mapUnlocked()?curRegion:"plain";
+  const region=selectedPlot?selectedPlot.region:"plain";
   const r=regionOf(region);
   BUILDINGS.forEach(b=>{
-    const cost=regionCost(b, region);
+    const cost=regionCost(b,region);
     const div=document.createElement("div");
     div.className="shopItem";
     const built=S.buildings[b.id]||0;
     const incPer=buildingIncome(b);
-    const costHtml=Object.entries(cost).map(([k,v])=>{
-      const have=k==="coin"?S.coin:count(k);
-      return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?ELEMENTS[k].n:"金币"}×${v}</span>`;
-    }).join("");
-    const tag = mapUnlocked() ? ` <small style="color:var(--dim)">@${r.i}${r.n}</small>` : "";
-    div.innerHTML=`
-      <div class="top"><span class="ico">${b.i}</span><span class="nm">${b.n}${tag}</span>
-        <span class="built">已建 ${built} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div>
-      <div class="cost">${costHtml}</div>
-      <button class="buildBtn" ${canAfford(cost)?"":"disabled"}>建造</button>`;
-    div.querySelector(".buildBtn").addEventListener("click",()=>build(b, cost, region));
+    const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?ELEMENTS[k].n:"金币"}×${v}</span>`;}).join("");
+    const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked());
+    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${b.n}</span><span class="built">已建 ${built} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>建造</button>`;
+    div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
   });
 }
-function build(b, cost, region){
+
+// 地块交互状态
+let selectedPlot=null;   // {region,index} 选中的空地
+let moveMode=null;       // {fromRegion,fromIndex,bid} 移动模式
+
+function buyPlot(region,index){
+  const r=regionOf(region), plots=S.plots[region];
+  if(!plots||plots[index]!==undefined) return;
+  if(S.coin<r.land){ toast(`💰 买地需要 ${r.land} 金币`); return; }
+  S.coin-=r.land; plots[index]=null;
+  toast(`🏞️ 在${r.i}${r.n}买下一块地（-💰${r.land}）`);
+  renderAll(); save();
+}
+function selectPlot(region,index){
+  if(moveMode){ completeMove(region,index); return; }
+  const plots=S.plots[region];
+  if(!plots||plots[index]!==null) return;
+  selectedPlot={region,index};
+  renderAll();
+}
+function cancelSelection(){ selectedPlot=null; moveMode=null; renderAll(); }
+function build(b,cost){
+  if(!selectedPlot){
+    if(!mapUnlocked()){
+      initPlots();
+      const plots=S.plots.plain;
+      let idx=plots.findIndex(p=>p===null);
+      if(idx<0){idx=plots.findIndex(p=>p===undefined);if(idx>=0&&S.coin>=regionOf("plain").land){S.coin-=regionOf("plain").land;plots[idx]=null;}}
+      if(idx<0){toast("郊外无空地，解锁地图后买新地");return;}
+      selectedPlot={region:"plain",index:idx};
+    }else{toast("先在地图上点一块 🟫 空地");return;}
+  }
   if(!canAfford(cost)) return;
+  const {region,index}=selectedPlot;
   Object.entries(cost).forEach(([k,v])=>{
     if(k==="coin"){ S.coin-=v; return; }
-    S.unlocked[k]=Math.max(0, (S.unlocked[k]||0)-v);
+    S.unlocked[k]=Math.max(0,(S.unlocked[k]||0)-v);
   });
+  S.plots[region][index]=b.id;
   S.buildings[b.id]=(S.buildings[b.id]||0)+1;
-  if(!S.regions[b.id]) S.regions[b.id]={};
-  S.regions[b.id][region]=(S.regions[b.id][region]||0)+1;
   toast(`${b.i} 在${regionOf(region).i}${regionOf(region).n}建造了${b.n}！`);
-  switchTab("town"); // 建完跳到小镇页看效果
+  selectedPlot=null;
+  renderAll(); save();
+}
+function startMove(region,index){
+  const plots=S.plots[region];
+  if(!plots||!plots[index]) return;
+  moveMode={fromRegion:region,fromIndex:index,bid:plots[index]};
+  selectedPlot=null;
+  renderAll();
+}
+function completeMove(toRegion,toIndex){
+  if(!moveMode) return;
+  const plots=S.plots[toRegion];
+  if(!plots||plots[toIndex]!==null){ toast("只能移到 🟫 空地"); moveMode=null; renderAll(); return; }
+  const {fromRegion,fromIndex,bid}=moveMode;
+  S.plots[fromRegion][fromIndex]=null;
+  S.plots[toRegion][toIndex]=bid;
+  toast(`🏗️ ${ELEMENTS[bid]?ELEMENTS[bid].i:""}${ELEMENTS[bid]?ELEMENTS[bid].n:bid} 移到了${regionOf(toRegion).i}${regionOf(toRegion).n}`);
+  moveMode=null;
+  renderAll(); save();
+}
+function demolishPlot(region,index){
+  const plots=S.plots[region];
+  if(!plots||!plots[index]) return;
+  const bid=plots[index], b=BUILDINGS.find(x=>x.id===bid);
+  if(!confirm(`确定拆除 ${b?b.i:""}${b?b.n:bid}？退还 50% 建造成本`)) return;
+  // 退还50%（按当前区域成本系数估算）
+  const cost=regionCost(b,region);
+  Object.entries(cost).forEach(([k,v])=>{
+    const refund=Math.floor(v/2);
+    if(k==="coin") S.coin+=refund;
+    else S.unlocked[k]=(S.unlocked[k]||0)+refund;
+  });
+  S.plots[region][index]=null;
+  S.buildings[bid]=Math.max(0,(S.buildings[bid]||0)-1);
+  toast(`💥 拆除了${b?b.n:bid}（退还50%材料）`);
   renderAll(); save();
 }
 
