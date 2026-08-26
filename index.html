@@ -275,24 +275,51 @@
   #view-pet.active{grid-template-columns:1fr; gap:14px;}
 
   /* 底图模式 */
-  #mapPanel{display:none; width:100%; margin-top:4px;}
-  #mapPanel.show{display:block;}
+  .mapStats{
+    display:flex; gap:16px; flex-wrap:wrap;
+    font-size:13px; color:var(--dim); margin-bottom:10px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  .mapStats b{color:var(--gold);}
+  .mapBadges{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .mapBadge{
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    padding:3px 8px; font-size:16px; display:inline-flex; align-items:center; gap:4px;
+  }
+  .mapBadge b{font-size:11px; color:var(--gold);}
+  .mapLocked{
+    font-size:12px; color:var(--dim); padding:10px;
+    border:1px dashed var(--line); border-radius:8px;
+  }
+  .mapHead{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:13px; font-weight:600; color:var(--dim); margin-bottom:8px;
+  }
+  .compass{font-size:12px; color:var(--gold); letter-spacing:1px;}
   .mapGrid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
     border-radius:12px; overflow:hidden; border:1px solid var(--line);
   }
   .tile{
-    position:relative; min-height:74px; border-radius:6px; padding:6px 4px;
-    cursor:pointer; transition:filter .15s, outline .15s;
-    display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:2px;
+    position:relative; min-height:90px; border-radius:8px; padding:8px 6px;
+    cursor:pointer; transition:filter .15s, outline .15s, transform .12s;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
     outline:2px solid transparent;
+    border:1px solid rgba(255,255,255,.1);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
   }
-  .tile:hover{filter:brightness(1.15);}
-  .tile.sel{outline-color:var(--gold); box-shadow:0 0 12px rgba(255,215,94,.35) inset;}
-  .tile .rn{font-size:11px; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,.5);}
-  .tile .rm{font-size:9px; opacity:.85;}
-  .tile .bld{display:flex; flex-wrap:wrap; gap:2px; justify-content:center; font-size:16px; line-height:1.2; margin-top:2px;}
-  .tile .more{font-size:9px; opacity:.8;}
+  .tile:hover{filter:brightness(1.15); transform:translateY(-1px);}
+  .tile.sel{outline-color:var(--gold); box-shadow:0 0 12px rgba(255,215,94,.35), inset 0 1px 0 rgba(255,255,255,.08);}
+  .tileHd{display:flex; align-items:center; gap:4px;}
+  .tile .rn{font-size:12px; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .tile .rm{font-size:9px; opacity:.92; background:rgba(0,0,0,.35); padding:1px 6px; border-radius:8px; white-space:nowrap;}
+  .tile .bld{
+    display:grid; grid-template-columns:repeat(auto-fill,14px); gap:1px;
+    justify-content:center; margin-top:2px; min-height:14px; width:100%;
+  }
+  .bldIcon{font-size:12px; line-height:1; text-align:center;}
+  .tile .more{font-size:9px; opacity:.85; justify-self:center;}
+  .emptyTile{font-size:9px; opacity:.5; grid-column:1/-1; text-align:center;}
   .tile.locked{filter:grayscale(.9) brightness(.6); cursor:not-allowed;}
 
   @media (max-width:860px){
@@ -342,16 +369,7 @@
 
   <!-- 小镇页（底图） -->
   <section id="view-town" class="view">
-    <section class="panel" id="mapPanelOuter">
-      <div id="mapPanel"></div>
-      <div id="mapLockedHint" style="font-size:12px;color:var(--dim);padding:8px;border:1px dashed var(--line);border-radius:8px;display:none">
-        🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，这里会出现小镇底图（分区建造，各区域成本/产出不同）
-      </div>
-    </section>
-    <section class="panel">
-      <h2>🏘️ 我的建筑</h2>
-      <div id="townList"></div>
-    </section>
+    <section class="panel" id="mapPanelOuter"></section>
     <section class="panel">
       <h2>🏗️ 建造</h2>
       <div id="shop"></div>
@@ -1193,18 +1211,41 @@ document.querySelectorAll(".tabBtn").forEach(b=>{
 
 /* ============ 底图 ============ */
 function renderMap(){
-  const panel=$("#mapPanel"), hint=$("#mapLockedHint");
-  if(!panel) return;
+  const outer=$("#mapPanelOuter");
+  if(!outer) return;
+  // ---- 统计 ----
+  let totalBld=0, totalOut=0;
+  const regionSet=new Set();
+  BUILDINGS.forEach(b=>{
+    const n=S.buildings[b.id]||0;
+    totalBld+=n;
+    if(n>0) totalOut+=buildingIncome(b);
+    Object.entries(S.regions[b.id]||{}).forEach(([rid,c])=>{ if(c>0) regionSet.add(rid); });
+  });
+  // ---- 建筑徽章（总量）----
+  const badges=BUILDINGS.filter(b=>(S.buildings[b.id]||0)>0).map(b=>
+    `<span class="mapBadge">${b.i}<b>${S.buildings[b.id]}</b></span>`
+  ).join("") || '<span style="font-size:11px;color:var(--dim)">还没有建筑，先去合成建材吧</span>';
+
+  let html=`
+    <div class="mapStats">
+      <span>🏘️ 总建筑 <b>${totalBld}</b></span>
+      <span>💰 产出 <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span>
+      <span>🗺️ 已开发 <b>${regionSet.size}</b>/${REGIONS.length}</span>
+    </div>
+    <div class="mapBadges">${badges}</div>`;
+
   if(!mapUnlocked()){
-    panel.classList.remove("show"); panel.innerHTML="";
-    if(hint) hint.style.display="block";
+    html+=`<div class="mapLocked">🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，解锁小镇全景图（分区建造，各区域成本/产出不同）</div>`;
+    outer.innerHTML=html;
     return;
   }
-  if(hint) hint.style.display="none";
-  panel.classList.add("show");
-  const head=`<h2 style="font-size:14px;color:var(--dim);margin-bottom:8px;font-weight:600">🗺️ 小镇底图（点击地块选区建造）</h2>`;
-  const grid=document.createElement("div");
-  grid.className="mapGrid";
+
+  html+=`<div class="mapHead"><span>🗺️ 小镇全景图</span><span class="compass">🧭 N</span></div>`;
+  html+=`<div class="mapGrid"></div>`;
+  outer.innerHTML=html;
+  const grid=outer.querySelector(".mapGrid");
+
   REGIONS.forEach(r=>{
     const tile=document.createElement("div");
     tile.className="tile"+(curRegion===r.id?" sel":"");
@@ -1212,17 +1253,17 @@ function renderMap(){
     tile.style.cssText=`grid-area:${r.area}; ${tileImg
       ?`background:url(${tileImg}) center/cover;`
       :`background:linear-gradient(160deg,${r.bg},rgba(0,0,0,.35)), ${r.bg};`}`;
-    // 该区域的建筑
+    // 该区域建筑 — 小网格展示，最多 12 个图标
     const blds=[];
     BUILDINGS.forEach(b=>{
       const n=(S.regions[b.id]||{})[r.id]||0;
-      for(let k=0;k<Math.min(n,6);k++) blds.push(b.i);
-      if(n>6) blds.push(`<span class="more">+${n-6}</span>`);
+      for(let k=0;k<Math.min(n,12);k++) blds.push(`<span class="bldIcon">${b.i}</span>`);
+      if(n>12) blds.push(`<span class="more">+${n-12}</span>`);
     });
     tile.innerHTML=`
-      <span class="rn">${r.i} ${r.n}</span>
+      <div class="tileHd"><span class="rn">${r.i} ${r.n}</span></div>
       <span class="rm">💰×${r.cm} 产×${r.im}</span>
-      <div class="bld">${blds.join("")||'<span style="font-size:9px;opacity:.6">空地</span>'}</div>`;
+      <div class="bld">${blds.join("")||'<span class="emptyTile">空地</span>'}</div>`;
     tile.addEventListener("click",()=>{
       curRegion=r.id;
       toast(`📍 已选区：${r.i}${r.n}（成本×${r.cm} 产出×${r.im}）`);
@@ -1230,8 +1271,6 @@ function renderMap(){
     });
     grid.appendChild(tile);
   });
-  panel.innerHTML=head;
-  panel.appendChild(grid);
 }
 
 /* ============ 商店 & 小镇 ============ */
@@ -1290,18 +1329,6 @@ function build(b, cost, region){
   toast(`${b.i} 在${regionOf(region).i}${regionOf(region).n}建造了${b.n}！`);
   switchTab("town"); // 建完跳到小镇页看效果
   renderAll(); save();
-}
-function renderTown(){
-  const t=$("#townList");
-  const items=Object.entries(S.buildings).filter(([,n])=>n>0)
-    .map(([id,n])=>{
-      const b=BUILDINGS.find(x=>x.id===id);
-      const dist=S.regions[id]||{};
-      const ds=Object.entries(dist).filter(([,c])=>c>0)
-        .map(([rid,c])=>`${regionOf(rid).i}${c}`).join(" ");
-      return `<div class="townItem">${b.i}<span class="n">×${n}</span><span style="font-size:9px;color:var(--dim)">${ds}</span></div>`;
-    }).join("");
-  t.innerHTML = items || `<span style="color:var(--dim);font-size:12px">还没建筑，先去合成建材吧</span>`;
 }
 
 /* ============ 产出与宠物状态循环（离线也结算，封顶 1 小时） ============ */
@@ -1403,7 +1430,7 @@ $("#drawBtn").addEventListener("click", ()=>{
 });
 
 /* ============ 总渲染 ============ */
-function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderTown(); renderPets(); renderMap(); }
+function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); }
 renderAll();
 assetsLoad().then(renderAll); // 自定义素材加载完成后重绘一次
 if(!S.drawn){
