@@ -10,10 +10,12 @@
     --text:#f0eaff; --dim:#a99cc9; --gold:#ffd75e; --accent:#7c5cff; --ok:#4cd97b;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{overscroll-behavior:none;} /* 关键：禁掉移动端下拉刷新/橡皮筋滚动 */
   body{
     color:var(--text); font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
     min-height:100vh; display:flex; flex-direction:column;
   }
+  body.dragging{user-select:none; -webkit-user-select:none;} /* 拖拽中全局禁选中，防文字拖拽叠影 */
   /* ===== 主题花纹背景（纯 CSS，无图片资源） ===== */
   body::before{
     content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
@@ -110,8 +112,11 @@
   .el{
     background:var(--panel2); border:1px solid var(--line); border-radius:10px;
     padding:8px 2px; text-align:center; cursor:grab; user-select:none;
+    -webkit-user-select:none; -webkit-user-drag:none; -webkit-touch-callout:none;
+    touch-action:none; /* 告诉浏览器：这个元素的手势归游戏管，别拿来滚动/刷新 */
     transition:transform .12s, box-shadow .12s;
   }
+  .el *{pointer-events:none;}
   .el:hover{transform:translateY(-2px); box-shadow:0 4px 14px rgba(124,92,255,.35); border-color:var(--accent);}
   .el .ico{font-size:26px; display:block;}
   .el .name{font-size:11px; color:var(--dim); display:block; margin-top:2px;}
@@ -674,34 +679,47 @@ function renderElements(){
 }
 
 /* ============ 拖拽（Pointer Events，兼容触屏） ============ */
-let dragId=null, ghost=null;
+let dragId=null, ghost=null, activePointer=null;
 function makeDraggable(el, id){
   el.addEventListener("pointerdown", ev=>{
+    if(dragId) return;                       // 同一时刻只允许一个拖拽，防叠影
     if(count(id)<=0){ toast(`${ELEMENTS[id].n} 已用完，再去合成一些吧`); return; }
     ev.preventDefault();
+    activePointer=ev.pointerId;
     dragId=id;
+    document.body.classList.add("dragging");
     ghost=document.createElement("div");
     ghost.className="ghost"; ghost.textContent=ELEMENTS[id].i;
     document.body.appendChild(ghost);
     moveGhost(ev);
     try{ el.setPointerCapture(ev.pointerId); }catch(e){}
   });
-  el.addEventListener("pointermove", ev=>{ if(dragId) moveGhost(ev); });
-  el.addEventListener("pointerup", ev=>{
-    if(!dragId) return;
-    const target=document.elementFromPoint(ev.clientX, ev.clientY);
-    const slot=target && target.closest(".slot");
-    if(slot) dropToSlot(slot, dragId);
-    cleanupDrag();
-  });
 }
-// 任何指针中断（切窗口、系统手势、触屏取消）都清理幽灵，防止 emoji 卡在页面上
-["pointerup","pointercancel","lostpointercapture"].forEach(evt=>{
-  window.addEventListener(evt, ()=>{ if(!dragId && ghost) cleanupDrag(); });
+// 拖拽逻辑全部挂在 window：即使元素被重渲染移除，也能正常移动和收尾
+window.addEventListener("pointermove", ev=>{
+  if(!dragId) return;
+  if(activePointer!==null && ev.pointerId!==activePointer) return;
+  moveGhost(ev);
+}, {passive:true});
+window.addEventListener("pointerup", ev=>{
+  if(!dragId) return;
+  if(activePointer!==null && ev.pointerId!==activePointer) return;
+  const target=document.elementFromPoint(ev.clientX, ev.clientY);
+  const slot=target && target.closest(".slot");
+  if(slot) dropToSlot(slot, dragId);
+  cleanupDrag();
+});
+window.addEventListener("pointercancel", ev=>{
+  if(activePointer!==null && ev.pointerId!==activePointer) return;
+  cleanupDrag();
 });
 window.addEventListener("blur", cleanupDrag);
-function moveGhost(ev){ ghost.style.left=(ev.clientX-17)+"px"; ghost.style.top=(ev.clientY-17)+"px"; }
-function cleanupDrag(){ dragId=null; if(ghost){ghost.remove(); ghost=null;} }
+function moveGhost(ev){ if(ghost){ ghost.style.left=(ev.clientX-17)+"px"; ghost.style.top=(ev.clientY-17)+"px"; } }
+function cleanupDrag(){
+  dragId=null; activePointer=null;
+  document.body.classList.remove("dragging");
+  if(ghost){ ghost.remove(); ghost=null; }
+}
 
 let selA=null, selB=null;
 function dropToSlot(slot, id){
