@@ -405,7 +405,12 @@
         <div id="plus">+</div>
         <div class="slot" id="slotB"><span class="lbl">点击元素</span></div>
       </div>
-      <button id="craftBtn" disabled>✨ 合成</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <button id="craftBtn" disabled>✨ 合成</button>
+        <span id="batchWrap" style="display:none;align-items:center;gap:4px;font-size:12px;color:var(--dim);">
+          ×<input type="number" id="batchInput" min="1" max="5" value="1" style="width:52px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);font-size:13px;text-align:center;">
+        </span>
+      </div>
       <div id="result"></div>
     </section>
   </section>
@@ -715,7 +720,8 @@ function renderElements(){
     const d=document.createElement("div");
     d.className="el"+(count(id)<=0?" empty":""); d.dataset.id=id;
     d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${e.n}<small style="color:#7c6bb0">${tierOf(id)}级</small></span><span class="cnt">×${count(id)}</span>`;
-    makeDraggable(d, id);
+    if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
+    else makeDraggable(d, id);
     g.appendChild(d);
   });
   $("#discovered").firstChild.textContent = `已发现 ${Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length} / `;
@@ -804,6 +810,20 @@ function updateCraftBtn(){
   const btn=$("#craftBtn");
   btn.disabled = !(selA&&selB);
 }
+function updateBatchInput(){
+  const wrap=$("#batchWrap"),input=$("#batchInput");
+  if(!wrap||!input) return;
+  let mx=0;
+  if(S.coin>10000) mx=100;
+  else if(S.coin>1000) mx=20;
+  else if(S.coin>100) mx=5;
+  if(mx>0){
+    wrap.style.display="inline-flex";
+    input.max=mx;
+    if(+input.value>mx) input.value=mx;
+    if(+input.value<1) input.value=1;
+  } else { wrap.style.display="none"; }
+}
 
 /* 点击槽位清空 */
 document.querySelectorAll(".slot").forEach(function(el){
@@ -820,15 +840,9 @@ document.querySelectorAll(".slot").forEach(function(el){
 /* ============ 合成 ============ */
 $("#craftBtn").addEventListener("click", ()=>{
   if(!selA||!selB) return;
-  // 层级和（合成免费，此值用于：生命的生命值）
   const cost=craftCost(selA,selB);
-  // 消耗：相同元素需要 2 个
-  if(selA===selB && count(selA)<2){ toast(`${ELEMENTS[selA].n} 数量不够（需要2个）`); return; }
-  if(selA!==selB && (count(selA)<1||count(selB)<1)) return;
-
   const recipe = R.find(r=>(r[0]===selA&&r[1]===selB)||(r[0]===selB&&r[1]===selA));
   const res=$("#result");
-
   if(!recipe){
     res.innerHTML=`<span style="color:var(--dim)">❌ 无效组合，换个思路试试</span>`;
     $("#slots").classList.add("shake");
@@ -836,30 +850,34 @@ $("#craftBtn").addEventListener("click", ()=>{
     clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2000);
     return;
   }
-  // 扣料（数量归 0 保留占位变灰）
-  S.unlocked[selA]--; S.unlocked[selB]--;
-  [selA, selB].forEach(k=>{
-    S.unlocked[k]=Math.max(0, S.unlocked[k]);
-  });
-
+  const bi=$("#batchInput");
+  const wantN=bi?Math.max(1,Math.min(+bi.max||1,Math.floor(+bi.value)||1)):1;
   const out=recipe[2];
-  // 金币/宝箱是货币不入元素库，不算"新元素"（否则每次都弹提示）
-  const isNew = !["coin","chest"].includes(out) && !(out in S.unlocked) && count(out)===0;
-  let suffix="";
-  if(out==="coin"){ S.coin+=1; }
-  else if(out==="chest"){ S.chest+=1; S.coin+=10; }
-  else if(out==="life"){
-    S.unlocked.life=(S.unlocked.life||0)+1;
-    S.lifePool.push(cost);
-    suffix=` <small style="color:var(--ok)">生命值 ${cost}</small>`;
+  const isNew=!["coin","chest"].includes(out)&&!(out in S.unlocked)&&count(out)===0;
+  let done=0,coinGain=0,chestGain=0;
+  for(let i=0;i<wantN;i++){
+    if(selA===selB){if(count(selA)<2)break;}
+    else{if(count(selA)<1||count(selB)<1)break;}
+    S.unlocked[selA]--;S.unlocked[selB]--;
+    [selA,selB].forEach(k=>{S.unlocked[k]=Math.max(0,S.unlocked[k]);});
+    if(out==="coin"){S.coin+=1;coinGain++;}
+    else if(out==="chest"){S.chest+=1;S.coin+=10;chestGain++;}
+    else if(out==="life"){S.unlocked.life=(S.unlocked.life||0)+1;S.lifePool.push(cost);}
+    else{S.unlocked[out]=(S.unlocked[out]||0)+1;}
+    done++;
   }
-  else { S.unlocked[out]=(S.unlocked[out]||0)+1; }
-
-  res.innerHTML = `<span class="pop">${ELEMENTS[out].i} ${ELEMENTS[out].n}${out==="coin"?"（+1金币）":out==="chest"?"（+10金币）":""}</span>${suffix}`;
-  if(isNew){ res.innerHTML=`<span class="new pop">🎉 新元素！</span> ${res.innerHTML}`; toast(`🎉 发现新元素：${ELEMENTS[out].n} ${ELEMENTS[out].i}`); }
-  clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2500);
-  clearSlots(); updateCraftBtn();
-  renderAll(); save();
+  if(done===0){toast(`${ELEMENTS[selA].n} 或 ${ELEMENTS[selB].n} 数量不够`);return;}
+  let ot=ELEMENTS[out].i+" "+ELEMENTS[out].n;
+  if(out==="coin")ot+="（+"+coinGain+"金币）";
+  else if(out==="chest")ot+="（+"+(chestGain*10)+"金币）";
+  else if(out==="life")ot+=` <small style="color:var(--ok)">生命值 ${cost}</small>`;
+  if(done>1)ot="×"+done+" "+ot;
+  if(done<wantN)ot+=` <small style="color:var(--dim)">（原料不足，只合成${done}/${wantN}）</small>`;
+  res.innerHTML=`<span class="pop">${ot}</span>`;
+  if(isNew&&done>0){res.innerHTML=`<span class="new pop">🎉 新元素！</span> ${res.innerHTML}`;toast(`🎉 发现新元素：${ELEMENTS[out].n} ${ELEMENTS[out].i}`);}
+  clearTimeout(resultTimer);resultTimer=setTimeout(clearResult,2500);
+  clearSlots();updateCraftBtn();
+  renderAll();save();
 });
 
 /* ============ 元素商店 ============ */
@@ -1493,7 +1511,7 @@ $("#drawBtn").addEventListener("click", ()=>{
 });
 
 /* ============ 总渲染 ============ */
-function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); }
+function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); updateBatchInput(); }
 renderAll();
 assetsLoad().then(renderAll); // 自定义素材加载完成后重绘一次
 if(!S.drawn){
