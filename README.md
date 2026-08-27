@@ -11,18 +11,19 @@ A cozy alchemy-and-city-building game that runs entirely in **one zero-dependenc
 - 🏗️ **Build Your Town** — gather materials to construct huts, shops, gardens, manors (generate coins) and a town hall (global +10% production bonus, no direct income)
 - 🗺️ **Town Map** — unlocked after building a Hut + Shop; visual map with 5 regions (Plain / Hillside / Forest / Riverside / Downtown), each with cost & output multipliers. Includes a stats bar (total buildings / coin output / developed regions), building badges, and a per-region building grid
 - 🧬 **The Hidden Life Line** — Energy + high-tier "dead-end" elements = 🧬 Life, whose tier depends on the recipe; hatch pets from it. **Max-tier Life has a 1/100 chance to hatch the legendary 🐼 Panda**
-- 🐾 **Pet Raising** — per-species diets, hunger & HP per pet, a pet hospital (pets get sick but never die), and town-wide production bonuses from +1% to +5%
-- 🧙‍♂️ **Summon the Elder** — stuck? Get a random hint for a craftable recipe you haven't discovered yet
+- 🐾 **Pet Raising** — name your pets (up to 15 chars), track birth time (minutes→hours→days), raise intimacy (0–100, +0.5% bonus per level, unlocks custom avatar at Lv.10), per-species diets, hunger & HP per pet, a pet hospital (pets get sick but never die), and town-wide production bonuses from +1% to +5% base + intimacy bonus
+- 🧙‍♂️ **Tab-Aware Elder NPC** — the elder gives context-specific hints per tab: smart recipe recommendations in Craft, building tips in Town, shop rules in Shop, and actual pet bonus breakdowns in Pet. Auto-hints on tab switch
 
 ## Features
 
 - Single HTML file, fully static — deploy to GitHub Pages / Cloudflare Pages
 - Auto-save in localStorage; offline income capped at 1 hour
-- 📦 Save snapshots — JSON export/import for multiple playthroughs
+- 📦 Save snapshots — JSON export/import with versioned migration (v3); choose **full export** (with custom pet avatars) or **lightweight export** (no avatars, smaller file)
 - 🎨 4 built-in themes with AI-generated background art (Night / Forest / Sand / Snow), plus a 5th **Custom** slot — upload any image and it becomes your game background
 - 🖼️ Custom background upload — pick any image, auto-compressed to ≤1920px, stored in IndexedDB (no save-file bloat)
-- 🖼️ Custom asset packs — upload `theme.json` to replace pet/element/region art (stored in IndexedDB, auto-resized, falls back to emoji)
-- Full touch support (Pointer Events) — mobile-first responsive layout: craft panel stays pinned at top, element library fills the rest and scrolls independently; no page scrolling needed to craft
+- 🖼️ Custom asset packs — upload `theme.json` to replace pet/element/region art (stored in IndexedDB, auto-resized, falls back to built-in cartoon art then emoji)
+- 🐾 6 built-in cartoon pet portraits with idle bounce animation; custom avatar upload unlocked at intimacy Lv.10
+- 📱 Mobile-first responsive layout — compact two-row header (avoids container UI overlap), natural page scrolling, all elements fully visible without internal scroll areas
 
 ## Custom Asset Pack Format
 

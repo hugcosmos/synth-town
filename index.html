@@ -703,6 +703,7 @@ function rollPet(hp){
 
 /* ============ 状态 ============ */
 const SAVE_KEY = "synth-town-save";
+const SAVE_VERSION = 3; // v1=初始, v2=地块系统, v3=宠物增强(起名/出生/亲密度/头像)
 let S = load();
 
 function fresh(){
@@ -723,6 +724,17 @@ function fresh(){
     lastTick:Date.now(),
   };
 }
+function migratePetFields(s){
+  // v3 迁移：宠物新字段（起名/出生时辰/亲密度/头像/互动计数）
+  (s.petList||[]).forEach(p=>{
+    if(p.name===undefined){ const d=PETS.find(x=>x.id===p.id); p.name=d?d.n:"宠物"; }
+    if(p.bornAt===undefined) p.bornAt=Date.now();
+    if(p.intimacy===undefined) p.intimacy=0;
+    if(p.avatar===undefined) p.avatar=null;
+    if(p.interactDate===undefined) p.interactDate="";
+    if(p.interactCount===undefined) p.interactCount=0;
+  });
+}
 function load(){
   try{
     const raw = localStorage.getItem(SAVE_KEY);
@@ -732,13 +744,7 @@ function load(){
       for(let i=0;i<n;i++) s.petList.push({id, hp:5, maxHp:5, sat:100, sick:false});
     });
     if(s.petList.some(p=>p.maxHp===undefined)) s.petList.forEach(p=>{p.maxHp=p.maxHp||p.hp||5;});
-    // 宠物新字段迁移（起名/出生时辰/亲密度/头像）
-    s.petList.forEach(p=>{
-      if(p.name===undefined){ const d=PETS.find(x=>x.id===p.id); p.name=d?d.n:"宠物"; }
-      if(p.bornAt===undefined) p.bornAt=Date.now();
-      if(p.intimacy===undefined) p.intimacy=0;
-      if(p.avatar===undefined) p.avatar=null;
-    });
+    migratePetFields(s);
     s.pets={};
     // 地块系统迁移（旧档→新档）
     if(!s.plots || !Object.keys(s.plots).length){
@@ -1110,7 +1116,9 @@ function renderPets(){
     card.addEventListener("click",()=>openPetDetail(idx));
     const sickTag=p.sick?`<span style="color:#ff7a7a;font-weight:700">🤒</span>`:"";
     const cureCost=(p.maxHp-p.hp)*2;
-    const avatarEl=p.avatar?`<img src="${p.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);">`:`<img src="assets/pets/${p.id}.png" class="pet-img" alt="${d.n}">`;
+    const packImg=assetCache.get("pets:"+p.id);
+    const defaultImg=packImg||`assets/pets/${p.id}.png`;
+    const avatarEl=p.avatar?`<img src="${p.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);">`:`<img src="${defaultImg}" class="pet-img" alt="${d.n}">`;
     card.innerHTML=`
       ${avatarEl}
       <div style="flex:1;min-width:0" onclick="event.stopPropagation()">
@@ -1200,7 +1208,9 @@ function renderPetDetail(){
   const lvl=intimacyLevel(p.intimacy);
   const ibonus=intimacyBonus(p.intimacy);
   const total=d.bonus+ibonus;
-  const avatarHtml=p.avatar?`<img src="${p.avatar}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">`:`<img src="assets/pets/${p.id}.png" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);animation:petBounce 2.2s ease-in-out infinite;">`;
+  const packImg=assetCache.get("pets:"+p.id);
+  const defaultImg=packImg||`assets/pets/${p.id}.png`;
+  const avatarHtml=p.avatar?`<img src="${p.avatar}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">`:`<img src="${defaultImg}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);animation:petBounce 2.2s ease-in-out infinite;">`;
   const canUpload=lvl>=10;
   $("#petDetailContent").innerHTML=`
     <div style="text-align:center;margin-bottom:12px;">
@@ -1425,13 +1435,22 @@ $("#settingsOverlay").addEventListener("click", e=>{
 });
 // 导出存档副本
 $("#exportBtn").addEventListener("click", ()=>{
-  const data=JSON.stringify({game:"synth-town", version:2, exportedAt:new Date().toISOString(), save:S}, null, 2);
+  const lightweight = confirm("导出存档副本\n\n确定 = 轻量版（不含宠物头像，文件更小）\n取消 = 完整版（含宠物自定义头像）");
+  let saveData = S;
+  let suffix = "完整版";
+  if(lightweight){
+    // 深拷贝并剥离宠物头像 dataURL
+    saveData = JSON.parse(JSON.stringify(S));
+    (saveData.petList||[]).forEach(p=>{ p.avatar = null; });
+    suffix = "轻量版";
+  }
+  const data=JSON.stringify({game:"synth-town", version:SAVE_VERSION, exportedAt:new Date().toISOString(), exportType:lightweight?"lightweight":"full", save:saveData}, null, 2);
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));
-  a.download=`synth-town-副本-${new Date().toISOString().slice(0,10)}.json`;
+  a.download=`synth-town-${suffix}-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-  toast("📤 存档已导出，妥善保管你的副本文件");
+  toast(`📤 ${suffix}存档已导出（v${SAVE_VERSION}）`);
 });
 // 导入存档副本
 $("#importBtn").addEventListener("click", ()=>$("#importFile").click());
@@ -1441,15 +1460,21 @@ $("#importFile").addEventListener("change", async e=>{
   try{
     const data=JSON.parse(await f.text());
     if(data.game!=="synth-town"||!data.save||!data.save.unlocked) throw new Error("不是有效的游戏存档");
-    if(!confirm("导入将覆盖当前进度，确定？")) return;
+    const fileVersion = data.version || 1;
+    const needMigrate = fileVersion < SAVE_VERSION;
+    const typeNote = data.exportType==="lightweight"?"（轻量版，不含头像）":"";
+    if(!confirm(`导入存档（v${fileVersion}${typeNote}）将覆盖当前进度，确定？${needMigrate?`\n\n⚠️ 检测到旧版本存档，导入后将自动迁移到 v${SAVE_VERSION}`:""}`)) return;
     S=Object.assign(fresh(), data.save);
     S.petList=S.petList||[]; S.food=S.food||{}; S.regions=S.regions||{}; S.lifePool=S.lifePool||[];
-    // 迁移旧版宠物计数 → 实例（与 load() 保持一致）
+    // 迁移旧版宠物计数 → 实例
     Object.entries(S.pets||{}).forEach(([id,n])=>{
       for(let i=0;i<n;i++) S.petList.push({id, hp:5, maxHp:5, sat:100, sick:false});
     });
     if(S.petList.some(p=>p.maxHp===undefined)) S.petList.forEach(p=>{p.maxHp=p.maxHp||p.hp||5; p.sat=p.sat??100;});
     S.pets={};
+    // v3 迁移：宠物新字段（起名/出生时辰/亲密度/头像/互动计数）
+    migratePetFields(S);
+    // 地块系统迁移（旧档→新档）
     if(!S.plots || !Object.keys(S.plots).length){
       const _s=S;
       REGIONS.forEach(r=>{ if(!_s.plots[r.id]) _s.plots[r.id]=new Array(r.plots).fill(false); });
@@ -1468,7 +1493,7 @@ $("#importFile").addEventListener("change", async e=>{
     }
     applyTheme(); clearSlots(); renderAll(); save();
     $("#settingsOverlay").classList.remove("show");
-    toast("📥 副本已导入，继续冒险！");
+    toast(needMigrate?`📥 旧版存档已迁移到 v${SAVE_VERSION}，继续冒险！`:"📥 副本已导入，继续冒险！");
   }catch(err){ toast("❌ 导入失败："+err.message); }
 });
 // 素材包
