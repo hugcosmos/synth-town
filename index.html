@@ -975,7 +975,7 @@ function autoPlace(id){
 }
 function setSlot(slot, id){
   if(slot.id==="slotA") selA=id; else selB=id;
-  slot.innerHTML=`<span style="font-size:40px">${ELEMENTS[id].i}</span><span class="lbl">${elName(id)}</span>`;
+  slot.innerHTML=`<span style="font-size:40px">${ELEMENTS[id].i}</span>`;
   slot.dataset.filled=id;
   slot.classList.add("pop"); setTimeout(()=>slot.classList.remove("pop"),450);
   clearResult(); clearTimeout(resultTimer);
