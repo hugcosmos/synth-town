@@ -662,7 +662,7 @@
 </div>
 
 <div id="introOverlay">
-  <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="position:absolute;top:16px;right:16px;background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:4px 12px;font-size:12px;cursor:pointer;">🌐 EN</button>
+  <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="position:absolute;top:50%;right:24px;transform:translateY(-50%);background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;z-index:10;">🌐 EN</button>
   <div class="npc">🧙‍♂️</div>
   <div class="bubble" id="introBubble">
     <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
@@ -875,7 +875,7 @@ const I18N = {
     "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园",
     "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭", "btn.recipe":"🔮 配方",
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
-    "recipe.title":"📖 炼金配方书", "recipe.basicTitle":"基础配方（1-3级）", "recipe.basicDesc":"输入密码解锁所有3级及以下配方", "recipe.advancedTitle":"高级配方（4级及以上）", "recipe.advancedDesc":"解锁基础配方后出现，输入密码解锁高级配方", "recipe.unlock":"解锁", "recipe.unlocked":"✅ 已解锁", "recipe.wrongPwd":"❌ 密码错误", "recipe.tier":"{0}级配方",
+    "recipe.title":"📖 炼金配方书", "recipe.basicTitle":"基础配方（1-3级）", "recipe.basicDesc":"输入密码解锁所有3级及以下配方", "recipe.advancedTitle":"高级配方（4级及以上）", "recipe.advancedDesc":"解锁基础配方后出现，输入密码解锁高级配方", "recipe.unlock":"解锁", "recipe.unlocked":"✅ 已解锁", "recipe.wrongPwd":"❌ 密码错误", "recipe.tier":"{0}级配方", "recipe.hoverHint":"去小红书找作者询问密码",
     "btn.export":"📤 导出存档为文件", "btn.import":"📥 导入存档", "btn.resetSave":"🗑️ 重置存档",
     "btn.bgUpload":"📷 上传背景图片", "btn.bgReset":"↩️ 移除自定义背景",
     "settings.bgResetConfirm":"确定移除自定义背景？",
@@ -1014,7 +1014,7 @@ const I18N = {
     "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden",
     "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close", "btn.recipe":"🔮 Recipe",
     "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
-    "recipe.title":"📖 Alchemy Recipe Book", "recipe.basicTitle":"Basic Recipes (Tier 1-3)", "recipe.basicDesc":"Enter password to unlock all tier 3 and below recipes", "recipe.advancedTitle":"Advanced Recipes (Tier 4+)", "recipe.advancedDesc":"Appears after unlocking basic recipes, enter password to unlock advanced", "recipe.unlock":"Unlock", "recipe.unlocked":"✅ Unlocked", "recipe.wrongPwd":"❌ Wrong password", "recipe.tier":"Tier {0} Recipes",
+    "recipe.title":"📖 Alchemy Recipe Book", "recipe.basicTitle":"Basic Recipes (Tier 1-3)", "recipe.basicDesc":"Enter password to unlock all tier 3 and below recipes", "recipe.advancedTitle":"Advanced Recipes (Tier 4+)", "recipe.advancedDesc":"Appears after unlocking basic recipes, enter password to unlock advanced", "recipe.unlock":"Unlock", "recipe.unlocked":"✅ Unlocked", "recipe.wrongPwd":"❌ Wrong password", "recipe.tier":"Tier {0} Recipes", "recipe.hoverHint":"Find the author on Xiaohongshu for the password",
     "btn.export":"📤 Export Save", "btn.import":"📥 Import Save", "btn.resetSave":"🗑️ Reset Save",
     "btn.bgUpload":"📷 Upload Background", "btn.bgReset":"↩️ Remove Background",
     "btn.packUpload":"📂 Upload theme.json", "btn.packReset":"↩️ Reset to Default",
@@ -1908,9 +1908,21 @@ function renderRecipeBook(){
   const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard");
   const basicPwd=$("#basicPwd"), basicBtn=$("#basicUnlockBtn");
   const advPwd=$("#advancedPwd"), advBtn=$("#advancedUnlockBtn");
-  const locks=$("#recipeLocks"), content=$("#recipeContent");
-  // 基础锁状态
-  if(u.basic){
+  const content=$("#recipeContent");
+  const discovered=new Set(Object.keys(S.unlocked).filter(k=>ELEMENTS[k]));
+  const tierStats={};
+  R.forEach(([a,b,out])=>{
+    if(out==="coin"||out==="chest") return;
+    const t=tierOf(out);
+    if(!tierStats[t]) tierStats[t]={total:0,discovered:0};
+    tierStats[t].total++;
+    if(discovered.has(out)) tierStats[t].discovered++;
+  });
+  const basicTiers=Object.keys(tierStats).filter(t=>Number(t)<=3);
+  const advTiers=Object.keys(tierStats).filter(t=>Number(t)>3);
+  const basicAllFound=basicTiers.length>0 && basicTiers.every(t=>tierStats[t].discovered===tierStats[t].total);
+  const advAllFound=advTiers.length>0 && advTiers.every(t=>tierStats[t].discovered===tierStats[t].total);
+  if(basicAllFound||u.basic){
     basicCard.style.display="none";
   }else{
     basicCard.style.display="flex";
@@ -1919,30 +1931,32 @@ function renderRecipeBook(){
     basicPwd.style.display=""; basicBtn.style.display="";
     basicCard.querySelector(".lockDesc").textContent=t("recipe.basicDesc");
   }
-  // 高级锁状态：基础解锁后才显示
-  if(u.basic && !u.advanced){
+  if(advAllFound||u.advanced){
+    advCard.style.display="none";
+  }else if(!basicAllFound&&!u.basic){
+    advCard.style.display="none";
+  }else{
     advCard.style.display="flex";
     advCard.classList.remove("locked","unlocked");
     advCard.querySelector(".lockIcon").textContent="🔐";
     advPwd.disabled=false; advBtn.disabled=false;
     advPwd.style.display=""; advBtn.style.display="";
     advCard.querySelector(".lockDesc").textContent=t("recipe.advancedDesc");
-  }else if(u.advanced){
-    advCard.style.display="none";
-  }else{
-    advCard.style.display="none";
   }
-  // 配方内容：解锁任意一级就显示
-  if(u.basic||u.advanced){
+  const hasAnyVisible=R.some(([a,b,out])=>{
+    if(out==="coin"||out==="chest") return false;
+    const t=tierOf(out);
+    return discovered.has(out)||(t<=3&&u.basic)||(t>3&&u.advanced);
+  });
+  if(hasAnyVisible){
     content.style.display="block";
-    renderRecipes(u);
+    renderRecipes(u,discovered);
   }else{
     content.style.display="none";
   }
 }
-function renderRecipes(u){
+function renderRecipes(u,discovered){
   const basicSec=$("#recipeBasicSection"), advSec=$("#recipeAdvancedSection");
-  // 按输出元素的层级分组
   const byTier={};
   R.forEach(([a,b,out])=>{
     if(out==="coin"||out==="chest") return;
@@ -1953,11 +1967,13 @@ function renderRecipes(u){
   const tiers=Object.keys(byTier).sort((a,b)=>a-b);
   let basicHtml="", advHtml="";
   tiers.forEach(tier=>{
-    const isBasic=tier<=3;
-    if(isBasic&&!u.basic) return;
-    if(!isBasic&&!u.advanced) return;
+    const isBasic=Number(tier)<=3;
+    const recipes=byTier[tier].filter(([a,b,out])=>{
+      return discovered.has(out)||(isBasic&&u.basic)||(!isBasic&&u.advanced);
+    });
+    if(recipes.length===0) return;
     let html=`<div class="recipeTierGroup"><div class="recipeTierTitle">${t("recipe.tier",tier)}</div><div class="recipeList">`;
-    byTier[tier].forEach(([a,b,out])=>{
+    recipes.forEach(([a,b,out])=>{
       const ea=ELEMENTS[a], eb=ELEMENTS[b], eo=ELEMENTS[out];
       html+=`<div class="recipeItem"><span>${ea.i}</span><span class="plus">+</span><span>${eb.i}</span><span class="arrow">→</span><span class="result">${eo.i}${elName(out)}</span></div>`;
     });
@@ -1966,7 +1982,7 @@ function renderRecipes(u){
   });
   basicSec.innerHTML=basicHtml;
   advSec.innerHTML=advHtml;
-  advSec.style.display=u.advanced?"block":"none";
+  advSec.style.display=advHtml?"block":"none";
 }
 $("#recipeBtn").addEventListener("click", ()=>{ renderRecipeBook(); $("#recipeOverlay").classList.add("show"); });
 $("#recipeCloseBtn").addEventListener("click", ()=>$("#recipeOverlay").classList.remove("show"));
@@ -1983,7 +1999,8 @@ $("#advancedUnlockBtn").addEventListener("click", ()=>{
 });
 $("#basicPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#basicUnlockBtn").click(); });
 $("#advancedPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#advancedUnlockBtn").click(); });
-
+$("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") toast(t("recipe.hoverHint")); });
+$("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") toast(t("recipe.hoverHint")); });
 /* ============ 设置面板 ============ */
 $("#settingsBtn").addEventListener("click", ()=>{
   renderThemeChips();
