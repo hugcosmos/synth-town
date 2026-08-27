@@ -264,6 +264,26 @@
     animation:petBounce 2.2s ease-in-out infinite;
     border:1px solid rgba(255,255,255,.2);
   }
+  /* 宠物网格卡片 */
+  #petList{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  @media(max-width:600px){#petList{grid-template-columns:1fr;}}
+  .petCard{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;transition:border-color .15s,transform .1s;display:flex;flex-direction:column;gap:8px;}
+  .petCard:active{transform:scale(.98);}
+  .petCardHead{display:flex;align-items:center;gap:10px;}
+  .petCardAvatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;}
+  .petCardInfo{flex:1;min-width:0;}
+  .petCardName{font-size:14px;font-weight:700;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+  .petCardSub{font-size:10px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .petCardBars{display:flex;flex-direction:column;gap:3px;}
+  .petBar{height:5px;background:#00000055;border-radius:3px;overflow:hidden;}
+  .petBar>div{height:100%;border-radius:3px;}
+  .petCardActions{display:flex;gap:6px;justify-content:center;padding-top:4px;border-top:1px solid var(--line);}
+  .petActBtn{flex:1;background:none;border:none;border-radius:8px;padding:6px 4px;font-size:16px;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:2px;}
+  .petActBtn:hover{background:rgba(255,255,255,.08);}
+  .petActBtn:disabled{opacity:.3;cursor:not-allowed;}
+  .petActBtn.feed{color:#4cd97b;}
+  .petActBtn.play{color:#ff7eb3;}
+  .petActBtn.cure{color:#7cc7ff;font-size:12px;font-weight:700;}
   @keyframes petBounce{
     0%,100%{transform:translateY(0) rotate(0deg);}
     25%{transform:translateY(-2px) rotate(-2deg);}
@@ -756,6 +776,7 @@ const I18N = {
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
     "btn.export":"📤 导出存档为文件", "btn.import":"📥 导入存档", "btn.resetSave":"🗑️ 重置存档",
     "btn.bgUpload":"📷 上传背景图片", "btn.bgReset":"↩️ 移除自定义背景",
+    "settings.bgResetConfirm":"确定移除自定义背景？",
     "btn.packUpload":"📂 上传素材包 theme.json", "btn.packReset":"↩️ 恢复默认外观",
     "settings.title":"⚙️ 设置", "settings.archive":"📦 存档副本", "settings.theme":"🎨 配色主题",
     "settings.bg":"🖼️ 自定义背景", "settings.pack":"🖼️ 自定义素材包（高级）",
@@ -815,7 +836,13 @@ const I18N = {
     "pet.hungry":"😴 饱食度不足，不生效",
     "pet.healthy":"✅ 健康饱食，加成生效中",
     "pet.maxIntimacy":"🎉 亲密度满级，已解锁自定义头像！",
-    "pet.unlockHint":"亲密度满级(Lv.10)解锁自定义头像",
+    "pet.satiety":"🍖 饱食度",
+    "pet.intimacy":"💕 亲密度",
+    "pet.outputBonus":"产出加成：",
+    "pet.bonusDetail":"（物种+{0}% + 亲密度+{1}%）",
+    "pet.sick":"🤒 生病中，不生效",
+    "pet.hungry":"😴 饱食度不足，不生效",
+    "pet.healthy":"✅ 健康饱食，加成生效中",    "pet.unlockHint":"亲密度满级(Lv.10)解锁自定义头像",
     "pet.bornJust":"刚刚出生",
     "pet.bornMin":"{0}分钟前出生",
     "pet.bornHour":"{0}小时前出生",
@@ -823,6 +850,8 @@ const I18N = {
     "pet.hp":"❤️ HP",
     "town.built":"已建 {0}",
     "town.income":"💰+{0}/{1}s",
+    "town.incomeToast":"🏘️ 小镇产出 💰+{0}{1}",
+    "town.incomeBonus":"（含{0}）",
     "town.passive":"🏛️ {0}",
     "town.buildBtn":"建造",
     "town.builtToast":"{0} 在{1}{2}建造了{3}！",
@@ -860,7 +889,15 @@ const I18N = {
     "pet.cured":"🏥 {0} 康复了！（-💰{1}）",
     "shop.boughtFood":"🛒 买了 {0}{1}（-💰{2}）",
     "save.exported":"📤 {0}存档已导出（v{1}）",
-    "save.importConfirm":"导入存档（v{0}{1}）将覆盖当前进度，确定？{2}",
+    "save.exportConfirm":"导出存档副本\n\n确定 = 轻量版（不含宠物头像，文件更小）\n取消 = 完整版（含宠物自定义头像）",
+    "save.fullVersion":"完整版",
+    "save.lightVersion":"轻量版",
+    "save.invalidFile":"不是有效的游戏存档",
+    "save.lightNote":"（轻量版，不含头像）",
+    "save.migrateToast":"📥 旧版存档已迁移到 v{0}，继续冒险！",
+    "save.importToast":"📥 副本已导入，继续冒险！",
+    "save.importFail":"❌ 导入失败：",
+    "save.oldVersion":"检测到旧版本存档，导入后将自动迁移到 v",    "save.importConfirm":"导入存档（v{0}{1}）将覆盖当前进度，确定？{2}",
     "pack.applied":"🖼️ 素材包生效：替换了 {0} 张图",
     "theme.night":"紫夜", "theme.forest":"森绿", "theme.sand":"暖沙", "theme.snow":"雪境", "theme.custom":"自定义",
     "save.error":"⚠️ 存档写入失败（存储空间不足），进度可能无法保存！",
@@ -878,6 +915,7 @@ const I18N = {
     "btn.export":"📤 Export Save", "btn.import":"📥 Import Save", "btn.resetSave":"🗑️ Reset Save",
     "btn.bgUpload":"📷 Upload Background", "btn.bgReset":"↩️ Remove Background",
     "btn.packUpload":"📂 Upload theme.json", "btn.packReset":"↩️ Reset to Default",
+    "settings.bgResetConfirm":"Remove custom background?",
     "settings.title":"⚙️ Settings", "settings.archive":"📦 Save Files", "settings.theme":"🎨 Themes",
     "settings.bg":"🖼️ Custom Background", "settings.pack":"🖼️ Custom Asset Pack (Advanced)",
     "stat.buildings":"🏘️ Buildings", "stat.output":"💰 Output", "stat.land":"🗺️ Land",
@@ -936,7 +974,13 @@ const I18N = {
     "pet.hungry":"😴 Hungry, not active",
     "pet.healthy":"✅ Healthy & fed, bonus active",
     "pet.maxIntimacy":"🎉 Max intimacy, custom avatar unlocked!",
-    "pet.unlockHint":"Max intimacy (Lv.10) unlocks custom avatar",
+    "pet.satiety":"🍖 Satiety",
+    "pet.intimacy":"💕 Intimacy",
+    "pet.outputBonus":"Output Bonus: ",
+    "pet.bonusDetail":"(Species +{0}% + Intimacy +{1}%)",
+    "pet.sick":"🤒 Sick, not active",
+    "pet.hungry":"😴 Hungry, not active",
+    "pet.healthy":"✅ Healthy & fed, bonus active",    "pet.unlockHint":"Max intimacy (Lv.10) unlocks custom avatar",
     "pet.bornJust":"Just born",
     "pet.bornMin":"{0} min ago",
     "pet.bornHour":"{0} hr ago",
@@ -944,6 +988,8 @@ const I18N = {
     "pet.hp":"❤️ HP",
     "town.built":"Built {0}",
     "town.income":"💰+{0}/{1}s",
+    "town.incomeToast":"🏘️ Town Income 💰+{0}{1}",
+    "town.incomeBonus":" (incl. {0})",
     "town.passive":"🏛️ {0}",
     "town.buildBtn":"Build",
     "town.builtToast":"{0} built {3} at {1}{2}!",
@@ -981,7 +1027,15 @@ const I18N = {
     "pet.cured":"🏥 {0} recovered! (-💰{1})",
     "shop.boughtFood":"🛒 Bought {0}{1} (-💰{2})",
     "save.exported":"📤 {0} save exported (v{1})",
-    "save.importConfirm":"Import save (v{0}{1}) will overwrite current progress, OK?{2}",
+    "save.exportConfirm":"Export Save\n\nOK = Light version (no pet avatars, smaller file)\nCancel = Full version (with custom pet avatars)",
+    "save.fullVersion":"Full",
+    "save.lightVersion":"Light",
+    "save.invalidFile":"Invalid game save file",
+    "save.lightNote":"(Light, no avatars)",
+    "save.migrateToast":"📥 Old save migrated to v{0}, continue!",
+    "save.importToast":"📥 Save imported, continue!",
+    "save.importFail":"❌ Import failed: ",
+    "save.oldVersion":"Old version save detected, will auto-migrate to v",    "save.importConfirm":"Import save (v{0}{1}) will overwrite current progress, OK?{2}",
     "pack.applied":"🖼️ Asset pack applied: replaced {0} images",
     "theme.night":"Purple Night", "theme.forest":"Forest Green", "theme.sand":"Warm Sand", "theme.snow":"Snow Realm", "theme.custom":"Custom",
     "save.error":"⚠️ Save failed (insufficient storage), progress may not be saved!",
@@ -1062,6 +1116,8 @@ function load(){
   try{
     const raw = localStorage.getItem(SAVE_KEY);
     let s = raw ? Object.assign(fresh(), JSON.parse(raw)) : fresh();
+    // 旧档无plotsVersion标记时重置为0，以触发null→false修复（fresh()默认是1会跳过修复）
+    if(raw && JSON.parse(raw).plotsVersion===undefined) s.plotsVersion=0;
     // 旧版宠物计数 → 迁移为实例（基础生命值 5、满饱食）
     Object.entries(s.pets||{}).forEach(([id,n])=>{
       for(let i=0;i<n;i++) s.petList.push({id, hp:5, maxHp:5, sat:100, sick:false});
@@ -1297,7 +1353,7 @@ $("#craftBtn").addEventListener("click", ()=>{
   res.innerHTML=`<span class="pop">${ot}</span>`;
   if(isNew&&done>0){res.innerHTML=`<span class="new pop">${t("craft.newBadge")}</span> ${res.innerHTML}`;toast(t("craft.newElement",elName(out),ELEMENTS[out].i));}
   clearTimeout(resultTimer);resultTimer=setTimeout(clearResult,2500);
-  clearSlots();updateCraftBtn();
+  clearSlots();updateCraftBtn();const _bi=$("#batchInput");if(_bi)_bi.value=1;
   renderAll();save();
 });
 
@@ -1344,6 +1400,7 @@ function renderElShop(){
       S.unlocked[id]=(S.unlocked[id]||0)+n;
       if(id==="life"){ for(let i=0;i<n;i++) S.lifePool.push(tierOf("life")); }
       toast(t("shop.bought",e.i+elName(id),n,total));
+      if(qty){qty.value=1;priceEl.textContent=price;btn.style.opacity=S.coin>=price?"1":".4";btn.style.cursor=S.coin>=price?"pointer":"not-allowed";}
       renderAll(); save();
     });
     // 初始按钮状态
@@ -1368,7 +1425,8 @@ function formatBornTime(ts){
   return t("pet.bornDay",days);
 }
 const PET_NAMES=["小橘","旺财","咪咪","豆豆","球球","毛毛","团团","圆圆","贝贝","乐乐","欢欢","喜喜","福福","禄禄","寿寿","奶茶","布丁","果冻","棉花糖","巧克力","芝麻","花生","核桃","杏仁","腰果","栗子","松果","蘑菇","草莓","樱桃","葡萄","西瓜","桃子","橘子","柠檬","芒果","菠萝","椰子","榴莲","火龙果","猕猴桃","蓝莓","黑莓","树莓","蔓越莓","圣女果","小南瓜","小黄瓜","小萝卜","小白菜","小菠菜","小芹菜","小韭菜","小香菜","小葱","小蒜","小姜","小辣椒","小胡椒","小花椒","小八角","小桂皮","小香叶","小薄荷","小迷迭香","小罗勒","小牛至","小百里香","小洋甘菊","小薰衣草","小玫瑰","小茉莉","小桂花","小梅花","小兰花","小菊花","小荷花","小桃花","小杏花","小梨花","小樱花","小枫叶","小银杏","小松柏","小杨柳","小槐树","小樟树","小榕树","小棕榈","仙人掌","小多肉","小绿萝","小吊兰","小虎皮兰","小龟背竹","小琴叶榕","小天堂鸟","小发财树","小金钱树","小平安树","小幸福树","小鸿运当头","小一帆风顺","小节节高","小年年有余","小吉祥如意","小心想事成","小万事如意","小福星高照","小财源广进","小生意兴隆","小学业有成","小工作顺利","小身体健康","小家庭和睦","小友谊长存","小爱情甜蜜","小事业腾飞","小梦想成真","小未来可期","小前程似锦","小鹏程万里","小大展宏图","小马到成功","小旗开得胜","小势如破竹","小乘风破浪","小披荆斩棘","小勇往直前","小无所畏惧","小坚忍不拔","小锲而不舍","小持之以恒","小坚持不懈","小水滴石穿","小绳锯木断","小磨杵成针","小愚公移山","小精卫填海","小夸父逐日","小女娲补天","小嫦娥奔月","小后羿射日","小盘古开天","小神农尝百草","小伏羲画八卦","小黄帝战蚩尤","小大禹治水","小商汤灭夏","小武王伐纣","小春秋五霸","小战国七雄","小秦灭六国","小楚汉相争","小三国鼎立","小魏晋南北朝","小隋唐演义","小五代十国","小宋元明清","小辛亥革命","小五四运动","小抗日战争","小解放战争","小新中国成立","小改革开放","小小康社会","小中国梦","小民族复兴","小国家富强","小人民幸福","小社会和谐","小世界和平","小人类命运共同体","小可持续发展","小绿水青山","小金山银山","小节能减排","小碳中和","小碳达峰","小新能源","小太阳能","小风能","小水能","小核能","小氢能","小生物质能","小地热能","小海洋能","小潮汐能","小波浪能","小温差能","小盐差能"];
-function randomPetName(){ return PET_NAMES[Math.floor(Math.random()*PET_NAMES.length)]; }
+function randomPetName(){ const arr=LANG==="en"?PET_NAMES_EN:PET_NAMES; return arr[Math.floor(Math.random()*arr.length)]; }
+const PET_NAMES_EN=["Luna","Max","Bella","Charlie","Lucy","Cooper","Daisy","Buddy","Lola","Sadie","Milo","Ruby","Toby","Chloe","Bear","Molly","Jack","Lily","Leo","Zoe","Duke","Nala","Rocky","Stella","Tucker","Mia","Bentley","Willow","Oliver","Penelope","Simba","Coco","Jasper","Bailey","Riley","Archie","Ollie","Louie","Finn","Theo","Hugo","Oscar","George","Henry","Arthur","Noah","Felix","Shadow","Pepper","Salty","Biscuit","Muffin","Cookie","Honey","Cinnamon","Maple","Willow","Aspen","Cedar","Birch","Fern","Ivy","Daisy","Rose","Lily","Violet","Poppy","Iris","Jasmine","Lavender","Magnolia","Marigold","Pansy","Peony","Petunia","Sunflower","Tulip","Zinnia","Bluebell","Buttercup","Clover","Dandelion","Heather","Mistletoe"];
 function petBonus(){
   // 物种加成 + 亲密度加成（每级+0.5%，满级+5%），健康且饱食度>50 时生效，可叠加
   return S.petList.reduce((s,p)=>{
@@ -1429,36 +1487,31 @@ function renderPets(){
     const lvl=intimacyLevel(p.intimacy);
     const totalBonus=d.bonus+intimacyBonus(p.intimacy);
     const card=document.createElement("div");
-    card.style.cssText="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;";
-    card.addEventListener("click",()=>openPetDetail(idx));
-    const sickTag=p.sick?`<span style="color:#ff7a7a;font-weight:700">🤒</span>`:"";
+    card.className="petCard";
+    card.addEventListener("click",e=>{ if(e.target.closest(".petActBtn")) return; openPetDetail(idx); });
+    const sickTag=p.sick?`<span style="color:#ff7a7a">🤒</span>`:"";
     const cureCost=(p.maxHp-p.hp)*2;
     const packImg=assetCache.get("pets:"+p.id);
     const defaultImg=packImg||`assets/pets/${p.id}.png`;
-    const avatarEl=p.avatar?`<img src="${p.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);">`:`<img src="${defaultImg}" class="pet-img" alt="${petName(d)}">`;
+    const avatarSrc=p.avatar||defaultImg;
+    const hpColor=p.sick?'#ff7a7a':'#4cd97b';
     card.innerHTML=`
-      ${avatarEl}
-      <div style="flex:1;min-width:0" onclick="event.stopPropagation()">
-        <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-          ${p.name} ${sickTag}
-          <span style="background:#ff7eb333;color:#ff7eb3;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700;">💕Lv.${lvl}</span>
-          <small style="color:var(--gold)">+${totalBonus}%</small>
-        </div>
-        <div style="font-size:10px;color:var(--dim)">${d.i}${petName(d)}｜${formatBornTime(p.bornAt)}｜${LANG==="en"?"Eats":"吃"}${f.i}${foodName(f)}</div>
-        <div style="height:4px;background:#00000055;border-radius:2px;margin-top:3px;overflow:hidden;display:flex">
-          <div style="width:${p.hp/p.maxHp*100}%;background:${p.sick?'#ff7a7a':'#4cd97b'}"></div>
-        </div>
-        <div style="height:4px;background:#00000055;border-radius:2px;margin-top:2px;overflow:hidden">
-          <div style="width:${p.sat}%;background:#ffd75e"></div>
-        </div>
-        <div style="height:4px;background:#00000055;border-radius:2px;margin-top:2px;overflow:hidden">
-          <div style="width:${p.intimacy}%;background:linear-gradient(90deg,#ff7eb3,#ff758c)"></div>
+      <div class="petCardHead">
+        <img class="petCardAvatar" src="${avatarSrc}" alt="${petName(d)}">
+        <div class="petCardInfo">
+          <div class="petCardName">${p.name} ${sickTag}<span style="background:#ff7eb333;color:#ff7eb3;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700;">💕Lv.${lvl}</span><small style="color:var(--gold)">+${totalBonus}%</small></div>
+          <div class="petCardSub">${d.i}${petName(d)}｜${formatBornTime(p.bornAt)}｜${LANG==="en"?"Eats":"吃"}${f.i}${foodName(f)}</div>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:3px" onclick="event.stopPropagation()">
-        ${!p.sick?`<button data-feed="${idx}" ${(S.food[d.food]||0)>0?"":"disabled style='opacity:.4'"} style="background:#4cd97b;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700;">🍖喂</button>`:""}
-        ${!p.sick?`<button data-interact="${idx}" style="background:#ff7eb3;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700;">💕玩</button>`:""}
-        ${(p.hp<p.maxHp)?`<button data-cure="${idx}" ${hasB("hospital")&&S.coin>=cureCost?"":"disabled style='opacity:.4'"} style="background:#7cc7ff;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700;">🏥💰${cureCost}</button>`:""}
+      <div class="petCardBars">
+        <div class="petBar"><div style="width:${p.hp/p.maxHp*100}%;background:${hpColor}"></div></div>
+        <div class="petBar"><div style="width:${p.sat}%;background:#ffd75e"></div></div>
+        <div class="petBar"><div style="width:${p.intimacy}%;background:linear-gradient(90deg,#ff7eb3,#ff758c)"></div></div>
+      </div>
+      <div class="petCardActions">
+        ${!p.sick?`<button class="petActBtn feed" data-feed="${idx}" ${(S.food[d.food]||0)>0?"":"disabled"} title="${LANG==="en"?"Feed":"喂食"}">🍖</button>`:`<button class="petActBtn feed" disabled title="${LANG==="en"?"Sick":"生病中"}">🤒</button>`}
+        ${!p.sick?`<button class="petActBtn play" data-interact="${idx}" title="${LANG==="en"?"Play":"玩"}">💕</button>`:`<button class="petActBtn play" disabled>🤒</button>`}
+        ${(p.hp<p.maxHp)?`<button class="petActBtn cure" data-cure="${idx}" ${hasB("hospital")&&S.coin>=cureCost?"":"disabled"} title="${LANG==="en"?"Heal":"治疗"}">🏥💰${cureCost}</button>`:`<button class="petActBtn cure" disabled style="opacity:.2">🏥</button>`}
       </div>`;
     list.appendChild(card);
   });
@@ -1532,30 +1585,30 @@ function renderPetDetail(){
   $("#petDetailContent").innerHTML=`
     <div style="text-align:center;margin-bottom:12px;">
       <div style="margin-bottom:8px;">${avatarHtml}</div>
-      <div style="font-size:18px;font-weight:700;cursor:pointer;" onclick="renamePet(${selectedPetIdx})" title="点击改名">${p.name} ✏️</div>
+      <div style="font-size:18px;font-weight:700;">${p.name}</div>
       <div style="font-size:12px;color:var(--dim);">${d.i}${petName(d)}｜${formatBornTime(p.bornAt)}</div>
     </div>
     <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>❤️ HP</span><span>${p.hp}/${p.maxHp}</span></div>
       <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;margin-bottom:8px;"><div style="width:${p.hp/p.maxHp*100}%;background:${p.sick?'#ff7a7a':'#4cd97b'};height:100%;"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>🍖 饱食度</span><span>${p.sat}/100</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>${t("pet.satiety")}</span><span>${p.sat}/100</span></div>
       <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;margin-bottom:8px;"><div style="width:${p.sat}%;background:#ffd75e;height:100%;"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>💕 亲密度 Lv.${lvl}/10</span><span>${p.intimacy}/100</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>${t("pet.intimacy")} Lv.${lvl}/10</span><span>${p.intimacy}/100</span></div>
       <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;"><div style="width:${p.intimacy}%;background:linear-gradient(90deg,#ff7eb3,#ff758c);height:100%;"></div></div>
     </div>
     <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;">
-      <div>产出加成：<b style="color:var(--gold)">+${total}%</b>（物种+${d.bonus}% + 亲密度+${ibonus}%）</div>
-      <div style="color:var(--dim);margin-top:4px;">${p.sick?'🤒 生病中，不生效':p.sat<=50?'😴 饱食度不足，不生效':'✅ 健康饱食，加成生效中'}</div>
-      ${lvl>=10?'<div style="color:#ff7eb3;margin-top:4px;">🎉 亲密度满级，已解锁自定义头像！</div>':`<div style="color:var(--dim);margin-top:4px;">亲密度满级(Lv.10)解锁自定义头像</div>`}
+      <div>${t("pet.outputBonus")}<b style="color:var(--gold)">+${total}%</b>${t("pet.bonusDetail",d.bonus,ibonus)}</div>
+      <div style="color:var(--dim);margin-top:4px;">${p.sick?t("pet.sick"):p.sat<=50?t("pet.hungry"):t("pet.healthy")}</div>
+      ${lvl>=10?`<div style="color:#ff7eb3;margin-top:4px;">${t("pet.maxIntimacy")}</div>`:`<div style="color:var(--dim);margin-top:4px;">${t("pet.unlockHint")}</div>`}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      ${!p.sick?`<button onclick="feedPet(${selectedPetIdx})" style="flex:1;min-width:100px;background:#4cd97b;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">🍖 喂食</button>`:''}
-      ${!p.sick?`<button onclick="interactPet(${selectedPetIdx})" style="flex:1;min-width:100px;background:#ff7eb3;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">💕 互动</button>`:''}
-      ${canUpload?`<button onclick="document.getElementById('petAvatarInput').click()" style="flex:1;min-width:100px;background:var(--gold);border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">📷 上传头像</button>`:''}
-      ${p.hp<p.maxHp?`<button onclick="curePet(${selectedPetIdx})" style="flex:1;min-width:100px;background:#7cc7ff;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">🏥 治疗</button>`:''}
+      <button id="petRenameBtn" style="flex:1;min-width:100px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">✏️ ${LANG==="en"?"Rename":"改名"}</button>
+      ${canUpload?`<button id="petAvatarBtn" style="flex:1;min-width:100px;background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">📷 ${LANG==="en"?"Avatar":"头像"}</button>`:''}
     </div>
     <input type="file" id="petAvatarInput" accept="image/*" style="display:none">
   `;
+  $("#petRenameBtn")?.addEventListener("click",()=>renamePet(selectedPetIdx));
+  $("#petAvatarBtn")?.addEventListener("click",()=>$("#petAvatarInput").click());
   const avatarInput=$("#petAvatarInput");
   if(avatarInput){
     avatarInput.onchange=async e=>{
@@ -1752,14 +1805,14 @@ $("#settingsOverlay").addEventListener("click", e=>{
 });
 // 导出存档副本
 $("#exportBtn").addEventListener("click", ()=>{
-  const lightweight = confirm("导出存档副本\n\n确定 = 轻量版（不含宠物头像，文件更小）\n取消 = 完整版（含宠物自定义头像）");
+  const lightweight = confirm(t("save.exportConfirm"));
   let saveData = S;
-  let suffix = "完整版";
+  let suffix = t("save.fullVersion");
   if(lightweight){
     // 深拷贝并剥离宠物头像 dataURL
     saveData = JSON.parse(JSON.stringify(S));
     (saveData.petList||[]).forEach(p=>{ p.avatar = null; });
-    suffix = "轻量版";
+    suffix = t("save.lightVersion");
   }
   const data=JSON.stringify({game:"synth-town", version:SAVE_VERSION, exportedAt:new Date().toISOString(), exportType:lightweight?"lightweight":"full", save:saveData}, null, 2);
   const a=document.createElement("a");
@@ -1776,12 +1829,14 @@ $("#importFile").addEventListener("change", async e=>{
   if(!f) return;
   try{
     const data=JSON.parse(await f.text());
-    if(data.game!=="synth-town"||!data.save||!data.save.unlocked) throw new Error("不是有效的游戏存档");
+    if(data.game!=="synth-town"||!data.save||!data.save.unlocked) throw new Error(t("save.invalidFile"));
     const fileVersion = data.version || 1;
     const needMigrate = fileVersion < SAVE_VERSION;
-    const typeNote = data.exportType==="lightweight"?"（轻量版，不含头像）":"";
-    if(!confirm(t("save.importConfirm",fileVersion,typeNote,needMigrate?"\n\n⚠️ "+(LANG==="en"?"Old version save detected, will auto-migrate to v":"检测到旧版本存档，导入后将自动迁移到 v")+SAVE_VERSION:""))) return;
+    const typeNote = data.exportType==="lightweight"?t("save.lightNote"):"";
+    if(!confirm(t("save.importConfirm",fileVersion,typeNote,needMigrate?"\n\n⚠️ "+t("save.oldVersion")+SAVE_VERSION:""))) return;
     S=Object.assign(fresh(), data.save);
+    // 旧档无plotsVersion标记时，重置为0以触发null→false修复（fresh()默认是1会跳过修复）
+    if(data.save.plotsVersion===undefined) S.plotsVersion=0;
     S.petList=S.petList||[]; S.food=S.food||{}; S.regions=S.regions||{}; S.lifePool=S.lifePool||[];
     // 迁移旧版宠物计数 → 实例
     Object.entries(S.pets||{}).forEach(([id,n])=>{
@@ -1810,8 +1865,8 @@ $("#importFile").addEventListener("change", async e=>{
     }
     applyTheme(); clearSlots(); renderAll(); save();
     $("#settingsOverlay").classList.remove("show");
-    toast(needMigrate?`📥 旧版存档已迁移到 v${SAVE_VERSION}，继续冒险！`:"📥 副本已导入，继续冒险！");
-  }catch(err){ toast("❌ 导入失败："+err.message); }
+    toast(needMigrate?t("save.migrateToast",SAVE_VERSION):t("save.importToast"));
+  }catch(err){ toast(t("save.importFail")+err.message); }
 });
 // 素材包
 $("#packBtn").addEventListener("click", ()=>$("#packFile").click());
@@ -1848,7 +1903,7 @@ $("#bgFile").addEventListener("change",async e=>{
   reader.readAsDataURL(f);
 });
 $("#bgResetBtn").addEventListener("click",async ()=>{
-  if(!confirm("确定移除自定义背景？")) return;
+  if(!confirm(t("settings.bgResetConfirm"))) return;
   await assetDelete("bg:custom");
   if(S.theme==="custom"){ S.theme="night"; }
   document.body.style.background="";
@@ -2063,7 +2118,7 @@ function tick(){
     if(earn>0){
       S.coin+=earn; S.totalEarned+=earn;
       let bt=(petB>0?("🐾+"+petB+"%"):"")+(hallB>0?((petB>0?" ":"")+"🏛️+"+hallB+"%"):"");
-      toast("🏘️ 小镇产出 💰+"+earn+(bt?"（含"+bt+"）":""));
+      toast(t("town.incomeToast",earn,bt?t("town.incomeBonus",bt):""));
     }
     // 2) 宠物状态：每 5 分钟饱食 -10；饱食 0 后 HP -1；HP 0 → 生病（停止衰减，可治疗，不会死亡）
     const dCycles=Math.floor(elapsed/DECAY_INTERVAL);
@@ -2184,6 +2239,8 @@ const NPC_LINES = {
       "猫和兔子吃肉/胡萝卜，狗和牛吃肉/草，马和熊猫吃草/竹子",
       "多只宠物加成叠加，养一群猫也能积少成多",
       "宠物亲密度越高加成越多，多喂食多互动提升亲密度",
+      "亲密度每10点升1级，每级+0.5%产出，满级(100点)=+5%",
+      "总加成=物种基础+亲密度加成，比如猫+1%+亲密30点(3级)+1.5%=+2.5%",
       "亲密度满级解锁自定义头像，给你的宠物拍张照吧",
     ],
     en: [
@@ -2196,6 +2253,8 @@ const NPC_LINES = {
       "Cats & Rabbits eat meat/carrot, Dogs & Cows eat meat/grass, Horses & Pandas eat grass/bamboo",
       "Multiple pets' bonuses stack—a crowd of cats can add up too",
       "Higher pet intimacy = more bonus—feed and play often to raise intimacy",
+      "Intimacy level = floor(intimacy/10), each level +0.5% output, max (100) = +5%",
+      "Total bonus = species base + intimacy bonus, e.g. Cat +1% + intimacy 30 (Lv.3) +1.5% = +2.5%",
       "Max intimacy unlocks custom avatar—take a photo of your pet!",
     ]
   },
