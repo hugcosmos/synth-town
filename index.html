@@ -669,11 +669,11 @@ const OFFLINE_CAP = 3600;     // 秒：离线结算封顶 1 小时（收入与�
 // 底图区域：成本/产出双系数，建造时选区域
 // 地图布局（4列×3行网格）：山脚在北、林间东侧、市中心居中、平原西侧、河岸沿南
 const REGIONS = [
-  {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", plots:6,  land:50},
-  {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", plots:8,  land:80},
-  {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", plots:12, land:300},
-  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", plots:8,  land:20},
-  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", plots:8,  land:150},
+  {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", descEn:"Cheap, low output", plots:6,  land:50},
+  {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", descEn:"Slightly higher output", plots:8,  land:80},
+  {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", descEn:"Most expensive, highest output", plots:12, land:300},
+  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:20},
+  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:150},
 ];
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
 function regName(r){ if(!r) return ""; return LANG==="en"?(r.en||r.n):r.n; }
@@ -701,8 +701,9 @@ function migratePlots(){
   });
   S.regions={}; // 迁移后清空旧数据
 }
-// 解锁条件：小屋 + 商铺 各建成 1 个
-const mapUnlocked = () => (S.buildings.hut||0)>=1 && (S.buildings.shop||0)>=1;
+// 解锁条件：建成任意 2 个建筑（避免小屋+商铺的死锁，初始两块免费地足够建两个）
+const totalBuildings = () => Object.values(S.buildings||{}).reduce((a,b)=>a+(b||0),0);
+const mapUnlocked = () => totalBuildings()>=2;
 let curRegion = "plain";
 // 区域化成本：单项向上取整
 function regionCost(b, region){
@@ -867,8 +868,8 @@ const I18N = {
     "town.mapStats.output":"💰 产出",
     "town.mapStats.land":"🗺️ 已购地",
     "town.noBuildings":"还没有建筑",
-    "town.unlockMap":"🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，解锁小镇全景图（买地建造，各区域成本/产出不同）",
-    "town.unlockMap2":"🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个，解锁底图模式（买地建造，各区域成本/产出不同）",
+    "town.unlockMap":"🗺️ 建成任意 2 个建筑后，解锁小镇全景图（买地建造，各区域成本/产出不同）",
+    "town.unlockMap2":"🗺️ 建成任意 2 个建筑，解锁底图模式（买地建造，各区域成本/产出不同）",
     "town.moveMode":"🏗️ 移动模式：点一块 🟫 空地移入，或",
     "town.selectedPlot":"📍 已选 {0}{1} 空地，下方选建筑建造，或",
     "town.mapTitle":"🗺️ 小镇全景图",
@@ -903,7 +904,7 @@ const I18N = {
     "save.error":"⚠️ 存档写入失败（存储空间不足），进度可能无法保存！",
     "draw.toast":"🎰 初始元素 + 💰{0} 启动金币已到账！",
     "life.info":"🧬生命 ×{0}｜最高生命值 <b style=\"color:var(--ok)\">{1}</b>（{2} 满级，1/100 出 🐼）",
-    "life.hatchBtn":"🐣 孕育宠物",
+    "life.hatchBtn":"🐣 孕育宠物（消耗1个🧬）",
   },
   en: {
     "app.title":"⚗️ Element Craft Town",
@@ -1005,8 +1006,8 @@ const I18N = {
     "town.mapStats.output":"💰 Output",
     "town.mapStats.land":"🗺️ Land",
     "town.noBuildings":"No buildings yet",
-    "town.unlockMap":"🗺️ Build 🏠Hut + 🏪Shop (1 each) to unlock town panorama (buy land, different regions have different costs/outputs)",
-    "town.unlockMap2":"🗺️ Build 🏠Hut + 🏪Shop (1 each) to unlock map mode (buy land, different regions have different costs/outputs)",
+    "town.unlockMap":"🗺️ Build any 2 buildings to unlock town panorama (buy land, different regions have different costs/outputs)",
+    "town.unlockMap2":"🗺️ Build any 2 buildings to unlock map mode (buy land, different regions have different costs/outputs)",
     "town.moveMode":"🏗️ Move mode: tap a 🟫 empty land to move, or",
     "town.selectedPlot":"📍 Selected {0}{1} empty land, choose building below, or",
     "town.mapTitle":"🗺️ Town Panorama",
@@ -1041,7 +1042,7 @@ const I18N = {
     "save.error":"⚠️ Save failed (insufficient storage), progress may not be saved!",
     "draw.toast":"🎰 Initial elements + 💰{0} starting coins credited!",
     "life.info":"🧬Life ×{0}｜Max HP <b style=\"color:var(--ok)\">{1}</b> ({2} max, 1/100 for 🐼)",
-    "life.hatchBtn":"🐣 Breed Pet",
+    "life.hatchBtn":"🐣 Breed Pet (1 🧬)",
   }
 };
 let LANG = localStorage.getItem("synth-town-lang") || "zh";
@@ -1444,7 +1445,7 @@ function renderPets(){
   // 顶部：生命与孕育
   let html=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
   html+=`🧬${elName("life")} ×${n}${n>0?`｜${LANG==="en"?"Max HP":"最高生命值"} <b style="color:var(--ok)">${bestLifeHp()}</b>（${MAX_LIFE_HP} ${LANG==="en"?"max, 1/100 for 🐼":"满级，1/100 出 🐼"}）`:''}<br>`;  if(hasB("hut")){
-    html+=`<button id="hatchBtn" ${n>0?"":"disabled style='opacity:.4;cursor:not-allowed'"} style="margin-top:6px;background:linear-gradient(135deg,#4cd97b,#2aa858);border:none;color:#fff;border-radius:8px;padding:8px 20px;font-size:14px;cursor:pointer;font-weight:700;">${t("life.hatchBtn")}（消耗1个🧬）</button>`;
+    html+=`<button id="hatchBtn" ${n>0?"":"disabled style='opacity:.4;cursor:not-allowed'"} style="margin-top:6px;background:linear-gradient(135deg,#4cd97b,#2aa858);border:none;color:#fff;border-radius:8px;padding:8px 20px;font-size:14px;cursor:pointer;font-weight:700;">${t("life.hatchBtn")}</button>`;
   }else{
     html+=`<span style="font-size:11px">${t("pet.needHut")}</span>`;
   }
@@ -1968,7 +1969,7 @@ function renderMap(){
     });
     ph+="</div>";
     const bc2=plots.filter(p=>p&&p!==null).length;
-    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${regName(r)}</span></div><span class="rm">${LANG==="en"?"Cost×":"成本×"}${r.cm} ${LANG==="en"?"Output×":"产出×"}${r.im} ${LANG==="en"?"Land💰":"地价💰"}${r.land}</span><span class="rdesc">${r.desc} · ${r.plots}${LANG==="en"?" plots":"块地"}</span>${ph}<span style="font-size:10px;color:var(--dim);margin-top:3px;font-weight:600;">🏗️ ${bc2}/${r.plots}</span>`;
+    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${regName(r)}</span></div><span class="rm">${LANG==="en"?"Cost×":"成本×"}${r.cm} ${LANG==="en"?"Output×":"产出×"}${r.im} ${LANG==="en"?"Land💰":"地价💰"}${r.land}</span><span class="rdesc">${LANG==="en"?r.descEn:r.desc} · ${r.plots}${LANG==="en"?" plots":"块地"}</span>${ph}<span style="font-size:10px;color:var(--dim);margin-top:3px;font-weight:600;">🏗️ ${bc2}/${r.plots}</span>`;
     tile.querySelectorAll("[data-r]").forEach(cell=>{
       cell.addEventListener("click",ev=>{
         ev.stopPropagation();
@@ -2190,7 +2191,7 @@ const NPC_LINES = {
       "🖼️花园提升幸福度，🏥宠物医院降低宠物消耗，🛖驿站解锁宠物食物商店",
       "市中心有12块地，是地块最多的区域，攒够300金币去市中心发展",
       "地块买了就是永久的，不会过期，慢慢扩张",
-      "建成🏠小屋+🏪商铺各1个后解锁小镇全景图，快去买地建造吧",
+      "建成任意2个建筑后解锁小镇全景图，快去买地建造吧",
     ],
     en: [
       "🏪Shop produces coins every 10s, the most basic income—build early to earn more",
@@ -2203,7 +2204,7 @@ const NPC_LINES = {
       "🖼️Garden boosts happiness, 🏥Pet Hospital reduces pet consumption, 🛖Station unlocks pet food shop",
       "Downtown has 12 plots, the most of any region—save 300 coins to develop there",
       "Purchased land is permanent, never expires—expand at your own pace",
-      "Build 🏠Hut + 🏪Shop (1 each) to unlock the town panorama map—go buy land and build!",
+      "Build any 2 buildings to unlock the town panorama map—go buy land and build!",
     ]
   },
   shop: {
