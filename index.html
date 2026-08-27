@@ -160,7 +160,7 @@
   #toast{
     position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px);
     background:var(--accent); color:#fff; padding:10px 22px; border-radius:24px;
-    font-size:14px; opacity:0; pointer-events:none; transition:all .3s; z-index:99; box-shadow:0 6px 20px rgba(124,92,255,.5);
+    font-size:14px; opacity:0; pointer-events:none; transition:all .3s; z-index:99999; box-shadow:0 6px 20px rgba(124,92,255,.5);
   }
   #toast.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; cursor:pointer;}
 
@@ -664,7 +664,7 @@
 <div id="introOverlay">
   <div style="display:flex;align-items:center;gap:20px;">
     <div class="npc">🧙‍♂️</div>
-    <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;white-space:nowrap;">🌐 EN</button>
+    <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;position:relative;z-index:999;pointer-events:auto;">🌐 EN</button>
   </div>
   <div class="bubble" id="introBubble">
     <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
@@ -1273,6 +1273,17 @@ function tooltipAt(el, msg, dur=2000){
   t.style.left=(rect.left+rect.width/2)+"px";
   t.style.top=(rect.bottom+12)+"px";
   t.style.transform="translateX(-50%)";
+  t.classList.add("show");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>{ t.classList.remove("show"); t.style.left=""; t.style.top=""; t.style.transform=""; },dur);
+  t.onclick=()=>{ t.classList.remove("show"); clearTimeout(t._tm); t.style.left=""; t.style.top=""; t.style.transform=""; };
+}
+function tooltipTopRight(el, msg, dur=2000){
+  const t=$("#toast");
+  const rect=el.getBoundingClientRect();
+  t.textContent=msg;
+  t.style.left=(rect.right+10)+"px";
+  t.style.top=(rect.top-14)+"px";
+  t.style.transform="translateY(-100%)";
   t.classList.add("show");
   clearTimeout(t._tm); t._tm=setTimeout(()=>{ t.classList.remove("show"); t.style.left=""; t.style.top=""; t.style.transform=""; },dur);
   t.onclick=()=>{ t.classList.remove("show"); clearTimeout(t._tm); t.style.left=""; t.style.top=""; t.style.transform=""; };
@@ -2019,8 +2030,8 @@ $("#advancedUnlockBtn").addEventListener("click", ()=>{
 });
 $("#basicPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#basicUnlockBtn").click(); });
 $("#advancedPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#advancedUnlockBtn").click(); });
-$("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") tooltipAt($("#basicLockCard"), t("recipe.hoverHint")); });
-$("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") tooltipAt($("#advancedLockCard"), t("recipe.hoverHint")); });
+$("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") tooltipTopRight($("#basicUnlockBtn"), t("recipe.hoverHint")); });
+$("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") tooltipTopRight($("#advancedUnlockBtn"), t("recipe.hoverHint")); });
 /* ============ 设置面板 ============ */
 $("#settingsBtn").addEventListener("click", ()=>{
   renderThemeChips();
@@ -2520,19 +2531,33 @@ function npcPetBonusText(){
   if(LANG==="en") return `You have ${S.petList.length} pets: ${parts.join(", ")}. Current active +${total}% (${active} healthy & fed, ${inactive} on strike)`;
   return `你有${S.petList.length}只宠物：${parts.join("、")}。当前生效+${total}%（${active}只健康饱食，${inactive}只罢工中）`;
 }
+let _lastNpcHint=null;
 function npcHint(){
   const tab=currentTab||"craft";
   let line=null;
   if(tab==="craft"){
     line=npcCraftSmart();
-    if(!line) line=NPC_LINES.craft[LANG][Math.floor(Math.random()*NPC_LINES.craft[LANG].length)];
+    if(!line){
+      const pool=NPC_LINES.craft[LANG];
+      let idx=Math.floor(Math.random()*pool.length);
+      if(pool.length>1){ while(pool[idx]===_lastNpcHint){ idx=Math.floor(Math.random()*pool.length); } }
+      line=pool[idx];
+    }
   }else if(tab==="pet"){
     if(Math.random()<0.5) line=npcPetBonusText();
-    else line=NPC_LINES.pet[LANG][Math.floor(Math.random()*NPC_LINES.pet[LANG].length)];
+    if(!line){
+      const pool=NPC_LINES.pet[LANG];
+      let idx=Math.floor(Math.random()*pool.length);
+      if(pool.length>1){ while(pool[idx]===_lastNpcHint){ idx=Math.floor(Math.random()*pool.length); } }
+      line=pool[idx];
+    }
   }else{
     const pool=NPC_LINES[tab]?NPC_LINES[tab][LANG]:NPC_LINES.craft[LANG];
-    line=pool[Math.floor(Math.random()*pool.length)];
+    let idx=Math.floor(Math.random()*pool.length);
+    if(pool.length>1){ while(pool[idx]===_lastNpcHint){ idx=Math.floor(Math.random()*pool.length); } }
+    line=pool[idx];
   }
+  _lastNpcHint=line;
   toast(`🧙‍♂️「${line}」`,5200);
 }
 $("#npcBtn").addEventListener("click", npcHint);
