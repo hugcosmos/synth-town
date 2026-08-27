@@ -159,7 +159,7 @@
     background:var(--accent); color:#fff; padding:10px 22px; border-radius:24px;
     font-size:14px; opacity:0; pointer-events:none; transition:all .3s; z-index:99; box-shadow:0 6px 20px rgba(124,92,255,.5);
   }
-  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; cursor:pointer;}
 
   /* 拖拽幽灵 */
   .ghost{position:fixed; pointer-events:none; z-index:999; font-size:34px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));}
@@ -779,6 +779,7 @@ const $ = s=>document.querySelector(s);
 function toast(msg, dur=2200){
   const t=$("#toast"); t.textContent=msg; t.classList.add("show");
   clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),dur);
+  t.onclick=()=>{ t.classList.remove("show"); clearTimeout(t._tm); };
 }
 function count(id){ return S.unlocked[id]||0; }
 
