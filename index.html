@@ -792,7 +792,7 @@ const REGIONS = [
   {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", descEn:"Cheap, low output", plots:6,  land:50},
   {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", descEn:"Slightly higher output", plots:8,  land:80},
   {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", descEn:"Most expensive, highest output", plots:12, land:300},
-  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:20},
+  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.8, im:1.0, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:20},
   {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:150},
 ];
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
