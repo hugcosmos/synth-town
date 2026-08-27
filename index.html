@@ -710,9 +710,9 @@ const FOODS = {
 };
 function foodName(f){ if(!f) return ""; return LANG==="en"?(f.en||f.n):f.n; }
 function updateDrawLang(){
-  const t=$("#drawTitle"), s=$("#drawSub");
-  if(t) t.textContent=t("draw.title");
-  if(s) s.textContent=t("draw.sub");
+  const titleEl=$("#drawTitle"), subEl=$("#drawSub");
+  if(titleEl) titleEl.textContent=t("draw.title");
+  if(subEl) subEl.textContent=t("draw.sub");
 }
 // 宠物：由 🧬生命 孕育；bonus = 该物种给全镇产出的加成 %
 // 获取难度与加成严格正相关：猫兔(+1%) < 狗牛(+2%) < 小马(+3%) < 熊猫(+5%, 仅满级生命1/100)
