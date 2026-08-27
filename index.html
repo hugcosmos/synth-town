@@ -211,7 +211,7 @@
   #introOverlay h2{font-size:24px; letter-spacing:2px;}
   #introOverlay .bubble{
     background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 18px;
-    max-width:460px; font-size:14px; line-height:1.9;
+    max-width:460px; font-size:14px; line-height:1.9; position:relative;
   }
   #introOverlay .bubble b{color:var(--gold);}
   #introOverlay .bubble .step{color:var(--text); display:block;}
@@ -662,8 +662,10 @@
 </div>
 
 <div id="introOverlay">
-  <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="position:absolute;top:50%;right:24px;transform:translateY(-50%);background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;z-index:10;">🌐 EN</button>
-  <div class="npc">🧙‍♂️</div>
+  <div style="display:flex;align-items:center;gap:20px;">
+    <div class="npc">🧙‍♂️</div>
+    <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;white-space:nowrap;">🌐 EN</button>
+  </div>
   <div class="bubble" id="introBubble">
     <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
     <span class="step"><b>① 合成</b>　点两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
@@ -1201,6 +1203,7 @@ function fresh(){
     plotsVersion:1,      // 地块数据版本（修复undefined→null序列化bug）
     theme:"night",      // 配色主题
     totalEarned:0,
+    craftedRecipes:[],   // 已合成过的配方组合（["a+b", ...]，a<b排序）
     lastTick:Date.now(),
   };
 }
@@ -1262,6 +1265,17 @@ function toast(msg, dur=2200){
   const t=$("#toast"); t.textContent=msg; t.classList.add("show");
   clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),dur);
   t.onclick=()=>{ t.classList.remove("show"); clearTimeout(t._tm); };
+}
+function tooltipAt(el, msg, dur=2000){
+  const t=$("#toast");
+  const rect=el.getBoundingClientRect();
+  t.textContent=msg;
+  t.style.left=(rect.left+rect.width/2)+"px";
+  t.style.top=(rect.bottom+12)+"px";
+  t.style.transform="translateX(-50%)";
+  t.classList.add("show");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>{ t.classList.remove("show"); t.style.left=""; t.style.top=""; t.style.transform=""; },dur);
+  t.onclick=()=>{ t.classList.remove("show"); clearTimeout(t._tm); t.style.left=""; t.style.top=""; t.style.transform=""; };
 }
 function count(id){ return S.unlocked[id]||0; }
 
@@ -1456,6 +1470,7 @@ $("#craftBtn").addEventListener("click", ()=>{
   res.innerHTML=`<span class="pop">${ot}</span>`;
   if(isNew&&done>0){res.innerHTML=`<span class="new pop">${t("craft.newBadge")}</span> ${res.innerHTML}`;toast(t("craft.newElement",elName(out),ELEMENTS[out].i));}
   clearTimeout(resultTimer);resultTimer=setTimeout(clearResult,2500);
+  if(done>0){ const rk=[selA,selB].sort().join("+"); if(!S.craftedRecipes.includes(rk)) S.craftedRecipes.push(rk); }
   clearSlots();updateCraftBtn();const _bi=$("#batchInput");if(_bi)_bi.value=1;
   renderAll();save();
 });
@@ -1903,26 +1918,29 @@ const BASIC_PWD = "1986";
 const ADVANCED_PWD = "cosmos";
 function getRecipeUnlock(){ try{ return JSON.parse(localStorage.getItem(RECIPE_KEY))||{basic:false,advanced:false}; }catch(e){ return {basic:false,advanced:false}; } }
 function setRecipeUnlock(s){ try{ localStorage.setItem(RECIPE_KEY, JSON.stringify(s)); }catch(e){} }
+function recipeKey(a,b){ return [a,b].sort().join("+"); }
 function renderRecipeBook(){
   const u=getRecipeUnlock();
   const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard");
   const basicPwd=$("#basicPwd"), basicBtn=$("#basicUnlockBtn");
   const advPwd=$("#advancedPwd"), advBtn=$("#advancedUnlockBtn");
   const content=$("#recipeContent");
-  const discovered=new Set(Object.keys(S.unlocked).filter(k=>ELEMENTS[k]));
+  const crafted=new Set(S.craftedRecipes||[]);
+  // 按层级统计：总数、已合成数、密码解锁数
   const tierStats={};
   R.forEach(([a,b,out])=>{
     if(out==="coin"||out==="chest") return;
     const t=tierOf(out);
-    if(!tierStats[t]) tierStats[t]={total:0,discovered:0};
+    if(!tierStats[t]) tierStats[t]={total:0,crafted:0};
     tierStats[t].total++;
-    if(discovered.has(out)) tierStats[t].discovered++;
+    if(crafted.has(recipeKey(a,b))) tierStats[t].crafted++;
   });
   const basicTiers=Object.keys(tierStats).filter(t=>Number(t)<=3);
   const advTiers=Object.keys(tierStats).filter(t=>Number(t)>3);
-  const basicAllFound=basicTiers.length>0 && basicTiers.every(t=>tierStats[t].discovered===tierStats[t].total);
-  const advAllFound=advTiers.length>0 && advTiers.every(t=>tierStats[t].discovered===tierStats[t].total);
-  if(basicAllFound||u.basic){
+  const basicAllCrafted=basicTiers.length>0 && basicTiers.every(t=>tierStats[t].crafted===tierStats[t].total);
+  const advAllCrafted=advTiers.length>0 && advTiers.every(t=>tierStats[t].crafted===tierStats[t].total);
+  // 基础锁：1-3级都已合成 → 不显示；密码已解锁 → 不显示；否则显示
+  if(basicAllCrafted||u.basic){
     basicCard.style.display="none";
   }else{
     basicCard.style.display="flex";
@@ -1931,9 +1949,10 @@ function renderRecipeBook(){
     basicPwd.style.display=""; basicBtn.style.display="";
     basicCard.querySelector(".lockDesc").textContent=t("recipe.basicDesc");
   }
-  if(advAllFound||u.advanced){
+  // 高级锁：4级+都已合成 → 不显示；密码已解锁 → 不显示；基础未解锁且未全合成 → 不显示
+  if(advAllCrafted||u.advanced){
     advCard.style.display="none";
-  }else if(!basicAllFound&&!u.basic){
+  }else if(!basicAllCrafted&&!u.basic){
     advCard.style.display="none";
   }else{
     advCard.style.display="flex";
@@ -1943,19 +1962,20 @@ function renderRecipeBook(){
     advPwd.style.display=""; advBtn.style.display="";
     advCard.querySelector(".lockDesc").textContent=t("recipe.advancedDesc");
   }
+  // 配方内容：只要有已合成或已解锁的配方就显示
   const hasAnyVisible=R.some(([a,b,out])=>{
     if(out==="coin"||out==="chest") return false;
     const t=tierOf(out);
-    return discovered.has(out)||(t<=3&&u.basic)||(t>3&&u.advanced);
+    return crafted.has(recipeKey(a,b))||(t<=3&&u.basic)||(t>3&&u.advanced);
   });
   if(hasAnyVisible){
     content.style.display="block";
-    renderRecipes(u,discovered);
+    renderRecipes(u,crafted);
   }else{
     content.style.display="none";
   }
 }
-function renderRecipes(u,discovered){
+function renderRecipes(u,crafted){
   const basicSec=$("#recipeBasicSection"), advSec=$("#recipeAdvancedSection");
   const byTier={};
   R.forEach(([a,b,out])=>{
@@ -1969,7 +1989,7 @@ function renderRecipes(u,discovered){
   tiers.forEach(tier=>{
     const isBasic=Number(tier)<=3;
     const recipes=byTier[tier].filter(([a,b,out])=>{
-      return discovered.has(out)||(isBasic&&u.basic)||(!isBasic&&u.advanced);
+      return crafted.has(recipeKey(a,b))||(isBasic&&u.basic)||(!isBasic&&u.advanced);
     });
     if(recipes.length===0) return;
     let html=`<div class="recipeTierGroup"><div class="recipeTierTitle">${t("recipe.tier",tier)}</div><div class="recipeList">`;
@@ -1999,8 +2019,8 @@ $("#advancedUnlockBtn").addEventListener("click", ()=>{
 });
 $("#basicPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#basicUnlockBtn").click(); });
 $("#advancedPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#advancedUnlockBtn").click(); });
-$("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") toast(t("recipe.hoverHint")); });
-$("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") toast(t("recipe.hoverHint")); });
+$("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") tooltipAt($("#basicLockCard"), t("recipe.hoverHint")); });
+$("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") tooltipAt($("#advancedLockCard"), t("recipe.hoverHint")); });
 /* ============ 设置面板 ============ */
 $("#settingsBtn").addEventListener("click", ()=>{
   renderThemeChips();
