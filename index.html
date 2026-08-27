@@ -360,32 +360,34 @@
     }
     #craftPanel{
       order:1; flex-shrink:0;
-      padding:10px; gap:10px;
+      padding:8px; gap:6px;
     }
-    #craftPanel h2{margin-bottom:4px;font-size:13px;}
-    #slots{gap:12px;}
-    #slots .slot{width:72px;height:72px;font-size:28px;}
-    #slots .slot .lbl{font-size:10px;}
-    #plus{font-size:24px;}
-    #craftBtn{padding:10px 28px;font-size:15px;}
-    #result{height:32px;font-size:16px;}
+    #craftPanel h2{margin-bottom:2px;font-size:12px;}
+    #slots{gap:8px;}
+    #slots .slot{width:56px;height:56px;font-size:22px;}
+    #slots .slot .lbl{font-size:9px;}
+    #plus{font-size:20px;}
+    #craftBtn{padding:8px 20px;font-size:13px;}
+    #result{height:24px;font-size:13px;}
+    #batchWrap{margin-top:2px;}
+    #batchInput{width:50px;padding:3px 6px;font-size:12px;}
     #view-craft .panel:first-child{
       order:2; flex-shrink:0;
       display:flex; flex-direction:column;
-      padding:10px;
+      padding:8px;
     }
-    #view-craft .panel:first-child h2{margin-bottom:6px;font-size:13px;}
+    #view-craft .panel:first-child h2{margin-bottom:4px;font-size:12px;}
     #elementGrid{
       flex-shrink:0; max-height:none;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(5,1fr);
       overflow:visible;
-      gap:6px;
+      gap:4px;
     }
-    .el{padding:6px 2px;}
-    .el .ico{font-size:24px;}
-    .el .name{font-size:10px;}
+    .el{padding:4px 1px;}
+    .el .ico{font-size:20px;}
+    .el .name{font-size:9px;}
     .el .name small{display:none;}
-    #discovered{font-size:11px;margin-top:4px;}
+    #discovered{font-size:10px;margin-top:2px;}
     #view-shop.active{grid-template-columns:1fr;}
     .mapGrid{grid-template-columns:repeat(2,1fr);}
     .mapGrid .tile{grid-area:auto !important; min-height:60px;}
@@ -489,6 +491,7 @@
     <h3>📦 存档副本</h3>
     <button class="setBtn" id="exportBtn">📤 导出存档为文件<small>下载 JSON 副本，可保存多个，随时回来继续</small></button>
     <button class="setBtn" id="importBtn">📥 导入存档<small>选择之前导出的 JSON 副本，覆盖当前进度</small></button>
+    <button class="setBtn" id="resetBtnSettings" style="border-color:#c0392b;color:#e74c3c">🗑️ 重置存档<small>清空所有进度，重新开始</small></button>
     <input type="file" id="importFile" accept="application/json" style="display:none">
 
     <h3>🎨 配色主题</h3>
@@ -1777,13 +1780,16 @@ function tick(){
 }
 
 /* ============ 重置 ============ */
-$("#resetBtn").addEventListener("click", ()=>{
+function doReset(){
   if(confirm("确定重置全部进度吗？不可恢复。")){
     localStorage.removeItem(SAVE_KEY);
     S=fresh(); clearSlots(); renderAll();
     $("#introOverlay").classList.add("show");
+    $("#settingsOverlay").classList.remove("show");
   }
-});
+}
+$("#resetBtn").addEventListener("click", doReset);
+$("#resetBtnSettings").addEventListener("click", doReset);
 
 /* ============ NPC 长老：按 Tab 差异化提示 ============ */
 const NPC_LINES = {
