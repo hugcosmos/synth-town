@@ -475,7 +475,7 @@
   <section id="view-town" class="view">
     <section class="panel" id="mapPanelOuter"></section>
     <section class="panel">
-      <h2>🏗️ 建造</h2>
+      <h2 data-i18n="panel.build">🏗️ 建造</h2>
       <div id="shop"></div>
     </section>
   </section>
@@ -483,8 +483,8 @@
   <!-- 元素商店页 -->
   <section id="view-shop" class="view">
     <section class="panel">
-      <h2>💰 元素商店</h2>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:8px">只卖 3 级及以下常见元素 · 价格 = 层级 × 5 金币</div>
+      <h2 data-i18n="panel.shop">💰 元素商店</h2>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px"><span data-i18n="shop.desc">只卖 3 级及以下常见元素 · 价格 = 层级 × 5 金币</span></div>
       <div id="elShop"></div>
     </section>
   </section>
@@ -492,7 +492,7 @@
   <!-- 宠物页 -->
   <section id="view-pet" class="view">
     <section class="panel">
-      <h2>🐾 宠物园</h2>
+      <h2 data-i18n="panel.pet">🐾 宠物园</h2>
       <div id="petPanel" style="font-size:12px;color:var(--dim);margin-bottom:8px"></div>
       <div id="petList"></div>
     </section>
@@ -500,7 +500,7 @@
 </main>
 
 <div id="toast"></div>
-<button id="npcBtn" title="召唤长老：随机提示一条原料已齐的隐藏配方">🧙‍♂️</button>
+<button id="npcBtn" title="">🧙‍♂️</button>
 
 <div id="settingsOverlay">
   <div id="settingsBox">
@@ -541,7 +541,7 @@
   <div id="petDetailBox">
     <div id="petDetailContent"></div>
     <div style="text-align:right;margin-top:12px;">
-      <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" onclick="closePetDetail()">关闭</button>
+      <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" onclick="closePetDetail()" data-i18n="btn.close">关闭</button>
     </div>
   </div>
 </div>
@@ -555,7 +555,7 @@
     <span class="step"><b>② 建造</b>　攒够建材建房屋商铺，持续产出金币；金币可在商店补货常见元素 <small>（本次抽取含少量启动金币）</small></span>
     <span class="step"><b>③ 卡住了？</b>　随时点右下角 <b>🧙‍♂️召唤长老</b>，我会告诉你一条手头原料就能做的隐藏配方 🐾</span>
   </div>
-  <button id="introBtn">接受指引，开始冒险 ▶</button>
+  <button id="introBtn" data-i18n="btn.intro">接受指引，开始冒险 ▶</button>
 </div>
 
 <div id="drawOverlay">
@@ -767,6 +767,78 @@ const I18N = {
     "draw.title":"🎰 开局幸运抽取",
     "draw.sub":"抽取四大基础元素的初始数量（每个 10~99，金色为高运 50+）",
     "draw.start":"开始游戏 ▶",
+    "panel.build":"🏗️ 建造",
+    "panel.shop":"💰 元素商店",
+    "panel.pet":"🐾 宠物园",
+    "shop.desc":"只卖 3 级及以下常见元素 · 价格 = 层级 × 5 金币",
+    "shop.empty":"还没有可买元素",
+    "shop.bought":"🛒 购买了 {0} ×{1}（-💰{2}）",
+    "shop.noCoin":"💰 金币不足（需要 {0}）",
+    "btn.close":"关闭",
+    "btn.intro":"接受指引，开始冒险 ▶",
+    "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
+    "btn.exportSmall":"下载 JSON 副本，可保存多个，随时回来继续",
+    "btn.importSmall":"选择之前导出的 JSON 副本，覆盖当前进度",
+    "settings.bg.desc":"上传一张图片作为游戏背景（自动压缩到 ≤1920px，存本地 IndexedDB，不占存档空间）。上传后在上方主题中选择「自定义」即可使用。",
+    "settings.pack.desc":"上传 theme.json：{ \"pets\":{…}, \"elements\":{…}, \"regions\":{…} }，值为 data:image/png;base64 图片。规格：宠物/元素 128×128、地块 512×256、单张 ≤200KB（自动压缩到规格内）。图片存 IndexedDB，不占存档空间；未替换的回落 emoji。",
+    "npc.title":"召唤长老：随机提示一条原料已齐的隐藏配方",
+    "reset.confirm":"确定重置全部进度吗？不可恢复。",
+    "craft.usedUp":"{0} 已用完，再去合成一些吧",
+    "craft.invalid":"❌ 无效组合，换个思路试试",
+    "craft.notEnough":"{0} 或 {1} 数量不够",
+    "craft.newElement":"🎉 发现新元素：{0} {1}",
+    "craft.newBadge":"🎉 新元素！",
+    "craft.coinGain":"（+{0}金币）",
+    "craft.chestGain":"（+{0}金币）",
+    "craft.lifeHp":"生命值 {0}",
+    "craft.partial":"（原料不足，只合成{0}/{1}）",
+    "pet.empty":"还没有宠物{0}",
+    "pet.hatchHint":"，点上方按钮孕育",
+    "pet.needHut":"🔒 需先建成 🏠小屋，宠物才有地方住",
+    "pet.needHutToast":"🔒 先建一座 🏠小屋，宠物才有地方住",
+    "pet.lifeError":"🧬生命数据异常，请重新合成生命",
+    "pet.bonus":"当前宠物加成：<b style=\"color:var(--gold)\">+{0}%</b> 全镇金币产出（物种基础：猫兔+1% 狗牛+2% 马+3% 熊猫+5%，亲密度额外加成）",
+    "pet.foodTitle":"🍽️ 宠物口粮",
+    "pet.needStation":"🔒 需建 🛖宠物驿站",
+    "pet.namePrompt":"给你的{0}起个名字吧（最多15个字符）：",
+    "pet.renamePrompt":"给 {0} 改个名字（最多15个字符）：",
+    "pet.pandaBorn":"🎊 传说降临！满级生命孕育出 🐼{0}！！",
+    "pet.born":"🐾 孕育出 {0}（HP {1}，基础+{2}% 加成）",
+    "pet.noFood":"缺 {0}，去驿站买",
+    "pet.ate":"🍽️ {0} 吃了 {1}（饱食{2}，亲密度+2 → Lv.{3}）",
+    "pet.interactMax":"💕 {0} 今天已经互动够了，明天再来吧",
+    "pet.interacted":"💕 跟 {0} 玩耍了一会儿（亲密度+5 → Lv.{1}，今天{2}/3次）",
+    "pet.renamed":"✏️ 改名为 {0}",
+    "pet.satiety":"🍖 饱食度",
+    "pet.intimacy":"💕 亲密度 Lv.{0}/10",
+    "pet.bonusDetail":"产出加成：<b style=\"color:var(--gold)\">+{0}%</b>（物种+{1}% + 亲密度+{2}%）",
+    "pet.sick":"🤒 生病中，不生效",
+    "pet.hungry":"😴 饱食度不足，不生效",
+    "pet.healthy":"✅ 健康饱食，加成生效中",
+    "pet.maxIntimacy":"🎉 亲密度满级，已解锁自定义头像！",
+    "pet.unlockHint":"亲密度满级(Lv.10)解锁自定义头像",
+    "pet.bornJust":"刚刚出生",
+    "pet.bornMin":"{0}分钟前出生",
+    "pet.bornHour":"{0}小时前出生",
+    "pet.bornDay":"{0}天前出生",
+    "pet.hp":"❤️ HP",
+    "town.built":"已建 {0}",
+    "town.income":"💰+{0}/{1}s",
+    "town.passive":"🏛️ {0}",
+    "town.buildBtn":"建造",
+    "town.builtToast":"{0} 在{1}{2}建造了{3}！",
+    "town.moved":"🏗️ {0} 移到了{1}{2}",
+    "town.demolishConfirm":"确定拆除 {0}？退还 50% 建造成本",
+    "town.demolished":"💥 拆除了{0}（退还50%材料）",
+    "town.moveOrDemolish":"{0}\n\n确定 = 🏗️ 移动到空地\n取消 = 💥 拆除(退50%)",
+    "town.selectedPlot":"📍 已选 {0}{1} 空地，下方选建筑建造，或",
+    "town.cancel":"取消",
+    "town.selectedBar":"📍 已选地块：<b style=\"color:var(--gold)\">{0}{1}</b>（成本×{2} 产出×{3}）—— 在地图上点其他空地切换",
+    "town.onlyEmpty":"只能移到 🟫 空地",
+    "save.error":"⚠️ 存档写入失败（存储空间不足），进度可能无法保存！",
+    "draw.toast":"🎰 初始元素 + 💰{0} 启动金币已到账！",
+    "life.info":"🧬生命 ×{0}｜最高生命值 <b style=\"color:var(--ok)\">{1}</b>（{2} 满级，1/100 出 🐼）",
+    "life.hatchBtn":"🐣 孕育宠物",
   },
   en: {
     "app.title":"⚗️ Element Craft Town",
@@ -787,10 +859,82 @@ const I18N = {
     "draw.title":"🎰 Starting Lucky Draw",
     "draw.sub":"Draw initial counts of the four base elements (10~99 each, gold = lucky 50+)",
     "draw.start":"Start Game ▶",
+    "panel.build":"🏗️ Build",
+    "panel.shop":"💰 Element Shop",
+    "panel.pet":"🐾 Pet Garden",
+    "shop.desc":"Only sells common elements Lvl 3 and below · Price = Level × 5 coins",
+    "shop.empty":"No elements available to buy",
+    "shop.bought":"🛒 Bought {0} ×{1} (-💰{2})",
+    "shop.noCoin":"💰 Not enough coins (need {0})",
+    "btn.close":"Close",
+    "btn.intro":"Accept guidance, start adventure ▶",
+    "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
+    "btn.exportSmall":"Download JSON copy, save multiple, resume anytime",
+    "btn.importSmall":"Select a previously exported JSON copy to overwrite current progress",
+    "settings.bg.desc":"Upload an image as game background (auto-compressed to ≤1920px, stored in local IndexedDB, no save space used). After upload, select 'Custom' in themes above to use.",
+    "settings.pack.desc":"Upload theme.json: { \"pets\":{…}, \"elements\":{…}, \"regions\":{…} }, values are data:image/png;base64 images. Specs: pets/elements 128×128, regions 512×256, each ≤200KB (auto-compressed). Images stored in IndexedDB; unreplaced items fall back to emoji.",
+    "npc.title":"Summon Elder: random hint for a craftable hidden recipe",
+    "reset.confirm":"Reset all progress? This cannot be undone.",
+    "craft.usedUp":"{0} is used up, craft some more",
+    "craft.invalid":"❌ Invalid combination, try another approach",
+    "craft.notEnough":"Not enough {0} or {1}",
+    "craft.newElement":"🎉 Discovered new element: {0} {1}",
+    "craft.newBadge":"🎉 New Element!",
+    "craft.coinGain":"(+{0} coins)",
+    "craft.chestGain":"(+{0} coins)",
+    "craft.lifeHp":"HP {0}",
+    "craft.partial":"(insufficient materials, only crafted {0}/{1})",
+    "pet.empty":"No pets yet{0}",
+    "pet.hatchHint":", tap button above to breed",
+    "pet.needHut":"🔒 Build 🏠Hut first for pets to live",
+    "pet.needHutToast":"🔒 Build a 🏠Hut first for pets to live",
+    "pet.lifeError":"🧬Life data error, please craft Life again",
+    "pet.bonus":"Current pet bonus: <b style=\"color:var(--gold)\">+{0}%</b> global coin output (base: Cat/Rabbit +1%, Dog/Cow +2%, Horse +3%, Panda +5%, plus intimacy bonus)",
+    "pet.foodTitle":"🍽️ Pet Food",
+    "pet.needStation":"🔒 Build 🛖Pet Station",
+    "pet.namePrompt":"Name your {0} (max 15 chars):",
+    "pet.renamePrompt":"Rename {0} (max 15 chars):",
+    "pet.pandaBorn":"🎊 Legendary! Max Life bred 🐼{0}!!",
+    "pet.born":"🐾 Bred {0} (HP {1}, base +{2}% bonus)",
+    "pet.noFood":"Need {0}, buy at station",
+    "pet.ate":"🍽️ {0} ate {1} (satiety {2}, intimacy +2 → Lv.{3})",
+    "pet.interactMax":"💕 {0} has played enough today, come back tomorrow",
+    "pet.interacted":"💕 Played with {0} (intimacy +5 → Lv.{1}, {2}/3 today)",
+    "pet.renamed":"✏️ Renamed to {0}",
+    "pet.satiety":"🍖 Satiety",
+    "pet.intimacy":"💕 Intimacy Lv.{0}/10",
+    "pet.bonusDetail":"Output bonus: <b style=\"color:var(--gold)\">+{0}%</b> (species +{1}% + intimacy +{2}%)",
+    "pet.sick":"🤒 Sick, not active",
+    "pet.hungry":"😴 Hungry, not active",
+    "pet.healthy":"✅ Healthy & fed, bonus active",
+    "pet.maxIntimacy":"🎉 Max intimacy, custom avatar unlocked!",
+    "pet.unlockHint":"Max intimacy (Lv.10) unlocks custom avatar",
+    "pet.bornJust":"Just born",
+    "pet.bornMin":"{0} min ago",
+    "pet.bornHour":"{0} hr ago",
+    "pet.bornDay":"{0} days ago",
+    "pet.hp":"❤️ HP",
+    "town.built":"Built {0}",
+    "town.income":"💰+{0}/{1}s",
+    "town.passive":"🏛️ {0}",
+    "town.buildBtn":"Build",
+    "town.builtToast":"{0} built {3} at {1}{2}!",
+    "town.moved":"🏗️ {0} moved to {1}{2}",
+    "town.demolishConfirm":"Demolish {0}? Refund 50% of build cost",
+    "town.demolished":"💥 Demolished {0} (50% materials refunded)",
+    "town.moveOrDemolish":"{0}\n\nOK = 🏗️ Move to empty land\nCancel = 💥 Demolish (50% refund)",
+    "town.selectedPlot":"📍 Selected {0}{1} empty land, choose building below, or",
+    "town.cancel":"Cancel",
+    "town.selectedBar":"📍 Selected land: <b style=\"color:var(--gold)\">{0}{1}</b> (cost×{2} output×{3}) — tap other empty land on map to switch",
+    "town.onlyEmpty":"Can only move to 🟫 empty land",
+    "save.error":"⚠️ Save failed (insufficient storage), progress may not be saved!",
+    "draw.toast":"🎰 Initial elements + 💰{0} starting coins credited!",
+    "life.info":"🧬Life ×{0}｜Max HP <b style=\"color:var(--ok)\">{1}</b> ({2} max, 1/100 for 🐼)",
+    "life.hatchBtn":"🐣 Breed Pet",
   }
 };
 let LANG = localStorage.getItem("synth-town-lang") || "zh";
-function t(key){ return (I18N[LANG]&&I18N[LANG][key]) || key; }
+function t(key,...args){ let s=(I18N[LANG]&&I18N[LANG][key])||key; args.forEach((a,i)=>{s=s.replace(new RegExp("\\{"+i+"\\}","g"),a);}); return s; }
 function applyLang(){
   document.querySelectorAll("[data-i18n]").forEach(el=>{
     const key=el.dataset.i18n;
@@ -845,7 +989,7 @@ function fresh(){
 function migratePetFields(s){
   // v3 迁移：宠物新字段（起名/出生时辰/亲密度/头像/互动计数）
   (s.petList||[]).forEach(p=>{
-    if(p.name===undefined){ const d=PETS.find(x=>x.id===p.id); p.name=d?d.n:"宠物"; }
+    if(p.name===undefined){ const d=PETS.find(x=>x.id===p.id); p.name=d?petName(d):(LANG==="en"?"Pet":"宠物"); }
     if(p.bornAt===undefined) p.bornAt=Date.now();
     if(p.intimacy===undefined) p.intimacy=0;
     if(p.avatar===undefined) p.avatar=null;
@@ -889,7 +1033,7 @@ function load(){
 }
 function save(){
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }
-  catch(e){ toast("⚠️ 存档写入失败（存储空间不足），进度可能无法保存！"); }
+  catch(e){ toast(t("save.error")); }
 }
 
 /* ============ 工具 ============ */
@@ -937,7 +1081,7 @@ let dragId=null, ghost=null, activePointer=null, startX=0, startY=0;
 function makeDraggable(el, id){
   el.addEventListener("pointerdown", ev=>{
     if(dragId) return;                       // 同一时刻只允许一个拖拽，防叠影
-    if(count(id)<=0){ toast(`${elName(id)} 已用完，再去合成一些吧`); return; }
+    if(count(id)<=0){ toast(t("craft.usedUp",elName(id))); return; }
     ev.preventDefault();
     activePointer=ev.pointerId;
     dragId=id;
@@ -1007,7 +1151,7 @@ function setSlot(slot, id){
 function clearSlots(){
   selA=selB=null;
   [["#slotA",selA],["#slotB",selB]].forEach(([s])=>{
-    const el=$(s); el.innerHTML='<span class="lbl">点击元素</span>'; delete el.dataset.filled;
+    const el=$(s); el.innerHTML='<span class="lbl">'+t('slot.hint')+'</span>'; delete el.dataset.filled;
   });
 }
 function updateCraftBtn(){
@@ -1047,7 +1191,7 @@ document.querySelectorAll(".slot").forEach(function(el){
     if(this.dataset.filled && !dragId){
       delete this.dataset.filled;
       if(this.id==="slotA") selA=null; else selB=null;
-      this.innerHTML='<span class="lbl">点击元素</span>';
+      this.innerHTML='<span class="lbl">'+t('slot.hint')+'</span>';
       updateCraftBtn();
     }
   });
@@ -1060,7 +1204,7 @@ $("#craftBtn").addEventListener("click", ()=>{
   const recipe = R.find(r=>(r[0]===selA&&r[1]===selB)||(r[0]===selB&&r[1]===selA));
   const res=$("#result");
   if(!recipe){
-    res.innerHTML=`<span style="color:var(--dim)">❌ 无效组合，换个思路试试</span>`;
+    res.innerHTML=t("craft.invalid");
     $("#slots").classList.add("shake");
     setTimeout(()=>$("#slots").classList.remove("shake"),400);
     clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2000);
@@ -1082,15 +1226,15 @@ $("#craftBtn").addEventListener("click", ()=>{
     else{S.unlocked[out]=(S.unlocked[out]||0)+1;}
     done++;
   }
-  if(done===0){toast(`${elName(selA)} 或 ${elName(selB)} 数量不够`);return;}
+  if(done===0){toast(t("craft.notEnough",elName(selA),elName(selB)));return;}
   let ot=ELEMENTS[out].i+" "+elName(out);
-  if(out==="coin")ot+="（+"+coinGain+"金币）";
-  else if(out==="chest")ot+="（+"+(chestGain*10)+"金币）";
-  else if(out==="life")ot+=` <small style="color:var(--ok)">生命值 ${cost}</small>`;
+  if(out==="coin")ot+=t("craft.coinGain",coinGain);
+  else if(out==="chest")ot+=t("craft.chestGain",chestGain*10);
+  else if(out==="life")ot+=` <small style="color:var(--ok)">${t("craft.lifeHp",cost)}</small>`;
   if(done>1)ot="×"+done+" "+ot;
-  if(done<wantN)ot+=` <small style="color:var(--dim)">（原料不足，只合成${done}/${wantN}）</small>`;
+  if(done<wantN)ot+=` <small style="color:var(--dim)">${t("craft.partial",done,wantN)}</small>`;
   res.innerHTML=`<span class="pop">${ot}</span>`;
-  if(isNew&&done>0){res.innerHTML=`<span class="new pop">🎉 新元素！</span> ${res.innerHTML}`;toast(`🎉 发现新元素：${elName(out)} ${ELEMENTS[out].i}`);}
+  if(isNew&&done>0){res.innerHTML=`<span class="new pop">${t("craft.newBadge")}</span> ${res.innerHTML}`;toast(t("craft.newElement",elName(out),ELEMENTS[out].i));}
   clearTimeout(resultTimer);resultTimer=setTimeout(clearResult,2500);
   clearSlots();updateCraftBtn();
   renderAll();save();
@@ -1104,7 +1248,7 @@ function renderElShop(){
   const box=$("#elShop");
   if(!box) return;
   const ids=Object.keys(S.unlocked).filter(k=>ELEMENTS[k] && shopSellable(k)).sort((a,b)=>tierOf(a)-tierOf(b));
-  if(!ids.length){ box.innerHTML=`<span style="color:var(--dim);font-size:12px">还没有可买元素</span>`; return; }
+  if(!ids.length){ box.innerHTML=`<span style="color:var(--dim);font-size:12px">${t("shop.empty")}</span>`; return; }
   const mx=batchMax();
   box.innerHTML="";
   ids.forEach(id=>{
@@ -1134,11 +1278,11 @@ function renderElShop(){
     btn.addEventListener("click",()=>{
       const n = qty ? Math.max(1,Math.min(+qty.max||1,Math.floor(+qty.value)||1)) : 1;
       const total=price*n;
-      if(S.coin<total){ toast(`💰 金币不足（需要 ${total}）`); return; }
+      if(S.coin<total){ toast(t("shop.noCoin",total)); return; }
       S.coin-=total;
       S.unlocked[id]=(S.unlocked[id]||0)+n;
       if(id==="life"){ for(let i=0;i<n;i++) S.lifePool.push(tierOf("life")); }
-      toast(`🛒 购买了 ${e.i}${e.n} ×${n}（-💰${total}）`);
+      toast(t("shop.bought",e.i+elName(id),n,total));
       renderAll(); save();
     });
     // 初始按钮状态
@@ -1155,12 +1299,12 @@ function intimacyBonus(intimacy){ return intimacyLevel(intimacy)*0.5; } // 每�
 function formatBornTime(ts){
   const diff=Date.now()-(ts||Date.now());
   const mins=Math.floor(diff/60000);
-  if(mins<1) return "刚刚出生";
-  if(mins<60) return `${mins}分钟前出生`;
+  if(mins<1) return t("pet.bornJust");
+  if(mins<60) return t("pet.bornMin",mins);
   const hrs=Math.floor(mins/60);
-  if(hrs<24) return `${hrs}小时前出生`;
+  if(hrs<24) return t("pet.bornHour",hrs);
   const days=Math.floor(hrs/24);
-  return `${days}天前出生`;
+  return t("pet.bornDay",days);
 }
 const PET_NAMES=["小橘","旺财","咪咪","豆豆","球球","毛毛","团团","圆圆","贝贝","乐乐","欢欢","喜喜","福福","禄禄","寿寿","奶茶","布丁","果冻","棉花糖","巧克力","芝麻","花生","核桃","杏仁","腰果","栗子","松果","蘑菇","草莓","樱桃","葡萄","西瓜","桃子","橘子","柠檬","芒果","菠萝","椰子","榴莲","火龙果","猕猴桃","蓝莓","黑莓","树莓","蔓越莓","圣女果","小南瓜","小黄瓜","小萝卜","小白菜","小菠菜","小芹菜","小韭菜","小香菜","小葱","小蒜","小姜","小辣椒","小胡椒","小花椒","小八角","小桂皮","小香叶","小薄荷","小迷迭香","小罗勒","小牛至","小百里香","小洋甘菊","小薰衣草","小玫瑰","小茉莉","小桂花","小梅花","小兰花","小菊花","小荷花","小桃花","小杏花","小梨花","小樱花","小枫叶","小银杏","小松柏","小杨柳","小槐树","小樟树","小榕树","小棕榈","仙人掌","小多肉","小绿萝","小吊兰","小虎皮兰","小龟背竹","小琴叶榕","小天堂鸟","小发财树","小金钱树","小平安树","小幸福树","小鸿运当头","小一帆风顺","小节节高","小年年有余","小吉祥如意","小心想事成","小万事如意","小福星高照","小财源广进","小生意兴隆","小学业有成","小工作顺利","小身体健康","小家庭和睦","小友谊长存","小爱情甜蜜","小事业腾飞","小梦想成真","小未来可期","小前程似锦","小鹏程万里","小大展宏图","小马到成功","小旗开得胜","小势如破竹","小乘风破浪","小披荆斩棘","小勇往直前","小无所畏惧","小坚忍不拔","小锲而不舍","小持之以恒","小坚持不懈","小水滴石穿","小绳锯木断","小磨杵成针","小愚公移山","小精卫填海","小夸父逐日","小女娲补天","小嫦娥奔月","小后羿射日","小盘古开天","小神农尝百草","小伏羲画八卦","小黄帝战蚩尤","小大禹治水","小商汤灭夏","小武王伐纣","小春秋五霸","小战国七雄","小秦灭六国","小楚汉相争","小三国鼎立","小魏晋南北朝","小隋唐演义","小五代十国","小宋元明清","小辛亥革命","小五四运动","小抗日战争","小解放战争","小新中国成立","小改革开放","小小康社会","小中国梦","小民族复兴","小国家富强","小人民幸福","小社会和谐","小世界和平","小人类命运共同体","小可持续发展","小绿水青山","小金山银山","小节能减排","小碳中和","小碳达峰","小新能源","小太阳能","小风能","小水能","小核能","小氢能","小生物质能","小地热能","小海洋能","小潮汐能","小波浪能","小温差能","小盐差能"];
 function randomPetName(){ return PET_NAMES[Math.floor(Math.random()*PET_NAMES.length)]; }
@@ -1180,18 +1324,17 @@ function renderPets(){
   const n=count("life");
   // 顶部：生命与孕育
   let html=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
-  html+=`🧬生命 ×${n}${n>0?`｜最高生命值 <b style="color:var(--ok)">${bestLifeHp()}</b>（${MAX_LIFE_HP} 满级，1/100 出 🐼）`:''}<br>`;
-  if(hasB("hut")){
-    html+=`<button id="hatchBtn" ${n>0?"":"disabled style='opacity:.4;cursor:not-allowed'"} style="margin-top:6px;background:linear-gradient(135deg,#4cd97b,#2aa858);border:none;color:#fff;border-radius:8px;padding:8px 20px;font-size:14px;cursor:pointer;font-weight:700;">🐾 孕育宠物（消耗1个🧬）</button>`;
+  html+=`🧬生命 ×${n}${n>0?`｜${LANG==="en"?"Max HP":"最高生命值"} <b style="color:var(--ok)">${bestLifeHp()}</b>（${MAX_LIFE_HP} ${LANG==="en"?"max, 1/100 for 🐼":"满级，1/100 出 🐼"}）`:''}<br>`;  if(hasB("hut")){
+    html+=`<button id="hatchBtn" ${n>0?"":"disabled style='opacity:.4;cursor:not-allowed'"} style="margin-top:6px;background:linear-gradient(135deg,#4cd97b,#2aa858);border:none;color:#fff;border-radius:8px;padding:8px 20px;font-size:14px;cursor:pointer;font-weight:700;">${t("life.hatchBtn")}（消耗1个🧬）</button>`;
   }else{
-    html+=`<span style="font-size:11px">🔒 需先建成 🏠小屋，宠物才有地方住</span>`;
+    html+=`<span style="font-size:11px">${t("pet.needHut")}</span>`;
   }
   html+=`</div>`;
   // 产出加成
-  html+=`<div style="font-size:12px;margin-bottom:10px">当前宠物加成：<b style="color:var(--gold)">+${petBonus()}%</b> 全镇金币产出（物种基础：猫兔+1% 狗牛+2% 马+3% 熊猫+5%，亲密度每级额外+0.5%，满级+5%）</div>`;
+  html+=`<div style="font-size:12px;margin-bottom:10px">${t("pet.bonus",petBonus())}</div>`;
   // 食物商店（需驿站）
   html+=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
-  html+=`<b style="font-size:13px">🍽️ 宠物口粮</b>${hasB("station")?"":" <span style='font-size:11px;color:var(--dim)'>🔒 需建 🛖宠物驿站</span>"}`;
+  html+=`<b style="font-size:13px">${t("pet.foodTitle")}</b>${hasB("station")?"":" <span style='font-size:11px;color:var(--dim)'>"+t("pet.needStation")+"</span>"}`;
   html+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">`;
   Object.entries(FOODS).forEach(([fid,f])=>{
     const own=S.food[fid]||0;
@@ -1217,7 +1360,7 @@ function renderPets(){
   // 宠物卡片
   list.innerHTML="";
   if(!S.petList.length){
-    list.innerHTML=`<span style="color:var(--dim);font-size:12px">还没有宠物${n>0&&hasB("hut")?"，点上方按钮孕育":""}</span>`;
+    list.innerHTML=`<span style="color:var(--dim);font-size:12px">${t("pet.empty",n>0&&hasB("hut")?t("pet.hatchHint"):"")}</span>`;
   }
   S.petList.forEach((p,idx)=>{
     const d=PETS.find(x=>x.id===p.id);
@@ -1270,47 +1413,47 @@ function renderPets(){
 }
 function hatch(){
   if(count("life")<1) return;
-  if(!hasB("hut")){ toast("🔒 先建一座 🏠小屋，宠物才有地方住"); return; }
-  if(!S.lifePool.length){ toast("🧬生命数据异常，请重新合成生命"); return; }
+  if(!hasB("hut")){ toast(t("pet.needHutToast")); return; }
+  if(!S.lifePool.length){ toast(t("pet.lifeError")); return; }
   const maxHp=Math.max(...S.lifePool);
   S.lifePool.splice(S.lifePool.indexOf(maxHp),1);
   S.unlocked.life--;
   const pid=rollPet(maxHp);
   const d=PETS.find(x=>x.id===pid);
   const defaultName=randomPetName();
-  const name=prompt(`${LANG==="en"?"Name your "+d.i+petName(d)+" (max 15 chars):":"给你的"+d.i+petName(d)+"起个名字吧（最多15个字符）："}（最多15个字符）：`, defaultName);
+  const name=prompt(t("pet.namePrompt",d.i+petName(d)), defaultName);
   const petName=(name&&name.trim())?name.trim().slice(0,15):defaultName;
   S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false, name:petName, bornAt:Date.now(), intimacy:0, avatar:null});
-  if(pid==="panda") toast(`🎊 传说降临！满级生命孕育出 🐼${petName}！！`);
-  else toast(`🐾 孕育出 ${d.i}${petName}（HP ${maxHp}，基础+${d.bonus}% 加成）`);
+  if(pid==="panda") toast(t("pet.pandaBorn",petName));
+  else toast(t("pet.born",d.i+petName,maxHp,d.bonus));
   renderAll(); save();
 }
 function feedPet(idx){
   const p=S.petList[idx]; if(!p||p.sick) return;
   const d=PETS.find(x=>x.id===p.id);
-  if((S.food[d.food]||0)<1){ toast(`缺 ${FOODS[d.food].i}${FOODS[d.food].n}，去驿站买`); return; }
+  if((S.food[d.food]||0)<1){ toast(t("pet.noFood",FOODS[d.food].i+foodName(FOODS[d.food]))); return; }
   S.food[d.food]--;
   p.sat=Math.min(100, p.sat+40);
   p.intimacy=Math.min(100, (p.intimacy||0)+2);
   const lvl=intimacyLevel(p.intimacy);
-  toast(`🍽️ ${p.name} 吃了 ${FOODS[d.food].i}（饱食${p.sat}，亲密度+2 → Lv.${lvl}）`);
+  toast(t("pet.ate",p.name,FOODS[d.food].i,p.sat,lvl));
   renderAll(); save();
 }
 function interactPet(idx){
   const p=S.petList[idx]; if(!p||p.sick) return;
   const today=new Date().toDateString();
   if(p.interactDate!==today){ p.interactDate=today; p.interactCount=0; }
-  if((p.interactCount||0)>=3){ toast(`💕 ${p.name} 今天已经互动够了，明天再来吧`); return; }
+  if((p.interactCount||0)>=3){ toast(t("pet.interactMax",p.name)); return; }
   p.interactCount=(p.interactCount||0)+1;
   p.intimacy=Math.min(100, (p.intimacy||0)+5);
   const lvl=intimacyLevel(p.intimacy);
-  toast(`💕 跟 ${p.name} 玩耍了一会儿（亲密度+5 → Lv.${lvl}，今天${p.interactCount}/3次）`);
+  toast(t("pet.interacted",p.name,lvl,p.interactCount));
   renderAll(); save();
 }
 function renamePet(idx){
   const p=S.petList[idx]; if(!p) return;
-  const name=prompt(`给 ${p.name} 改个名字（最多15个字符）：`, p.name);
-  if(name&&name.trim()){ p.name=name.trim().slice(0,15); toast(`✏️ 改名为 ${p.name}`); renderAll(); save(); }
+  const name=prompt(t("pet.renamePrompt",p.name), p.name);
+  if(name&&name.trim()){ p.name=name.trim().slice(0,15); toast(t("pet.renamed",p.name)); renderAll(); save(); }
 }
 let selectedPetIdx=null;
 function openPetDetail(idx){ selectedPetIdx=idx; renderPetDetail(); $("#petDetailOverlay").classList.add("show"); }
@@ -1736,7 +1879,7 @@ function renderShop(){
   if(mapUnlocked()){
     const bar=document.createElement("div");
     bar.className="shopBar";
-    if(selectedPlot){const r=regionOf(selectedPlot.region);bar.innerHTML=`📍 已选地块：<b style="color:var(--gold)">${r.i}${regName(r)}</b>（成本×${r.cm} 产出×${r.im}）—— 在地图上点其他空地切换`;}
+    if(selectedPlot){const r=regionOf(selectedPlot.region);bar.innerHTML=t("town.selectedBar",r.i,regName(r),r.cm,r.im);}
     else if(moveMode){bar.innerHTML=`🏗️ 移动模式：在地图上点一块 🟫 空地移入建筑`;}
     else{bar.innerHTML=`👆 先在地图上点一块 🟫 空地（或 🔒 买地），再选建筑建造`;}
     box.appendChild(bar);
@@ -1756,7 +1899,7 @@ function renderShop(){
     const incPer=buildingIncome(b);
     const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:k==="chest"?S.chest:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?elName(k):"金币"}×${v}</span>`;}).join("");
     const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked());
-    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">已建 ${built} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>建造</button>`;
+    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
   });
@@ -1816,7 +1959,7 @@ function startMove(region,index){
 function completeMove(toRegion,toIndex){
   if(!moveMode) return;
   const plots=S.plots[toRegion];
-  if(!plots||plots[toIndex]!==null){ toast("只能移到 🟫 空地"); moveMode=null; renderAll(); return; }
+  if(!plots||plots[toIndex]!==null){ toast(t("town.onlyEmpty")); moveMode=null; renderAll(); return; }
   const {fromRegion,fromIndex,bid}=moveMode;
   S.plots[fromRegion][fromIndex]=null;
   S.plots[toRegion][toIndex]=bid;
@@ -1828,7 +1971,7 @@ function demolishPlot(region,index){
   const plots=S.plots[region];
   if(!plots||!plots[index]) return;
   const bid=plots[index], b=BUILDINGS.find(x=>x.id===bid);
-  if(!confirm(`确定拆除 ${b?b.i:""}${b?bldName(b):bid}？退还 50% 建造成本`)) return;
+  if(!confirm(t("town.demolishConfirm",(b?b.i:"")+(b?bldName(b):bid)))) return;
   // 退还50%（按当前区域成本系数估算）
   const cost=regionCost(b,region);
   Object.entries(cost).forEach(([k,v])=>{
@@ -1839,7 +1982,7 @@ function demolishPlot(region,index){
   });
   S.plots[region][index]=null;
   S.buildings[bid]=Math.max(0,(S.buildings[bid]||0)-1);
-  toast(`💥 拆除了${b?bldName(b):bid}（退还50%材料）`);
+  toast(t("town.demolished",b?bldName(b):bid));
   renderAll(); save();
 }
 
@@ -1877,11 +2020,12 @@ function tick(){
 
 /* ============ 重置 ============ */
 function doReset(){
-  if(confirm("确定重置全部进度吗？不可恢复。")){
+  if(confirm(t("reset.confirm"))){
     localStorage.removeItem(SAVE_KEY);
     S=fresh(); clearSlots(); renderAll();
-    $("#introOverlay").classList.add("show");
+    updateIntroLang(); updateDrawLang();
     $("#settingsOverlay").classList.remove("show");
+    $("#introOverlay").classList.add("show");
   }
 }
 $("#resetBtn").addEventListener("click", doReset);
