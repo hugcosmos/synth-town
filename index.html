@@ -56,8 +56,8 @@
     background:linear-gradient(180deg,rgba(12,8,26,.20),rgba(12,8,26,.50));
   }
   header{
-    padding:8px 60px 6px; background:rgba(20,14,40,.7); border-bottom:1px solid var(--line);
-    position:sticky; top:0; z-index:10; backdrop-filter:blur(6px);
+    padding:8px 60px 6px; background:transparent; border-bottom:none;
+    position:sticky; top:0; z-index:10; backdrop-filter:blur(10px);
   }
   .hdr-top{display:flex; justify-content:center; align-items:center;}
   .hdr-top h1{font-size:17px; font-weight:700; letter-spacing:1.5px; margin:0;}
@@ -70,12 +70,12 @@
   }
   .stat b{color:var(--gold); font-weight:700; font-variant-numeric:tabular-nums;}
   .hdr-actions{display:flex; gap:6px; flex-shrink:0;}
-  #resetBtn,#settingsBtn,#langBtn{
+  #resetBtn,#settingsBtn,#langBtn,#recipeBtn{
     background:none; border:1px solid var(--line); color:var(--dim); border-radius:14px;
     padding:4px 12px; font-size:12px; font-weight:500; cursor:pointer; white-space:nowrap;
     transition:all .15s;
   }
-  #resetBtn:hover,#settingsBtn:hover,#langBtn:hover{color:var(--text); border-color:var(--gold);}
+  #resetBtn:hover,#settingsBtn:hover,#langBtn:hover,#recipeBtn:hover{color:var(--text); border-color:var(--gold);}
 
   main{
     flex:1; padding:14px 18px; width:100%; max-width:1200px; margin:0 auto;
@@ -239,6 +239,66 @@
     padding:4px 10px; font-size:12px; cursor:pointer;
   }
   #settingsBtn:hover{color:var(--text);}
+  /* 配方书 */
+  #recipeOverlay{
+    position:fixed; inset:0; background:rgba(12,8,26,.88); z-index:1003;
+    display:none; align-items:center; justify-content:center; padding:16px;
+  }
+  #recipeOverlay.show{display:flex;}
+  .recipeBook{
+    display:flex; max-width:680px; width:100%; max-height:88vh;
+    background:linear-gradient(135deg,#8b6914,#a67c00); border-radius:8px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6), inset 0 0 30px rgba(0,0,0,.3);
+    overflow:hidden; position:relative;
+  }
+  .bookSpine{
+    width:24px; background:linear-gradient(90deg,#5c4a0e,#8b6914,#5c4a0e);
+    border-right:2px solid rgba(0,0,0,.3); position:relative; flex-shrink:0;
+  }
+  .bookSpine::before{content:""; position:absolute; top:0; left:0; right:0; height:100%;
+    background:repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(0,0,0,.1) 8px,rgba(0,0,0,.1) 9px);}
+  .bookPage{
+    flex:1; background:linear-gradient(180deg,#f5ecd7,#ede0c0);
+    padding:20px 24px; overflow-y:auto; color:#3a2a00; position:relative;
+  }
+  .bookPage::before{content:""; position:absolute; top:0; left:0; right:0; bottom:0;
+    background:radial-gradient(ellipse at 30% 20%,rgba(139,105,20,.08),transparent 60%); pointer-events:none;}
+  .bookHeader{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; position:relative; z-index:1;}
+  .bookHeader h2{margin:0; font-size:20px; font-weight:700; color:#5c4a0e; letter-spacing:1px;}
+  .bookClose{background:none; border:none; font-size:18px; cursor:pointer; color:#8b6914; padding:4px 8px; border-radius:4px;}
+  .bookClose:hover{background:rgba(139,105,20,.15);}
+  .lockCard{
+    background:rgba(255,255,255,.6); border:1px solid rgba(139,105,20,.3); border-radius:10px;
+    padding:14px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px; position:relative; z-index:1;
+    transition:all .2s;
+  }
+  .lockCard.unlocked{background:rgba(76,217,123,.15); border-color:rgba(76,217,123,.4);}
+  .lockCard.locked{opacity:.5; filter:grayscale(.5);}
+  .lockIcon{font-size:28px; flex-shrink:0;}
+  .lockInfo{flex:1; min-width:0;}
+  .lockTitle{font-size:14px; font-weight:700; color:#5c4a0e;}
+  .lockDesc{font-size:11px; color:#8b6914; margin-top:2px;}
+  .lockInput{display:flex; gap:6px; flex-shrink:0;}
+  .lockInput input{padding:6px 10px; border:2px solid rgba(139,105,20,.5); border-radius:8px;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.9) 0,rgba(255,255,255,.9) 26px,rgba(139,105,20,.15) 26px,rgba(139,105,20,.15) 27px);
+    color:#3a2a00; font-size:16px; font-weight:700; text-align:center; letter-spacing:14px; font-family:"Courier New",monospace;
+    text-indent:7px; outline:none;}
+  #basicPwd{width:116px;}
+  #advancedPwd{width:168px;}
+  .lockInput input:disabled{opacity:.4; cursor:not-allowed;}
+  .lockInput button{background:linear-gradient(135deg,#8b6914,#a67c00); border:none; color:#fff;
+    border-radius:6px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;}
+  .lockInput button:disabled{opacity:.4; cursor:not-allowed;}
+  .lockInput button:hover:not(:disabled){transform:translateY(-1px); box-shadow:0 2px 8px rgba(139,105,20,.4);}
+  .recipeTierGroup{margin-bottom:16px; position:relative; z-index:1;}
+  .recipeTierTitle{font-size:13px; font-weight:700; color:#8b6914; margin-bottom:8px;
+    padding-bottom:4px; border-bottom:1px dashed rgba(139,105,20,.3);}
+  .recipeList{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:6px;}
+  .recipeItem{background:rgba(255,255,255,.5); border:1px solid rgba(139,105,20,.2); border-radius:6px;
+    padding:6px 8px; font-size:12px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;}
+  .recipeItem .plus{color:#8b6914; font-weight:700;}
+  .recipeItem .arrow{color:#a67c00; font-weight:700;}
+  .recipeItem .result{font-weight:700; color:#5c4a0e;}
   #settingsOverlay{
     position:fixed; inset:0; background:rgba(12,8,26,.85); z-index:1002;
     display:none; align-items:center; justify-content:center; padding:20px;
@@ -421,7 +481,7 @@
     .hdr-top{display:none;} /* 移动端隐藏标题 */
     .hdr-bottom{flex-direction:column; gap:6px; margin-top:0;}
     .hdr-actions{justify-content:center; gap:8px; order:1;}
-    #resetBtn,#settingsBtn,#langBtn{
+    #resetBtn,#settingsBtn,#langBtn,#recipeBtn{
       padding:4px 12px; font-size:12px; font-weight:500;
       border-radius:14px; letter-spacing:0.3px;
     }
@@ -452,6 +512,7 @@
   <div class="hdr-bottom">
     <div class="stats" id="stats"></div>
     <div class="hdr-actions">
+      <button id="recipeBtn" title="配方书" data-i18n="btn.recipe">🔮 配方</button>
       <button id="resetBtn" data-i18n="btn.reset">重置</button>
       <button id="langBtn" onclick="toggleLang()" title="切换语言" data-i18n="lang.toggle">🌐 EN</button>
       <button id="settingsBtn" data-i18n="btn.settings">⚙️ 设置</button>
@@ -522,6 +583,45 @@
 <div id="toast"></div>
 <button id="npcBtn" title="">🧙‍♂️</button>
 
+<div id="recipeOverlay">
+  <div class="recipeBook">
+    <div class="bookSpine"></div>
+    <div class="bookPage">
+      <div class="bookHeader">
+        <h2 data-i18n="recipe.title">📖 炼金配方书</h2>
+        <button id="recipeCloseBtn" class="bookClose">✕</button>
+      </div>
+      <div id="recipeLocks">
+        <div class="lockCard" id="basicLockCard">
+          <div class="lockIcon">🔒</div>
+          <div class="lockInfo">
+            <div class="lockTitle" data-i18n="recipe.basicTitle">基础配方（1-3级）</div>
+            <div class="lockDesc" data-i18n="recipe.basicDesc">输入密码解锁所有3级及以下配方</div>
+          </div>
+          <div class="lockInput">
+            <input type="password" id="basicPwd" placeholder="••••" maxlength="4">
+            <button id="basicUnlockBtn" data-i18n="recipe.unlock">解锁</button>
+          </div>
+        </div>
+        <div class="lockCard locked" id="advancedLockCard">
+          <div class="lockIcon">🔐</div>
+          <div class="lockInfo">
+            <div class="lockTitle" data-i18n="recipe.advancedTitle">高级配方（4级及以上）</div>
+            <div class="lockDesc" data-i18n="recipe.advancedDesc">解锁基础配方后出现，输入密码解锁高级配方</div>
+          </div>
+          <div class="lockInput">
+            <input type="password" id="advancedPwd" placeholder="••••••" maxlength="6" disabled>
+            <button id="advancedUnlockBtn" data-i18n="recipe.unlock" disabled>解锁</button>
+          </div>
+        </div>
+      </div>
+      <div id="recipeContent" style="display:none">
+        <div id="recipeBasicSection"></div>
+        <div id="recipeAdvancedSection" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="settingsOverlay">
   <div id="settingsBox">
     <h2 data-i18n="settings.title">⚙️ 设置</h2>
@@ -773,8 +873,9 @@ const I18N = {
     "tab.craft":"⚗️ 合成", "tab.town":"🗺️ 小镇", "tab.shop":"🛒 商店", "tab.pet":"🐾 宠物",
     "panel.elements":"元素库（点一下填入合成槽）",
     "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园",
-    "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭",
+    "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭", "btn.recipe":"🔮 配方",
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
+    "recipe.title":"📖 炼金配方书", "recipe.basicTitle":"基础配方（1-3级）", "recipe.basicDesc":"输入密码解锁所有3级及以下配方", "recipe.advancedTitle":"高级配方（4级及以上）", "recipe.advancedDesc":"解锁基础配方后出现，输入密码解锁高级配方", "recipe.unlock":"解锁", "recipe.unlocked":"✅ 已解锁", "recipe.wrongPwd":"❌ 密码错误", "recipe.tier":"{0}级配方",
     "btn.export":"📤 导出存档为文件", "btn.import":"📥 导入存档", "btn.resetSave":"🗑️ 重置存档",
     "btn.bgUpload":"📷 上传背景图片", "btn.bgReset":"↩️ 移除自定义背景",
     "settings.bgResetConfirm":"确定移除自定义背景？",
@@ -911,8 +1012,9 @@ const I18N = {
     "tab.craft":"⚗️ Craft", "tab.town":"🗺️ Town", "tab.shop":"🛒 Shop", "tab.pet":"🐾 Pets",
     "panel.elements":"Elements (tap to fill slot)",
     "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden",
-    "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close",
+    "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close", "btn.recipe":"🔮 Recipe",
     "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
+    "recipe.title":"📖 Alchemy Recipe Book", "recipe.basicTitle":"Basic Recipes (Tier 1-3)", "recipe.basicDesc":"Enter password to unlock all tier 3 and below recipes", "recipe.advancedTitle":"Advanced Recipes (Tier 4+)", "recipe.advancedDesc":"Appears after unlocking basic recipes, enter password to unlock advanced", "recipe.unlock":"Unlock", "recipe.unlocked":"✅ Unlocked", "recipe.wrongPwd":"❌ Wrong password", "recipe.tier":"Tier {0} Recipes",
     "btn.export":"📤 Export Save", "btn.import":"📥 Import Save", "btn.resetSave":"🗑️ Reset Save",
     "btn.bgUpload":"📷 Upload Background", "btn.bgReset":"↩️ Remove Background",
     "btn.packUpload":"📂 Upload theme.json", "btn.packReset":"↩️ Reset to Default",
@@ -1794,6 +1896,93 @@ async function importPack(pack){
   if(!count) throw new Error("没有可用素材（检查 id 与图片格式）");
   return count;
 }
+
+/* ============ 配方书 ============ */
+const RECIPE_KEY = "synth-town-recipe-unlock";
+const BASIC_PWD = "1986";
+const ADVANCED_PWD = "cosmos";
+function getRecipeUnlock(){ try{ return JSON.parse(localStorage.getItem(RECIPE_KEY))||{basic:false,advanced:false}; }catch(e){ return {basic:false,advanced:false}; } }
+function setRecipeUnlock(s){ try{ localStorage.setItem(RECIPE_KEY, JSON.stringify(s)); }catch(e){} }
+function renderRecipeBook(){
+  const u=getRecipeUnlock();
+  const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard");
+  const basicPwd=$("#basicPwd"), basicBtn=$("#basicUnlockBtn");
+  const advPwd=$("#advancedPwd"), advBtn=$("#advancedUnlockBtn");
+  const locks=$("#recipeLocks"), content=$("#recipeContent");
+  // 基础锁状态
+  if(u.basic){
+    basicCard.style.display="none";
+  }else{
+    basicCard.style.display="flex";
+    basicCard.classList.remove("unlocked");
+    basicCard.querySelector(".lockIcon").textContent="🔒";
+    basicPwd.style.display=""; basicBtn.style.display="";
+    basicCard.querySelector(".lockDesc").textContent=t("recipe.basicDesc");
+  }
+  // 高级锁状态：基础解锁后才显示
+  if(u.basic && !u.advanced){
+    advCard.style.display="flex";
+    advCard.classList.remove("locked","unlocked");
+    advCard.querySelector(".lockIcon").textContent="🔐";
+    advPwd.disabled=false; advBtn.disabled=false;
+    advPwd.style.display=""; advBtn.style.display="";
+    advCard.querySelector(".lockDesc").textContent=t("recipe.advancedDesc");
+  }else if(u.advanced){
+    advCard.style.display="none";
+  }else{
+    advCard.style.display="none";
+  }
+  // 配方内容：解锁任意一级就显示
+  if(u.basic||u.advanced){
+    content.style.display="block";
+    renderRecipes(u);
+  }else{
+    content.style.display="none";
+  }
+}
+function renderRecipes(u){
+  const basicSec=$("#recipeBasicSection"), advSec=$("#recipeAdvancedSection");
+  // 按输出元素的层级分组
+  const byTier={};
+  R.forEach(([a,b,out])=>{
+    if(out==="coin"||out==="chest") return;
+    const t=tierOf(out);
+    if(!byTier[t]) byTier[t]=[];
+    byTier[t].push([a,b,out]);
+  });
+  const tiers=Object.keys(byTier).sort((a,b)=>a-b);
+  let basicHtml="", advHtml="";
+  tiers.forEach(tier=>{
+    const isBasic=tier<=3;
+    if(isBasic&&!u.basic) return;
+    if(!isBasic&&!u.advanced) return;
+    let html=`<div class="recipeTierGroup"><div class="recipeTierTitle">${t("recipe.tier",tier)}</div><div class="recipeList">`;
+    byTier[tier].forEach(([a,b,out])=>{
+      const ea=ELEMENTS[a], eb=ELEMENTS[b], eo=ELEMENTS[out];
+      html+=`<div class="recipeItem"><span>${ea.i}</span><span class="plus">+</span><span>${eb.i}</span><span class="arrow">→</span><span class="result">${eo.i}${elName(out)}</span></div>`;
+    });
+    html+=`</div></div>`;
+    if(isBasic) basicHtml+=html; else advHtml+=html;
+  });
+  basicSec.innerHTML=basicHtml;
+  advSec.innerHTML=advHtml;
+  advSec.style.display=u.advanced?"block":"none";
+}
+$("#recipeBtn").addEventListener("click", ()=>{ renderRecipeBook(); $("#recipeOverlay").classList.add("show"); });
+$("#recipeCloseBtn").addEventListener("click", ()=>$("#recipeOverlay").classList.remove("show"));
+$("#recipeOverlay").addEventListener("click", e=>{ if(e.target.id==="recipeOverlay") $("#recipeOverlay").classList.remove("show"); });
+$("#basicUnlockBtn").addEventListener("click", ()=>{
+  const pwd=$("#basicPwd").value.trim();
+  if(pwd===BASIC_PWD){ const u=getRecipeUnlock(); u.basic=true; setRecipeUnlock(u); renderRecipeBook(); }
+  else{ toast(t("recipe.wrongPwd")); $("#basicPwd").value=""; }
+});
+$("#advancedUnlockBtn").addEventListener("click", ()=>{
+  const pwd=$("#advancedPwd").value.trim();
+  if(pwd===ADVANCED_PWD){ const u=getRecipeUnlock(); u.advanced=true; setRecipeUnlock(u); renderRecipeBook(); }
+  else{ toast(t("recipe.wrongPwd")); $("#advancedPwd").value=""; }
+});
+$("#basicPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#basicUnlockBtn").click(); });
+$("#advancedPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#advancedUnlockBtn").click(); });
 
 /* ============ 设置面板 ============ */
 $("#settingsBtn").addEventListener("click", ()=>{
