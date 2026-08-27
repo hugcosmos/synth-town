@@ -55,22 +55,24 @@
     background:linear-gradient(180deg,rgba(12,8,26,.20),rgba(12,8,26,.50));
   }
   header{
-    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    padding:12px 18px; background:rgba(20,14,40,.7); border-bottom:1px solid var(--line);
+    padding:8px 60px 6px; background:rgba(20,14,40,.7); border-bottom:1px solid var(--line);
     position:sticky; top:0; z-index:10; backdrop-filter:blur(6px);
   }
-  header h1{font-size:18px; letter-spacing:1px;}
-  .stats{display:flex; gap:8px; flex-wrap:wrap; margin-left:auto;}
+  .hdr-top{display:flex; justify-content:center; align-items:center;}
+  .hdr-top h1{font-size:16px; letter-spacing:1px; margin:0;}
+  .hdr-bottom{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px;}
+  .stats{display:flex; gap:6px; flex-wrap:wrap; margin-left:0; flex:1; overflow-x:auto;}
   .stat{
-    background:var(--panel); border:1px solid var(--line); border-radius:20px;
-    padding:4px 12px; font-size:14px; white-space:nowrap;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:3px 10px; font-size:12px; white-space:nowrap;
   }
   .stat b{color:var(--gold);}
-  #resetBtn{
-    background:none; border:1px solid var(--line); color:var(--dim); border-radius:20px;
-    padding:4px 10px; font-size:12px; cursor:pointer;
+  .hdr-actions{display:flex; gap:6px; flex-shrink:0;}
+  #resetBtn,#settingsBtn{
+    background:none; border:1px solid var(--line); color:var(--dim); border-radius:16px;
+    padding:3px 10px; font-size:12px; cursor:pointer; white-space:nowrap;
   }
-  #resetBtn:hover{color:var(--text);}
+  #resetBtn:hover,#settingsBtn:hover{color:var(--text); border-color:var(--gold);}
 
   main{
     flex:1; padding:14px 18px; width:100%; max-width:1200px; margin:0 auto;
@@ -245,6 +247,25 @@
   }
   #settingsBox h2{font-size:16px; margin-bottom:12px;}
   #settingsBox h3{font-size:13px; color:var(--gold); margin:14px 0 6px;}
+  #petDetailOverlay{
+    position:fixed; inset:0; background:rgba(12,8,26,.85); z-index:1003;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #petDetailOverlay.show{display:flex;}
+  #petDetailBox{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:380px; max-height:90vh; overflow-y:auto; padding:18px;
+  }
+  .pet-img{
+    width:38px;height:38px;border-radius:50%;object-fit:cover;
+    animation:petBounce 2.2s ease-in-out infinite;
+    border:1px solid rgba(255,255,255,.2);
+  }
+  @keyframes petBounce{
+    0%,100%{transform:translateY(0) rotate(0deg);}
+    25%{transform:translateY(-2px) rotate(-2deg);}
+    75%{transform:translateY(-2px) rotate(2deg);}
+  }
   .setBtn{
     display:block; width:100%; text-align:left; background:var(--panel2); border:1px solid var(--line);
     color:var(--text); border-radius:8px; padding:9px 12px; font-size:13px; cursor:pointer; margin-bottom:6px;
@@ -300,22 +321,23 @@
   }
   .compass{font-size:12px; color:var(--gold); letter-spacing:1px;}
   .mapGrid{
-    display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
-    border-radius:12px; overflow:hidden; border:1px solid var(--line);
+    display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+    border-radius:14px; padding:10px; background:rgba(0,0,0,.2);
   }
   .tile{
-    position:relative; min-height:90px; border-radius:8px; padding:8px 6px;
+    position:relative; min-height:120px; border-radius:10px; padding:10px 8px;
     cursor:pointer; transition:filter .15s, outline .15s, transform .12s;
-    display:flex; flex-direction:column; align-items:center; gap:3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
     outline:2px solid transparent;
-    border:1px solid rgba(255,255,255,.1);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 2px 8px rgba(0,0,0,.3);
   }
-  .tile:hover{filter:brightness(1.15); transform:translateY(-1px);}
-  .tile.sel{outline-color:var(--gold); box-shadow:0 0 12px rgba(255,215,94,.35), inset 0 1px 0 rgba(255,255,255,.08);}
-  .tileHd{display:flex; align-items:center; gap:4px;}
-  .tile .rn{font-size:12px; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,.6);}
-  .tile .rm{font-size:9px; opacity:.92; background:rgba(0,0,0,.35); padding:1px 6px; border-radius:8px; white-space:nowrap;}
+  .tile:hover{filter:brightness(1.15); transform:translateY(-2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 4px 16px rgba(0,0,0,.4);}
+  .tile.sel{outline-color:var(--gold); box-shadow:0 0 16px rgba(255,215,94,.4), inset 0 1px 0 rgba(255,255,255,.1);}
+  .tileHd{display:flex; align-items:center; gap:5px; margin-bottom:2px;}
+  .tile .rn{font-size:14px; font-weight:700; text-shadow:0 1px 3px rgba(0,0,0,.7);}
+  .tile .rm{font-size:10px; opacity:.95; background:rgba(0,0,0,.4); padding:2px 8px; border-radius:10px; white-space:nowrap;}
+  .tile .rdesc{font-size:9px; opacity:.8; margin-top:1px; text-shadow:0 1px 2px rgba(0,0,0,.6);}
   .tile .bld{
     display:grid; grid-template-columns:repeat(auto-fill,14px); gap:1px;
     justify-content:center; margin-top:2px; min-height:14px; width:100%;
@@ -374,10 +396,14 @@
 </head>
 <body>
 <header>
-  <h1>⚗️ 元素合成小镇</h1>
-  <div class="stats" id="stats"></div>
-  <button id="resetBtn">重置存档</button>
-  <button id="settingsBtn">⚙️ 设置</button>
+  <div class="hdr-top"><h1>⚗️ 元素合成小镇</h1></div>
+  <div class="hdr-bottom">
+    <div class="stats" id="stats"></div>
+    <div class="hdr-actions">
+      <button id="resetBtn">重置</button>
+      <button id="settingsBtn">⚙️ 设置</button>
+    </div>
+  </div>
 </header>
 
 <nav id="tabs">
@@ -474,6 +500,15 @@
 
     <div style="text-align:right;margin-top:10px">
       <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" id="settingsClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="petDetailOverlay">
+  <div id="petDetailBox">
+    <div id="petDetailContent"></div>
+    <div style="text-align:right;margin-top:12px;">
+      <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" onclick="closePetDetail()">关闭</button>
     </div>
   </div>
 </div>
@@ -697,6 +732,13 @@ function load(){
       for(let i=0;i<n;i++) s.petList.push({id, hp:5, maxHp:5, sat:100, sick:false});
     });
     if(s.petList.some(p=>p.maxHp===undefined)) s.petList.forEach(p=>{p.maxHp=p.maxHp||p.hp||5;});
+    // 宠物新字段迁移（起名/出生时辰/亲密度/头像）
+    s.petList.forEach(p=>{
+      if(p.name===undefined){ const d=PETS.find(x=>x.id===p.id); p.name=d?d.n:"宠物"; }
+      if(p.bornAt===undefined) p.bornAt=Date.now();
+      if(p.intimacy===undefined) p.intimacy=0;
+      if(p.avatar===undefined) p.avatar=null;
+    });
     s.pets={};
     // 地块系统迁移（旧档→新档）
     if(!s.plots || !Object.keys(s.plots).length){
@@ -989,12 +1031,26 @@ function renderElShop(){
 
 /* ============ 宠物系统 ============ */
 const hasB = id => (S.buildings[id]||0)>0;
+function intimacyLevel(intimacy){ return Math.min(10, Math.floor((intimacy||0)/10)); }
+function intimacyBonus(intimacy){ return intimacyLevel(intimacy)*0.5; } // 每级+0.5%，满级+5%
+function formatBornTime(ts){
+  const diff=Date.now()-(ts||Date.now());
+  const mins=Math.floor(diff/60000);
+  if(mins<1) return "刚刚出生";
+  if(mins<60) return `${mins}分钟前出生`;
+  const hrs=Math.floor(mins/60);
+  if(hrs<24) return `${hrs}小时前出生`;
+  const days=Math.floor(hrs/24);
+  return `${days}天前出生`;
+}
+const PET_NAMES=["小橘","旺财","咪咪","豆豆","球球","毛毛","团团","圆圆","贝贝","乐乐","欢欢","喜喜","福福","禄禄","寿寿","奶茶","布丁","果冻","棉花糖","巧克力","芝麻","花生","核桃","杏仁","腰果","栗子","松果","蘑菇","草莓","樱桃","葡萄","西瓜","桃子","橘子","柠檬","芒果","菠萝","椰子","榴莲","火龙果","猕猴桃","蓝莓","黑莓","树莓","蔓越莓","圣女果","小南瓜","小黄瓜","小萝卜","小白菜","小菠菜","小芹菜","小韭菜","小香菜","小葱","小蒜","小姜","小辣椒","小胡椒","小花椒","小八角","小桂皮","小香叶","小薄荷","小迷迭香","小罗勒","小牛至","小百里香","小洋甘菊","小薰衣草","小玫瑰","小茉莉","小桂花","小梅花","小兰花","小菊花","小荷花","小桃花","小杏花","小梨花","小樱花","小枫叶","小银杏","小松柏","小杨柳","小槐树","小樟树","小榕树","小棕榈","仙人掌","小多肉","小绿萝","小吊兰","小虎皮兰","小龟背竹","小琴叶榕","小天堂鸟","小发财树","小金钱树","小平安树","小幸福树","小鸿运当头","小一帆风顺","小节节高","小年年有余","小吉祥如意","小心想事成","小万事如意","小福星高照","小财源广进","小生意兴隆","小学业有成","小工作顺利","小身体健康","小家庭和睦","小友谊长存","小爱情甜蜜","小事业腾飞","小梦想成真","小未来可期","小前程似锦","小鹏程万里","小大展宏图","小马到成功","小旗开得胜","小势如破竹","小乘风破浪","小披荆斩棘","小勇往直前","小无所畏惧","小坚忍不拔","小锲而不舍","小持之以恒","小坚持不懈","小水滴石穿","小绳锯木断","小磨杵成针","小愚公移山","小精卫填海","小夸父逐日","小女娲补天","小嫦娥奔月","小后羿射日","小盘古开天","小神农尝百草","小伏羲画八卦","小黄帝战蚩尤","小大禹治水","小商汤灭夏","小武王伐纣","小春秋五霸","小战国七雄","小秦灭六国","小楚汉相争","小三国鼎立","小魏晋南北朝","小隋唐演义","小五代十国","小宋元明清","小辛亥革命","小五四运动","小抗日战争","小解放战争","小新中国成立","小改革开放","小小康社会","小中国梦","小民族复兴","小国家富强","小人民幸福","小社会和谐","小世界和平","小人类命运共同体","小可持续发展","小绿水青山","小金山银山","小节能减排","小碳中和","小碳达峰","小新能源","小太阳能","小风能","小水能","小核能","小氢能","小生物质能","小地热能","小海洋能","小潮汐能","小波浪能","小温差能","小盐差能"];
+function randomPetName(){ return PET_NAMES[Math.floor(Math.random()*PET_NAMES.length)]; }
 function petBonus(){
-  // 物种加成：健康且饱食度>50 的宠物生效，可叠加（猫兔+1% 狗牛+2% 马+3% 熊猫+5%）
+  // 物种加成 + 亲密度加成（每级+0.5%，满级+5%），健康且饱食度>50 时生效，可叠加
   return S.petList.reduce((s,p)=>{
     if(p.sick || p.sat<=50) return s;
     const d=PETS.find(x=>x.id===p.id);
-    return s+(d?d.bonus:0);
+    return s+(d?d.bonus:0)+intimacyBonus(p.intimacy);
   },0);
 }
 function hallBonus(){ return hasB("hall")?10:0; }
@@ -1013,7 +1069,7 @@ function renderPets(){
   }
   html+=`</div>`;
   // 产出加成
-  html+=`<div style="font-size:12px;margin-bottom:10px">当前宠物加成：<b style="color:var(--gold)">+${petBonus()}%</b> 全镇金币产出（健康且饱食度&gt;50 时按物种计：猫兔+1% 狗牛+2% 马+3% 熊猫+5%）</div>`;
+  html+=`<div style="font-size:12px;margin-bottom:10px">当前宠物加成：<b style="color:var(--gold)">+${petBonus()}%</b> 全镇金币产出（物种基础：猫兔+1% 狗牛+2% 马+3% 熊猫+5%，亲密度每级额外+0.5%，满级+5%）</div>`;
   // 食物商店（需驿站）
   html+=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
   html+=`<b style="font-size:13px">🍽️ 宠物口粮</b>${hasB("station")?"":" <span style='font-size:11px;color:var(--dim)'>🔒 需建 🛖宠物驿站</span>"}`;
@@ -1047,31 +1103,45 @@ function renderPets(){
   S.petList.forEach((p,idx)=>{
     const d=PETS.find(x=>x.id===p.id);
     const f=FOODS[d.food];
+    const lvl=intimacyLevel(p.intimacy);
+    const totalBonus=d.bonus+intimacyBonus(p.intimacy);
     const card=document.createElement("div");
-    card.style.cssText="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;margin-bottom:8px;";
-    const sickTag=p.sick?`<span style="color:#ff7a7a;font-weight:700">🤒生病中</span>`:"";
+    card.style.cssText="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;";
+    card.addEventListener("click",()=>openPetDetail(idx));
+    const sickTag=p.sick?`<span style="color:#ff7a7a;font-weight:700">🤒</span>`:"";
     const cureCost=(p.maxHp-p.hp)*2;
+    const avatarEl=p.avatar?`<img src="${p.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);">`:`<img src="assets/pets/${p.id}.png" class="pet-img" alt="${d.n}">`;
     card.innerHTML=`
-      <span style="font-size:34px">${assetHtml("pets",p.id,d.i,"38px")}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700">${d.n} ${sickTag} <small style="color:var(--gold)">+${d.bonus}%</small></div>
-        <div style="font-size:10px;color:var(--dim)">HP ${p.hp}/${p.maxHp}｜饱食 ${p.sat}｜吃 ${f.i}${f.n}</div>
-        <div style="height:5px;background:#00000055;border-radius:3px;margin-top:3px;overflow:hidden;display:flex">
+      ${avatarEl}
+      <div style="flex:1;min-width:0" onclick="event.stopPropagation()">
+        <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+          ${p.name} ${sickTag}
+          <span style="background:#ff7eb333;color:#ff7eb3;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700;">💕Lv.${lvl}</span>
+          <small style="color:var(--gold)">+${totalBonus}%</small>
+        </div>
+        <div style="font-size:10px;color:var(--dim)">${d.i}${d.n}｜${formatBornTime(p.bornAt)}｜吃${f.i}${f.n}</div>
+        <div style="height:4px;background:#00000055;border-radius:2px;margin-top:3px;overflow:hidden;display:flex">
           <div style="width:${p.hp/p.maxHp*100}%;background:${p.sick?'#ff7a7a':'#4cd97b'}"></div>
         </div>
-        <div style="height:5px;background:#00000055;border-radius:3px;margin-top:2px;overflow:hidden">
+        <div style="height:4px;background:#00000055;border-radius:2px;margin-top:2px;overflow:hidden">
           <div style="width:${p.sat}%;background:#ffd75e"></div>
         </div>
+        <div style="height:4px;background:#00000055;border-radius:2px;margin-top:2px;overflow:hidden">
+          <div style="width:${p.intimacy}%;background:linear-gradient(90deg,#ff7eb3,#ff758c)"></div>
+        </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        ${!p.sick?`<button data-feed="${idx}" ${(S.food[d.food]||0)>0?"":"disabled style='opacity:.4'"} style="background:#4cd97b;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700;">喂${f.i}</button>`:""}
-        ${(p.hp<p.maxHp)?`<button data-cure="${idx}" ${hasB("hospital")&&S.coin>=cureCost?"":"disabled style='opacity:.4'"} style="background:#7cc7ff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700;">🏥治疗💰${cureCost}</button>`:""}
-        ${!hasB("hospital")&&p.hp<p.maxHp?`<small style="font-size:9px;color:var(--dim)">需建🏥医院</small>`:""}
+      <div style="display:flex;flex-direction:column;gap:3px" onclick="event.stopPropagation()">
+        ${!p.sick?`<button data-feed="${idx}" ${(S.food[d.food]||0)>0?"":"disabled style='opacity:.4'"} style="background:#4cd97b;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700;">🍖喂</button>`:""}
+        ${!p.sick?`<button data-interact="${idx}" style="background:#ff7eb3;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700;">💕玩</button>`:""}
+        ${(p.hp<p.maxHp)?`<button data-cure="${idx}" ${hasB("hospital")&&S.coin>=cureCost?"":"disabled style='opacity:.4'"} style="background:#7cc7ff;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700;">🏥💰${cureCost}</button>`:""}
       </div>`;
     list.appendChild(card);
   });
   list.querySelectorAll("[data-feed]").forEach(b=>{
     b.addEventListener("click",()=>feedPet(+b.dataset.feed));
+  });
+  list.querySelectorAll("[data-interact]").forEach(b=>{
+    b.addEventListener("click",()=>interactPet(+b.dataset.interact));
   });
   list.querySelectorAll("[data-cure]").forEach(b=>{
     b.addEventListener("click",()=>curePet(+b.dataset.cure));
@@ -1080,16 +1150,18 @@ function renderPets(){
 function hatch(){
   if(count("life")<1) return;
   if(!hasB("hut")){ toast("🔒 先建一座 🏠小屋，宠物才有地方住"); return; }
-  // 消耗生命值最高的那个生命（自动用最好的机会）
   if(!S.lifePool.length){ toast("🧬生命数据异常，请重新合成生命"); return; }
   const maxHp=Math.max(...S.lifePool);
   S.lifePool.splice(S.lifePool.indexOf(maxHp),1);
   S.unlocked.life--;
   const pid=rollPet(maxHp);
   const d=PETS.find(x=>x.id===pid);
-  S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false});
-  if(pid==="panda") toast(`🎊 传说降临！满级生命孕育出 🐼熊猫！！`);
-  else toast(`🐾 孕育出 ${d.i}${d.n}（HP ${maxHp}，+${d.bonus}% 加成）`);
+  const defaultName=randomPetName();
+  const name=prompt(`给你的${d.i}${d.n}起个名字吧（最多15个字符）：`, defaultName);
+  const petName=(name&&name.trim())?name.trim().slice(0,15):defaultName;
+  S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false, name:petName, bornAt:Date.now(), intimacy:0, avatar:null});
+  if(pid==="panda") toast(`🎊 传说降临！满级生命孕育出 🐼${petName}！！`);
+  else toast(`🐾 孕育出 ${d.i}${petName}（HP ${maxHp}，基础+${d.bonus}% 加成）`);
   renderAll(); save();
 }
 function feedPet(idx){
@@ -1098,8 +1170,82 @@ function feedPet(idx){
   if((S.food[d.food]||0)<1){ toast(`缺 ${FOODS[d.food].i}${FOODS[d.food].n}，去驿站买`); return; }
   S.food[d.food]--;
   p.sat=Math.min(100, p.sat+40);
-  toast(`🍽️ ${d.i}${d.n} 吃了 ${FOODS[d.food].i}（饱食 ${p.sat}）`);
+  p.intimacy=Math.min(100, (p.intimacy||0)+2);
+  const lvl=intimacyLevel(p.intimacy);
+  toast(`🍽️ ${p.name} 吃了 ${FOODS[d.food].i}（饱食${p.sat}，亲密度+2 → Lv.${lvl}）`);
   renderAll(); save();
+}
+function interactPet(idx){
+  const p=S.petList[idx]; if(!p||p.sick) return;
+  const today=new Date().toDateString();
+  if(p.interactDate!==today){ p.interactDate=today; p.interactCount=0; }
+  if((p.interactCount||0)>=3){ toast(`💕 ${p.name} 今天已经互动够了，明天再来吧`); return; }
+  p.interactCount=(p.interactCount||0)+1;
+  p.intimacy=Math.min(100, (p.intimacy||0)+5);
+  const lvl=intimacyLevel(p.intimacy);
+  toast(`💕 跟 ${p.name} 玩耍了一会儿（亲密度+5 → Lv.${lvl}，今天${p.interactCount}/3次）`);
+  renderAll(); save();
+}
+function renamePet(idx){
+  const p=S.petList[idx]; if(!p) return;
+  const name=prompt(`给 ${p.name} 改个名字（最多15个字符）：`, p.name);
+  if(name&&name.trim()){ p.name=name.trim().slice(0,15); toast(`✏️ 改名为 ${p.name}`); renderAll(); save(); }
+}
+let selectedPetIdx=null;
+function openPetDetail(idx){ selectedPetIdx=idx; renderPetDetail(); $("#petDetailOverlay").classList.add("show"); }
+function closePetDetail(){ $("#petDetailOverlay").classList.remove("show"); selectedPetIdx=null; }
+function renderPetDetail(){
+  const p=S.petList[selectedPetIdx]; if(!p) return;
+  const d=PETS.find(x=>x.id===p.id);
+  const lvl=intimacyLevel(p.intimacy);
+  const ibonus=intimacyBonus(p.intimacy);
+  const total=d.bonus+ibonus;
+  const avatarHtml=p.avatar?`<img src="${p.avatar}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">`:`<img src="assets/pets/${p.id}.png" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);animation:petBounce 2.2s ease-in-out infinite;">`;
+  const canUpload=lvl>=10;
+  $("#petDetailContent").innerHTML=`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="margin-bottom:8px;">${avatarHtml}</div>
+      <div style="font-size:18px;font-weight:700;cursor:pointer;" onclick="renamePet(${selectedPetIdx})" title="点击改名">${p.name} ✏️</div>
+      <div style="font-size:12px;color:var(--dim);">${d.i}${d.n}｜${formatBornTime(p.bornAt)}</div>
+    </div>
+    <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>❤️ HP</span><span>${p.hp}/${p.maxHp}</span></div>
+      <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;margin-bottom:8px;"><div style="width:${p.hp/p.maxHp*100}%;background:${p.sick?'#ff7a7a':'#4cd97b'};height:100%;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>🍖 饱食度</span><span>${p.sat}/100</span></div>
+      <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;margin-bottom:8px;"><div style="width:${p.sat}%;background:#ffd75e;height:100%;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>💕 亲密度 Lv.${lvl}/10</span><span>${p.intimacy}/100</span></div>
+      <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;"><div style="width:${p.intimacy}%;background:linear-gradient(90deg,#ff7eb3,#ff758c);height:100%;"></div></div>
+    </div>
+    <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;">
+      <div>产出加成：<b style="color:var(--gold)">+${total}%</b>（物种+${d.bonus}% + 亲密度+${ibonus}%）</div>
+      <div style="color:var(--dim);margin-top:4px;">${p.sick?'🤒 生病中，不生效':p.sat<=50?'😴 饱食度不足，不生效':'✅ 健康饱食，加成生效中'}</div>
+      ${lvl>=10?'<div style="color:#ff7eb3;margin-top:4px;">🎉 亲密度满级，已解锁自定义头像！</div>':`<div style="color:var(--dim);margin-top:4px;">亲密度满级(Lv.10)解锁自定义头像</div>`}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      ${!p.sick?`<button onclick="feedPet(${selectedPetIdx})" style="flex:1;min-width:100px;background:#4cd97b;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">🍖 喂食</button>`:''}
+      ${!p.sick?`<button onclick="interactPet(${selectedPetIdx})" style="flex:1;min-width:100px;background:#ff7eb3;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">💕 互动</button>`:''}
+      ${canUpload?`<button onclick="document.getElementById('petAvatarInput').click()" style="flex:1;min-width:100px;background:var(--gold);border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">📷 上传头像</button>`:''}
+      ${p.hp<p.maxHp?`<button onclick="curePet(${selectedPetIdx})" style="flex:1;min-width:100px;background:#7cc7ff;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">🏥 治疗</button>`:''}
+    </div>
+    <input type="file" id="petAvatarInput" accept="image/*" style="display:none">
+  `;
+  const avatarInput=$("#petAvatarInput");
+  if(avatarInput){
+    avatarInput.onchange=async e=>{
+      const f=e.target.files[0]; if(!f) return;
+      if(!f.type.startsWith("image/")){ toast("❌ 请选择图片文件"); return; }
+      const reader=new FileReader();
+      reader.onload=async()=>{
+        try{
+          const compressed=await compressBg(reader.result);
+          S.petList[selectedPetIdx].avatar=compressed;
+          toast("📷 头像已更新！");
+          renderPetDetail(); renderAll(); save();
+        }catch(err){ toast("❌ 头像处理失败："+err.message); }
+      };
+      reader.readAsDataURL(f);
+    };
+  }
 }
 function curePet(idx){
   const p=S.petList[idx]; if(!p) return;
@@ -1412,7 +1558,8 @@ function renderMap(){
     const ti=assetCache.get("regions:"+r.id);
     tile.style.cssText=`grid-area:${r.area};${ti?`background:url(${ti}) center/cover;`:`background:linear-gradient(160deg,${r.bg},rgba(0,0,0,.35)),${r.bg};`}`;
     const plots=S.plots[r.id]||[];
-    let ph=`<div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px;">`;
+    const cellSize=r.plots<=6?28:r.plots<=8?24:20;
+    let ph=`<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:6px;max-width:${cellSize*4+12}px;">`;
     plots.forEach((p,i)=>{
       const sel=selectedPlot&&selectedPlot.region===r.id&&selectedPlot.index===i;
       const ms=moveMode&&moveMode.fromRegion===r.id&&moveMode.fromIndex===i;
@@ -1420,11 +1567,11 @@ function renderMap(){
       if(p===false){c="🔒";t=`买地💰${r.land}`;}
       else if(p===null){c="";t="空地-点击选中";}
       else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";t=b?b.n:"";}
-      ph+=`<div data-r="${r.id}" data-i="${i}" title="${t}" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:4px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:${p===false?'#00000055':p===null?'#ffffff15':'#ffffff30'};${sel?'outline:2px solid var(--gold);':''}${ms?'outline:2px solid #4cd97b;':''}">${c}</div>`;
+      ph+=`<div data-r="${r.id}" data-i="${i}" title="${t}" style="width:${cellSize}px;height:${cellSize}px;display:flex;align-items:center;justify-content:center;font-size:${cellSize*0.6}px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:${p===false?'#00000066':p===null?'#ffffff18':'#ffffff35'};${sel?'outline:2px solid var(--gold);':''}${ms?'outline:2px solid #4cd97b;':''}">${c}</div>`;
     });
     ph+="</div>";
     const bc2=plots.filter(p=>p&&p!==null).length;
-    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${r.n}</span></div><span class="rm">💰×${r.cm} 产×${r.im} 地💰${r.land}</span>${ph}<span style="font-size:9px;color:var(--dim);margin-top:2px;">${bc2}/${r.plots}</span>`;
+    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${r.n}</span></div><span class="rm">成本×${r.cm} 产出×${r.im} 地价💰${r.land}</span><span class="rdesc">${r.desc} · ${r.plots}块地</span>${ph}<span style="font-size:10px;color:var(--dim);margin-top:3px;font-weight:600;">🏗️ ${bc2}/${r.plots}</span>`;
     tile.querySelectorAll("[data-r]").forEach(cell=>{
       cell.addEventListener("click",ev=>{
         ev.stopPropagation();
@@ -1599,21 +1746,106 @@ $("#resetBtn").addEventListener("click", ()=>{
   }
 });
 
-/* ============ 召唤长老：随机提示一条"原料已齐但还没合成过"的配方 ============ */
-function npcHint(){
+/* ============ NPC 长老：按 Tab 差异化提示 ============ */
+const NPC_LINES = {
+  craft: [
+    "基础四元素靠开局抽奖获得，多开新档试试手气~",
+    "🟫土+💧水=🟤泥，🟤泥+🔥火=🧱砖，砖是造房子的基础",
+    "💨气+🔥火=⚡能量，能量是创造🧬生命的关键",
+    "⚡能量+7种材料都能合成🧬生命：玉石/砖/玻璃/云/木材/花丛/花海",
+    "🌸花+🌸花=💮花丛，同类元素叠加有惊喜",
+    "🪨石头+🪨石头=🏖️沙，沙+🔥火=🪟玻璃",
+    "🔩金属+🔥火=💰金币，缺钱就多合成金属",
+    "🔩金属+🔩金属=🧰宝箱，宝箱是市政厅和豪宅的建造材料",
+    "🌋灰烬+🌱种子=💩肥料，花+肥料=🌺花海，花海也能创造生命",
+    "💧水+🔥火=♨️蒸汽，蒸汽+💨气=☁️云",
+    "元素多了不用慌，点一下元素就自动进合成槽，比拖拽方便",
+    "合成按钮可以输入数字批量合成，资产>100解锁1~5，>1000解锁1~20，>10000解锁1~100",
+  ],
+  town: [
+    "🏪商铺每10秒产出金币，是最基础的收入来源，越早建越赚",
+    "🏛️市政厅全局+10%产出，自己不产金币但能让所有建筑更赚钱",
+    "不同区域成本产出不同：郊外最便宜但产出低，市中心最贵但产出最高",
+    "建造成本=基础成本×区域系数(cm)，产出=基础产出×区域系数(im)",
+    "移动建筑免费！点已有建筑选移动，再点空地即可，多试试布局",
+    "拆除建筑退50%材料，建错了别慌，拆了重来",
+    "🏠小屋是解锁地图和宠物的前提，优先建一个",
+    "🖼️花园提升幸福度，🏥宠物医院降低宠物消耗，🛖驿站解锁宠物食物商店",
+    "市中心有12块地，是地块最多的区域，攒够300金币去市中心发展",
+    "地块买了就是永久的，不会过期，慢慢扩张",
+    "建成🏠小屋+🏪商铺各1个后解锁小镇全景图，快去买地建造吧",
+  ],
+  shop: [
+    "商店用金币直接买元素，省了合成功夫，适合缺关键材料时",
+    "🧰宝箱是市政厅和豪宅的建造材料，记得囤几个",
+    "购买也支持批量输入，上限和合成一样：资产>100解锁1~5，>1000解锁1~20",
+    "基础元素便宜，高级元素贵但省时间，看你缺什么",
+    "金币来源：商铺产出、金属+火合成、卖元素？不，元素不能卖哦",
+    "商店里的元素买了直接进背包，和合成的一样用",
+    "缺钱就多建商铺，商铺是永动机，每10秒自动产金币",
+    "宝箱也能合成：🔩金属+🔩金属，不一定非要买",
+  ],
+  pet: [
+    "宠物由🧬生命孕育，需要先建🏠小屋才有地方住",
+    "孕育消耗1个🧬生命，生命值越高出稀有宠物概率越大",
+    "满级生命(11)有1/100概率出🐼熊猫，熊猫+5%产出",
+    "宠物饱食度<=50时不生效，记得定时喂食",
+    "宠物生病了也不生效，建🏥宠物医院可以治疗",
+    "建🛖宠物驿站后解锁食物商店，不同宠物吃不同食物",
+    "猫和兔子吃肉/胡萝卜，狗和牛吃肉/草，马和熊猫吃草/竹子",
+    "多只宠物加成叠加，养一群猫也能积少成多",
+    "宠物亲密度越高加成越多，多喂食多互动提升亲密度",
+    "亲密度满级解锁自定义头像，给你的宠物拍张照吧",
+  ],
+};
+function npcCraftSmart(){
   const candidates=R.filter(([a,b,out])=>{
-    if(out==="coin"||out==="chest") return false;      // 货币不算隐藏配方
-    if(count(out)>0 || (out in S.unlocked)) return false; // 已合成过/已拥有
-    return count(a)>0 && count(b)>0 && (a!==b || count(a)>=2); // 原料已齐
+    if(out==="coin"||out==="chest") return false;
+    if(count(out)>0||(out in S.unlocked)) return false;
+    return count(a)>0&&count(b)>0&&(a!==b||count(a)>=2);
   });
-  if(!candidates.length){
-    toast("🧙‍♂️「你的原料我一时也变不出新东西，去商店补点货或多攒些元素吧」");
-    return;
+  if(candidates.length){
+    const [a,b,out]=candidates[Math.floor(Math.random()*candidates.length)];
+    return `你有${ELEMENTS[a].i}${ELEMENTS[a].n}和${ELEMENTS[b].i}${ELEMENTS[b].n}，试试合成${ELEMENTS[out].i}${ELEMENTS[out].n}！`;
   }
-  const [a,b,out]=candidates[Math.floor(Math.random()*candidates.length)];
-  toast(`🧙‍♂️「试试 ${ELEMENTS[a].i}${ELEMENTS[a].n} + ${ELEMENTS[b].i}${ELEMENTS[b].n}，会有惊喜…」`, 4200);
+  return null;
+}
+function npcPetBonusText(){
+  if(!S.petList.length) return "还没有宠物，先建🏠小屋再用🧬生命孕育一只吧！猫兔+1% 狗牛+2% 马+3% 熊猫+5%";
+  const byType={};
+  let active=0,inactive=0;
+  S.petList.forEach(p=>{
+    const d=PETS.find(x=>x.id===p.id);
+    if(!d) return;
+    byType[p.id]=(byType[p.id]||0)+1;
+    if(p.sick||p.sat<=50) inactive++; else active++;
+  });
+  const parts=Object.entries(byType).map(([id,n])=>{
+    const d=PETS.find(x=>x.id===id);
+    return `${d.i}${d.n}×${n}(+${d.bonus}%/只)`;
+  });
+  const total=petBonus();
+  return `你有${S.petList.length}只宠物：${parts.join("、")}。当前生效+${total}%（${active}只健康饱食，${inactive}只罢工中）`;
+}
+function npcHint(){
+  const tab=currentTab||"craft";
+  let line=null;
+  if(tab==="craft"){
+    line=npcCraftSmart();
+    if(!line) line=NPC_LINES.craft[Math.floor(Math.random()*NPC_LINES.craft.length)];
+  }else if(tab==="pet"){
+    if(Math.random()<0.5) line=npcPetBonusText();
+    else line=NPC_LINES.pet[Math.floor(Math.random()*NPC_LINES.pet.length)];
+  }else{
+    const pool=NPC_LINES[tab]||NPC_LINES.craft;
+    line=pool[Math.floor(Math.random()*pool.length)];
+  }
+  toast(`🧙‍♂️「${line}」`,5200);
 }
 $("#npcBtn").addEventListener("click", npcHint);
+// 切换Tab时自动提示一条
+const _origSwitch=switchTab;
+switchTab=function(tab){ _origSwitch(tab); setTimeout(npcHint,300); };
 
 /* ============ 开局幸运抽奖 ============ */
 let drawnCounts=null;
