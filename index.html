@@ -493,7 +493,6 @@
     <h3 data-i18n="settings.archive">📦 存档副本</h3>
     <button class="setBtn" id="exportBtn" data-i18n="btn.export">📤 导出存档为文件<small>下载 JSON 副本，可保存多个，随时回来继续</small></button>
     <button class="setBtn" id="importBtn" data-i18n="btn.import">📥 导入存档<small>选择之前导出的 JSON 副本，覆盖当前进度</small></button>
-    <button class="setBtn" id="resetBtnSettings" style="border-color:#c0392b;color:#e74c3c" data-i18n="btn.resetSave">🗑️ 重置存档<small>清空所有进度，重新开始</small></button>
     <input type="file" id="importFile" accept="application/json" style="display:none">
 
     <h3 data-i18n="settings.theme">🎨 配色主题</h3>
@@ -532,11 +531,12 @@
 </div>
 
 <div id="introOverlay">
-  <h2>欢迎来到 元素合成小镇 ⚗️</h2>
+  <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="position:absolute;top:16px;right:16px;background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:4px 12px;font-size:12px;cursor:pointer;">🌐 EN</button>
+  <h2 id="introTitle">欢迎来到 元素合成小镇 ⚗️</h2>
   <div class="npc">🧙‍♂️</div>
-  <div class="bubble">
+  <div class="bubble" id="introBubble">
     <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
-    <span class="step"><b>① 合成</b>　拖两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
+    <span class="step"><b>① 合成</b>　点两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
     <span class="step"><b>② 建造</b>　攒够建材建房屋商铺，持续产出金币；金币可在商店补货常见元素 <small>（本次抽取含少量启动金币）</small></span>
     <span class="step"><b>③ 卡住了？</b>　随时点右下角 <b>🧙‍♂️召唤长老</b>，我会告诉你一条手头原料就能做的隐藏配方 🐾</span>
   </div>
@@ -553,13 +553,13 @@
 <script>
 /* ============ 数据定义 ============ */
 const ELEMENTS = {
-  earth:{n:"土",i:"🟫"}, water:{n:"水",i:"💧"}, fire:{n:"火",i:"🔥"}, air:{n:"气",i:"💨"},
-  mud:{n:"泥",i:"🟤"}, brick:{n:"砖",i:"🧱"}, rain:{n:"雨",i:"🌧️"}, seed:{n:"种子",i:"🌱"},
-  flower:{n:"花",i:"🌸"}, bunch:{n:"花丛",i:"💮"}, energy:{n:"能量",i:"⚡"}, tree:{n:"树",i:"🌲"},
-  wood:{n:"木材",i:"🪵"}, stone:{n:"石头",i:"🪨"}, metal:{n:"金属",i:"🔩"}, coin:{n:"金币",i:"💰"},
-  chest:{n:"金币宝箱",i:"🧰"}, jade:{n:"玉石",i:"💎"}, ash:{n:"灰烬",i:"🌋"}, fertilizer:{n:"肥料",i:"💩"},
-  garden_flowers:{n:"花海",i:"🌺"}, glass:{n:"玻璃",i:"🪟"}, sand:{n:"沙",i:"🏖️"}, cloud:{n:"云",i:"☁️"},
-  steam:{n:"蒸汽",i:"♨️"}, life:{n:"生命",i:"🧬"}, charocal:{n:"木炭",i:"🖤"}, tower:{n:"塔楼",i:"🗼"},
+  earth:{n:"土",en:"Earth",i:"🟫"}, water:{n:"水",en:"Water",i:"💧"}, fire:{n:"火",en:"Fire",i:"🔥"}, air:{n:"气",en:"Air",i:"💨"},
+  mud:{n:"泥",en:"Mud",i:"🟤"}, brick:{n:"砖",en:"Brick",i:"🧱"}, rain:{n:"雨",en:"Rain",i:"🌧️"}, seed:{n:"种子",en:"Seed",i:"🌱"},
+  flower:{n:"花",en:"Flower",i:"🌸"}, bunch:{n:"花丛",en:"Flower Bush",i:"💮"}, energy:{n:"能量",en:"Energy",i:"⚡"}, tree:{n:"树",en:"Tree",i:"🌲"},
+  wood:{n:"木材",en:"Wood",i:"🪵"}, stone:{n:"石头",en:"Stone",i:"🪨"}, metal:{n:"金属",en:"Metal",i:"🔩"}, coin:{n:"金币",en:"Coin",i:"💰"},
+  chest:{n:"金币宝箱",en:"Treasure Chest",i:"🧰"}, jade:{n:"玉石",en:"Jade",i:"💎"}, ash:{n:"灰烬",en:"Ash",i:"🌋"}, fertilizer:{n:"肥料",en:"Fertilizer",i:"💩"},
+  garden_flowers:{n:"花海",en:"Flower Sea",i:"🌺"}, glass:{n:"玻璃",en:"Glass",i:"🪟"}, sand:{n:"沙",en:"Sand",i:"🏖️"}, cloud:{n:"云",en:"Cloud",i:"☁️"},
+  steam:{n:"蒸汽",en:"Steam",i:"♨️"}, life:{n:"生命",en:"Life",i:"🧬"}, charocal:{n:"木炭",en:"Charcoal",i:"🖤"}, tower:{n:"塔楼",en:"Tower",i:"🗼"},
 };
 // 基础元素（开局解锁）
 const BASE = ["earth","water","fire","air"];
@@ -624,13 +624,13 @@ window.tierOf=tierOf; // 供控制台调试
 const BUY_RATE = 5; // 商店购买价 = 层级 × 5 金币
 
 const BUILDINGS = [
-  {id:"hut",  n:"小屋",  i:"🏠", cost:{brick:5, wood:3},                 income:1},
-  {id:"shop", n:"商铺",  i:"🏪", cost:{brick:8, wood:5, coin:20},         income:3},
-  {id:"garden",n:"花园", i:"🌸", cost:{flower:15, coin:10},               income:2},
-  {id:"manor",n:"豪宅",  i:"🏯", cost:{brick:20, jade:5, flower:10, chest:1}, income:5},
-  {id:"hospital",n:"宠物医院",i:"🏥", cost:{brick:10, flower:5},          income:0},
-  {id:"station",n:"宠物驿站",i:"🛖", cost:{wood:5, coin:20},              income:0},
-  {id:"hall", n:"市政厅",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:3}, income:0, passive:"全镇产出+10%"},
+  {id:"hut",  n:"小屋",  en:"Hut",  i:"🏠", cost:{brick:5, wood:3},                 income:1},
+  {id:"shop", n:"商铺",  en:"Shop", i:"🏪", cost:{brick:8, wood:5, coin:20},         income:3},
+  {id:"garden",n:"花园", en:"Garden",i:"🌸", cost:{flower:15, coin:10},               income:2},
+  {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:20, jade:5, flower:10, chest:1}, income:5},
+  {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:10, flower:5},          income:0},
+  {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:5, coin:20},              income:0},
+  {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:3}, income:0, passive:"全镇产出+10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
 const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
@@ -639,13 +639,14 @@ const OFFLINE_CAP = 3600;     // 秒：离线结算封顶 1 小时（收入与�
 // 底图区域：成本/产出双系数，建造时选区域
 // 地图布局（4列×3行网格）：山脚在北、林间东侧、市中心居中、平原西侧、河岸沿南
 const REGIONS = [
-  {id:"hill",   n:"山脚",    i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", plots:6,  land:50},
-  {id:"forest", n:"林间",    i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", plots:8,  land:80},
-  {id:"center", n:"市中心",  i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", plots:12, land:300},
-  {id:"plain",  n:"郊外平原", i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", plots:8,  land:20},
-  {id:"river",  n:"河岸",    i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", plots:8,  land:150},
+  {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", plots:6,  land:50},
+  {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", plots:8,  land:80},
+  {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", plots:12, land:300},
+  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.8, im:0.6, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", plots:8,  land:20},
+  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", plots:8,  land:150},
 ];
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
+function regName(r){ if(!r) return ""; return LANG==="en"?(r.en||r.n):r.n; }
 function initPlots(){
   if(!S.plots) S.plots={};
   REGIONS.forEach(r=>{
@@ -687,21 +688,23 @@ function buildingIncome(b){
 
 // 宠物食物：分物种口味，只能金币购买（驿站上架后），不可合成
 const FOODS = {
-  meat:  {n:"肉块",   i:"🥩", price:8},
-  carrot:{n:"胡萝卜", i:"🥕", price:5},
-  grass: {n:"牧草",   i:"🌾", price:5},
-  bamboo:{n:"竹笋",   i:"🎍", price:20},
+  meat:  {n:"肉块",   en:"Meat",   i:"🥩", price:8},
+  carrot:{n:"胡萝卜", en:"Carrot", i:"🥕", price:5},
+  grass: {n:"牧草",   en:"Grass",  i:"🌾", price:5},
+  bamboo:{n:"竹笋",   en:"Bamboo", i:"🎍", price:20},
 };
+function foodName(f){ if(!f) return ""; return LANG==="en"?(f.en||f.n):f.n; }
 // 宠物：由 🧬生命 孕育；bonus = 该物种给全镇产出的加成 %
 // 获取难度与加成严格正相关：猫兔(+1%) < 狗牛(+2%) < 小马(+3%) < 熊猫(+5%, 仅满级生命1/100)
 const PETS = [
-  {id:"cat",   n:"猫",   i:"🐈", bonus:1, food:"meat"},
-  {id:"rabbit",n:"兔子", i:"🐇", bonus:1, food:"carrot"},
-  {id:"dog",   n:"狗",   i:"🐕", bonus:2, food:"meat"},
-  {id:"cow",   n:"小牛", i:"🐮", bonus:2, food:"grass"},
-  {id:"horse", n:"小马", i:"🐴", bonus:3, food:"grass"},
-  {id:"panda", n:"熊猫", i:"🐼", bonus:5, food:"bamboo"},
+  {id:"cat",   n:"猫",   en:"Cat",   i:"🐈", bonus:1, food:"meat"},
+  {id:"rabbit",n:"兔子", en:"Rabbit",i:"🐇", bonus:1, food:"carrot"},
+  {id:"dog",   n:"狗",   en:"Dog",   i:"🐕", bonus:2, food:"meat"},
+  {id:"cow",   n:"小牛", en:"Cow",   i:"🐮", bonus:2, food:"grass"},
+  {id:"horse", n:"小马", en:"Horse", i:"🐴", bonus:3, food:"grass"},
+  {id:"panda", n:"熊猫", en:"Panda", i:"🐼", bonus:5, food:"bamboo"},
 ];
+function petName(d){ if(!d) return ""; return LANG==="en"?(d.en||d.n):d.n; }
 const MAX_LIFE_HP = 11;
 function petPoolFor(hp){
   // 权重按同档拉平（猫:兔=3:3，狗:牛=2:2），难度只由生命值门槛决定，与加成一致
@@ -769,7 +772,32 @@ function applyLang(){
   });
   document.title = t("app.title");
 }
-function toggleLang(){ LANG = LANG==="zh"?"en":"zh"; localStorage.setItem("synth-town-lang",LANG); applyLang(); }
+function toggleLang(){ LANG = LANG==="zh"?"en":"zh"; localStorage.setItem("synth-town-lang",LANG); applyLang(); renderAll(); }
+function elName(id){ const e=ELEMENTS[id]; if(!e) return id; return LANG==="en"?(e.en||e.n):e.n; }
+function bldName(b){ if(!b) return ""; return LANG==="en"?(b.en||b.n):b.n; }
+function updateIntroLang(){
+  const t=$("#introTitle"), b=$("#introBubble"), btn=$("#introLangBtn");
+  if(!t||!b) return;
+  if(LANG==="en"){
+    t.textContent="Welcome to Element Craft Town ⚗️";
+    b.innerHTML=`
+      <span class="step">🧙‍♂️「Welcome, traveler! To settle in this town, remember three things——」</span>
+      <span class="step"><b>① Craft</b>　Tap two elements into the craft bench, craft new elements for free. <small>Examples: 💨Air+🔥Fire=⚡Energy, 🟤Mud+🔥Fire=🧱Brick, ⚡Energy+🌱Seed=🌲Tree, 🌲Tree+⚡Energy=🪵Wood</small></span>
+      <span class="step"><b>② Build</b>　Save materials to build houses and shops, they produce coins continuously; coins can buy common elements in the shop <small>(this draw includes some starting coins)</small></span>
+      <span class="step"><b>③ Stuck?</b>　Tap <b>🧙‍♂️Summon Elder</b> at bottom-right anytime, I'll tell you a hidden recipe you can make with current materials 🐾</span>`;
+    $("#introBtn").textContent="Accept guidance, start adventure ▶";
+    if(btn) btn.textContent="🌐 中";
+  }else{
+    t.textContent="欢迎来到 元素合成小镇 ⚗️";
+    b.innerHTML=`
+      <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
+      <span class="step"><b>① 合成</b>　点两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
+      <span class="step"><b>② 建造</b>　攒够建材建房屋商铺，持续产出金币；金币可在商店补货常见元素 <small>（本次抽取含少量启动金币）</small></span>
+      <span class="step"><b>③ 卡住了？</b>　随时点右下角 <b>🧙‍♂️召唤长老</b>，我会告诉你一条手头原料就能做的隐藏配方 🐾</span>`;
+    $("#introBtn").textContent="接受指引，开始冒险 ▶";
+    if(btn) btn.textContent="🌐 EN";
+  }
+}
 let S = load();
 
 function fresh(){
@@ -852,21 +880,15 @@ function count(id){ return S.unlocked[id]||0; }
 /* ============ 顶部状态 ============ */
 function renderStats(){
   const el=$("#stats"); if(!el) return;
-  let html=`<div class="stat">💰 <b>${S.coin}</b></div>`;
-  if(currentTab==="craft"){
-    const disc=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length;
-    const total=new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest").concat(BASE)).size;
-    html+=`<div class="stat">🔬 <b>${disc}</b>/${total}</div><div class="stat">🧰 <b>${S.chest}</b></div>`;
-  }else if(currentTab==="town"){
-    let bld=0,out=0;
-    Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{if(p&&p!==null){bld++;const b=BUILDINGS.find(x=>x.id===p);if(b)out+=b.income;}}));
-    html+=`<div class="stat">🏘️ <b>${bld}</b></div><div class="stat">📈 +<b>${Math.round(out)}</b>/10s</div>`;
-  }else if(currentTab==="shop"){
-    html+=`<div class="stat">🧰 <b>${S.chest}</b></div>`;
-  }else if(currentTab==="pet"){
-    html+=`<div class="stat">🐾 <b>${S.petList?.length||0}</b></div>`;
-  }
-  el.innerHTML=html;
+  let bld=0;
+  Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{if(p&&p!==null)bld++;}));
+  const disc=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length;
+  const total=new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest").concat(BASE)).size;
+  const petN=S.petList?.length||0;
+  const bldLbl=LANG==="en"?"Buildings":"建筑";
+  const petLbl=LANG==="en"?"Pets":"宠物";
+  const discLbl=LANG==="en"?"Found":"发现";
+  el.innerHTML=`<div class="stat">💰 <b>${S.coin}</b></div><div class="stat">🏘️ <b>${bld}</b></div><div class="stat">🐾 <b>${petN}</b></div><div class="stat">🔬 <b>${disc}</b>/${total}</div>`;
 }
 
 /* ============ 元素库 ============ */
@@ -877,12 +899,12 @@ function renderElements(){
     const e=ELEMENTS[id]; if(!e) return;
     const d=document.createElement("div");
     d.className="el"+(count(id)<=0?" empty":""); d.dataset.id=id;
-    d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${e.n}<small style="color:#7c6bb0">${tierOf(id)}级</small></span><span class="cnt">×${count(id)}</span>`;
+    d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small></span><span class="cnt">×${count(id)}</span>`;
     if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
     else makeDraggable(d, id);
     g.appendChild(d);
   });
-  $("#discovered").firstChild.textContent = `已发现 ${Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length} / `;
+  $("#discovered").firstChild.textContent = `${t("discovered")} ${Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length} / `;
   $("#totalRecipes").textContent = new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest").concat(BASE)).size;
 }
 
@@ -891,7 +913,7 @@ let dragId=null, ghost=null, activePointer=null, startX=0, startY=0;
 function makeDraggable(el, id){
   el.addEventListener("pointerdown", ev=>{
     if(dragId) return;                       // 同一时刻只允许一个拖拽，防叠影
-    if(count(id)<=0){ toast(`${ELEMENTS[id].n} 已用完，再去合成一些吧`); return; }
+    if(count(id)<=0){ toast(`${elName(id)} 已用完，再去合成一些吧`); return; }
     ev.preventDefault();
     activePointer=ev.pointerId;
     dragId=id;
@@ -953,7 +975,7 @@ function autoPlace(id){
 }
 function setSlot(slot, id){
   if(slot.id==="slotA") selA=id; else selB=id;
-  slot.innerHTML=`<span style="font-size:40px">${ELEMENTS[id].i}</span><span class="lbl">${ELEMENTS[id].n}</span>`;
+  slot.innerHTML=`<span style="font-size:40px">${ELEMENTS[id].i}</span><span class="lbl">${elName(id)}</span>`;
   slot.dataset.filled=id;
   slot.classList.add("pop"); setTimeout(()=>slot.classList.remove("pop"),450);
   clearResult(); clearTimeout(resultTimer);
@@ -1036,15 +1058,15 @@ $("#craftBtn").addEventListener("click", ()=>{
     else{S.unlocked[out]=(S.unlocked[out]||0)+1;}
     done++;
   }
-  if(done===0){toast(`${ELEMENTS[selA].n} 或 ${ELEMENTS[selB].n} 数量不够`);return;}
-  let ot=ELEMENTS[out].i+" "+ELEMENTS[out].n;
+  if(done===0){toast(`${elName(selA)} 或 ${elName(selB)} 数量不够`);return;}
+  let ot=ELEMENTS[out].i+" "+elName(out);
   if(out==="coin")ot+="（+"+coinGain+"金币）";
   else if(out==="chest")ot+="（+"+(chestGain*10)+"金币）";
   else if(out==="life")ot+=` <small style="color:var(--ok)">生命值 ${cost}</small>`;
   if(done>1)ot="×"+done+" "+ot;
   if(done<wantN)ot+=` <small style="color:var(--dim)">（原料不足，只合成${done}/${wantN}）</small>`;
   res.innerHTML=`<span class="pop">${ot}</span>`;
-  if(isNew&&done>0){res.innerHTML=`<span class="new pop">🎉 新元素！</span> ${res.innerHTML}`;toast(`🎉 发现新元素：${ELEMENTS[out].n} ${ELEMENTS[out].i}`);}
+  if(isNew&&done>0){res.innerHTML=`<span class="new pop">🎉 新元素！</span> ${res.innerHTML}`;toast(`🎉 发现新元素：${elName(out)} ${ELEMENTS[out].i}`);}
   clearTimeout(resultTimer);resultTimer=setTimeout(clearResult,2500);
   clearSlots();updateCraftBtn();
   renderAll();save();
@@ -1068,8 +1090,8 @@ function renderElShop(){
     const qtyInput = mx>0 ? `<input type="number" class="shopQty" data-id="${id}" min="1" max="${mx}" value="1" style="width:44px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text);font-size:12px;text-align:center;">` : "";
     row.innerHTML=`
       <span style="font-size:18px">${e.i}</span>
-      <span style="font-size:13px">${e.n}</span>
-      <span style="font-size:10px;color:var(--dim)">${tierOf(id)}级·×${count(id)}</span>
+      <span style="font-size:13px">${elName(id)}</span>
+      <span style="font-size:10px;color:var(--dim)">${tierOf(id)}${LANG==="en"?"Lvl":"级"}·×${count(id)}</span>
       ${qtyInput}
       <button data-id="${id}" style="margin-left:auto;background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰<span class="btnPrice">${price}</span></button>`;
     const btn=row.querySelector("button");
@@ -1150,7 +1172,7 @@ function renderPets(){
   Object.entries(FOODS).forEach(([fid,f])=>{
     const own=S.food[fid]||0;
     html+=`<div style="text-align:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;">
-      <div>${f.i}${f.n} <b style="color:var(--gold)">×${own}</b></div>
+      <div>${f.i}${foodName(f)} <b style="color:var(--gold)">×${own}</b></div>
       <button data-buyfood="${fid}" ${hasB("station")&&S.coin>=f.price?"":"disabled style='opacity:.4'"} style="margin-top:4px;background:var(--gold);border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:700;">💰${f.price}</button>
     </div>`;
   });
@@ -1164,7 +1186,7 @@ function renderPets(){
       const f=FOODS[b.dataset.buyfood];
       if(S.coin<f.price) return;
       S.coin-=f.price; S.food[b.dataset.buyfood]=(S.food[b.dataset.buyfood]||0)+1;
-      toast(`🛒 买了 ${f.i}${f.n}（-💰${f.price}）`);
+      toast(`🛒 ${LANG==="en"?"Bought ":"买了 "}${f.i}${foodName(f)}（-💰${f.price}）`);
       renderAll(); save();
     });
   });
@@ -1185,7 +1207,7 @@ function renderPets(){
     const cureCost=(p.maxHp-p.hp)*2;
     const packImg=assetCache.get("pets:"+p.id);
     const defaultImg=packImg||`assets/pets/${p.id}.png`;
-    const avatarEl=p.avatar?`<img src="${p.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);">`:`<img src="${defaultImg}" class="pet-img" alt="${d.n}">`;
+    const avatarEl=p.avatar?`<img src="${p.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);">`:`<img src="${defaultImg}" class="pet-img" alt="${petName(d)}">`;
     card.innerHTML=`
       ${avatarEl}
       <div style="flex:1;min-width:0" onclick="event.stopPropagation()">
@@ -1194,7 +1216,7 @@ function renderPets(){
           <span style="background:#ff7eb333;color:#ff7eb3;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700;">💕Lv.${lvl}</span>
           <small style="color:var(--gold)">+${totalBonus}%</small>
         </div>
-        <div style="font-size:10px;color:var(--dim)">${d.i}${d.n}｜${formatBornTime(p.bornAt)}｜吃${f.i}${f.n}</div>
+        <div style="font-size:10px;color:var(--dim)">${d.i}${petName(d)}｜${formatBornTime(p.bornAt)}｜${LANG==="en"?"Eats":"吃"}${f.i}${foodName(f)}</div>
         <div style="height:4px;background:#00000055;border-radius:2px;margin-top:3px;overflow:hidden;display:flex">
           <div style="width:${p.hp/p.maxHp*100}%;background:${p.sick?'#ff7a7a':'#4cd97b'}"></div>
         </div>
@@ -1232,7 +1254,7 @@ function hatch(){
   const pid=rollPet(maxHp);
   const d=PETS.find(x=>x.id===pid);
   const defaultName=randomPetName();
-  const name=prompt(`给你的${d.i}${d.n}起个名字吧（最多15个字符）：`, defaultName);
+  const name=prompt(`${LANG==="en"?"Name your "+d.i+petName(d)+" (max 15 chars):":"给你的"+d.i+petName(d)+"起个名字吧（最多15个字符）："}（最多15个字符）：`, defaultName);
   const petName=(name&&name.trim())?name.trim().slice(0,15):defaultName;
   S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false, name:petName, bornAt:Date.now(), intimacy:0, avatar:null});
   if(pid==="panda") toast(`🎊 传说降临！满级生命孕育出 🐼${petName}！！`);
@@ -1283,7 +1305,7 @@ function renderPetDetail(){
     <div style="text-align:center;margin-bottom:12px;">
       <div style="margin-bottom:8px;">${avatarHtml}</div>
       <div style="font-size:18px;font-weight:700;cursor:pointer;" onclick="renamePet(${selectedPetIdx})" title="点击改名">${p.name} ✏️</div>
-      <div style="font-size:12px;color:var(--dim);">${d.i}${d.n}｜${formatBornTime(p.bornAt)}</div>
+      <div style="font-size:12px;color:var(--dim);">${d.i}${petName(d)}｜${formatBornTime(p.bornAt)}</div>
     </div>
     <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>❤️ HP</span><span>${p.hp}/${p.maxHp}</span></div>
@@ -1635,7 +1657,7 @@ function renderMap(){
   const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);return `<span class="mapBadge">${b?b.i:"❓"}<b>${n}</b></span>`;}).join("")||'<span style="font-size:11px;color:var(--dim)">还没有建筑</span>';
   let hint="";
   if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">🏗️ 移动模式：点一块 🟫 空地移入，或 <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">取消</button></div>`;
-  else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">📍 已选 ${regionOf(selectedPlot.region).i}${regionOf(selectedPlot.region).n} 空地，下方选建筑建造，或 <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">取消</button></div>`;
+  else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">📍 已选 ${regionOf(selectedPlot.region).i}${regName(regionOf(selectedPlot.region))} 空地，下方选建筑建造，或 <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">取消</button></div>`;
   let html=`<div class="mapStats"><span>🏘️ 总建筑 <b>${totalBld}</b></span><span>💰 产出 <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>🗺️ 已购地 <b>${bought}</b>/42</span></div><div class="mapBadges">${badges}</div>${hint}`;
   if(!mapUnlocked()){
     html+=`<div class="mapLocked">🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，解锁小镇全景图（买地建造，各区域成本/产出不同）</div>`;
@@ -1658,12 +1680,12 @@ function renderMap(){
       let c="",t="";
       if(p===false){c="🔒";t=`买地💰${r.land}`;}
       else if(p===null){c="";t="空地-点击选中";}
-      else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";t=b?b.n:"";}
+      else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";t=b?bldName(b):"";}
       ph+=`<div data-r="${r.id}" data-i="${i}" title="${t}" style="width:${cellSize}px;height:${cellSize}px;display:flex;align-items:center;justify-content:center;font-size:${cellSize*0.6}px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:${p===false?'#00000066':p===null?'#ffffff18':'#ffffff35'};${sel?'outline:2px solid var(--gold);':''}${ms?'outline:2px solid #4cd97b;':''}">${c}</div>`;
     });
     ph+="</div>";
     const bc2=plots.filter(p=>p&&p!==null).length;
-    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${r.n}</span></div><span class="rm">成本×${r.cm} 产出×${r.im} 地价💰${r.land}</span><span class="rdesc">${r.desc} · ${r.plots}块地</span>${ph}<span style="font-size:10px;color:var(--dim);margin-top:3px;font-weight:600;">🏗️ ${bc2}/${r.plots}</span>`;
+    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${regName(r)}</span></div><span class="rm">成本×${r.cm} 产出×${r.im} 地价💰${r.land}</span><span class="rdesc">${r.desc} · ${r.plots}块地</span>${ph}<span style="font-size:10px;color:var(--dim);margin-top:3px;font-weight:600;">🏗️ ${bc2}/${r.plots}</span>`;
     tile.querySelectorAll("[data-r]").forEach(cell=>{
       cell.addEventListener("click",ev=>{
         ev.stopPropagation();
@@ -1671,7 +1693,7 @@ function renderMap(){
         if(moveMode){if(p===null)completeMove(rid,idx);else toast("只能移到空地");return;}
         if(p===false)buyPlot(rid,idx);
         else if(p===null)selectPlot(rid,idx);
-        else{const b=BUILDINGS.find(x=>x.id===p);if(confirm(`${b?b.i+b.n:"建筑"}\n\n确定 = 🏗️ 移动到空地\n取消 = 💥 拆除(退50%)`))startMove(rid,idx);else demolishPlot(rid,idx);}
+        else{const b=BUILDINGS.find(x=>x.id===p);if(confirm(`${b?b.i+bldName(b):(LANG==="en"?"Building":"建筑")}\n\n确定 = 🏗️ 移动到空地\n取消 = 💥 拆除(退50%)`))startMove(rid,idx);else demolishPlot(rid,idx);}
       });
     });
     grid.appendChild(tile);
@@ -1690,7 +1712,7 @@ function renderShop(){
   if(mapUnlocked()){
     const bar=document.createElement("div");
     bar.className="shopBar";
-    if(selectedPlot){const r=regionOf(selectedPlot.region);bar.innerHTML=`📍 已选地块：<b style="color:var(--gold)">${r.i}${r.n}</b>（成本×${r.cm} 产出×${r.im}）—— 在地图上点其他空地切换`;}
+    if(selectedPlot){const r=regionOf(selectedPlot.region);bar.innerHTML=`📍 已选地块：<b style="color:var(--gold)">${r.i}${regName(r)}</b>（成本×${r.cm} 产出×${r.im}）—— 在地图上点其他空地切换`;}
     else if(moveMode){bar.innerHTML=`🏗️ 移动模式：在地图上点一块 🟫 空地移入建筑`;}
     else{bar.innerHTML=`👆 先在地图上点一块 🟫 空地（或 🔒 买地），再选建筑建造`;}
     box.appendChild(bar);
@@ -1708,9 +1730,9 @@ function renderShop(){
     div.className="shopItem";
     const built=S.buildings[b.id]||0;
     const incPer=buildingIncome(b);
-    const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:k==="chest"?S.chest:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?ELEMENTS[k].n:"金币"}×${v}</span>`;}).join("");
+    const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:k==="chest"?S.chest:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?elName(k):"金币"}×${v}</span>`;}).join("");
     const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked());
-    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${b.n}</span><span class="built">已建 ${built} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>建造</button>`;
+    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">已建 ${built} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>建造</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
   });
@@ -1725,7 +1747,7 @@ function buyPlot(region,index){
   if(!plots||plots[index]!==false) return;
   if(S.coin<r.land){ toast(`💰 买地需要 ${r.land} 金币`); return; }
   S.coin-=r.land; plots[index]=null;
-  toast(`🏞️ 在${r.i}${r.n}买下一块地（-💰${r.land}）`);
+  toast(`🏞️ 在${r.i}${regName(r)}买下一块地（-💰${r.land}）`);
   renderAll(); save();
 }
 function selectPlot(region,index){
@@ -1756,7 +1778,7 @@ function build(b,cost){
   });
   S.plots[region][index]=b.id;
   S.buildings[b.id]=(S.buildings[b.id]||0)+1;
-  toast(`${b.i} 在${regionOf(region).i}${regionOf(region).n}建造了${b.n}！`);
+  toast(`${b.i} 在${regionOf(region).i}${regionOf(region).n}建造了${bldName(b)}！`);
   selectedPlot=null;
   renderAll(); save();
 }
@@ -1774,7 +1796,7 @@ function completeMove(toRegion,toIndex){
   const {fromRegion,fromIndex,bid}=moveMode;
   S.plots[fromRegion][fromIndex]=null;
   S.plots[toRegion][toIndex]=bid;
-  toast(`🏗️ ${ELEMENTS[bid]?ELEMENTS[bid].i:""}${ELEMENTS[bid]?ELEMENTS[bid].n:bid} 移到了${regionOf(toRegion).i}${regionOf(toRegion).n}`);
+  toast(`🏗️ ${ELEMENTS[bid]?ELEMENTS[bid].i:""}${ELEMENTS[bid]?elName(bid):bid} 移到了${regionOf(toRegion).i}${regionOf(toRegion).n}`);
   moveMode=null;
   renderAll(); save();
 }
@@ -1782,7 +1804,7 @@ function demolishPlot(region,index){
   const plots=S.plots[region];
   if(!plots||!plots[index]) return;
   const bid=plots[index], b=BUILDINGS.find(x=>x.id===bid);
-  if(!confirm(`确定拆除 ${b?b.i:""}${b?b.n:bid}？退还 50% 建造成本`)) return;
+  if(!confirm(`确定拆除 ${b?b.i:""}${b?bldName(b):bid}？退还 50% 建造成本`)) return;
   // 退还50%（按当前区域成本系数估算）
   const cost=regionCost(b,region);
   Object.entries(cost).forEach(([k,v])=>{
@@ -1793,7 +1815,7 @@ function demolishPlot(region,index){
   });
   S.plots[region][index]=null;
   S.buildings[bid]=Math.max(0,(S.buildings[bid]||0)-1);
-  toast(`💥 拆除了${b?b.n:bid}（退还50%材料）`);
+  toast(`💥 拆除了${b?bldName(b):bid}（退还50%材料）`);
   renderAll(); save();
 }
 
@@ -1839,59 +1861,115 @@ function doReset(){
   }
 }
 $("#resetBtn").addEventListener("click", doReset);
-$("#resetBtnSettings").addEventListener("click", doReset);
 
 /* ============ NPC 长老：按 Tab 差异化提示 ============ */
 const NPC_LINES = {
-  craft: [
-    "基础四元素靠开局抽奖获得，多开新档试试手气~",
-    "🟫土+💧水=🟤泥，🟤泥+🔥火=🧱砖，砖是造房子的基础",
-    "💨气+🔥火=⚡能量，能量是创造🧬生命的关键",
-    "⚡能量+7种材料都能合成🧬生命：玉石/砖/玻璃/云/木材/花丛/花海",
-    "🌸花+🌸花=💮花丛，同类元素叠加有惊喜",
-    "🪨石头+🪨石头=🏖️沙，沙+🔥火=🪟玻璃",
-    "🔩金属+🔥火=💰金币，缺钱就多合成金属",
-    "🔩金属+🔩金属=🧰宝箱，宝箱是市政厅和豪宅的建造材料",
-    "🌋灰烬+🌱种子=💩肥料，花+肥料=🌺花海，花海也能创造生命",
-    "💧水+🔥火=♨️蒸汽，蒸汽+💨气=☁️云",
-    "元素多了不用慌，点一下元素就自动进合成槽，比拖拽方便",
-    "合成按钮可以输入数字批量合成，资产>100解锁1~5，>1000解锁1~20，>10000解锁1~100",
-  ],
-  town: [
-    "🏪商铺每10秒产出金币，是最基础的收入来源，越早建越赚",
-    "🏛️市政厅全局+10%产出，自己不产金币但能让所有建筑更赚钱",
-    "不同区域成本产出不同：郊外最便宜但产出低，市中心最贵但产出最高",
-    "建造成本=基础成本×区域系数(cm)，产出=基础产出×区域系数(im)",
-    "移动建筑免费！点已有建筑选移动，再点空地即可，多试试布局",
-    "拆除建筑退50%材料，建错了别慌，拆了重来",
-    "🏠小屋是解锁地图和宠物的前提，优先建一个",
-    "🖼️花园提升幸福度，🏥宠物医院降低宠物消耗，🛖驿站解锁宠物食物商店",
-    "市中心有12块地，是地块最多的区域，攒够300金币去市中心发展",
-    "地块买了就是永久的，不会过期，慢慢扩张",
-    "建成🏠小屋+🏪商铺各1个后解锁小镇全景图，快去买地建造吧",
-  ],
-  shop: [
-    "商店用金币直接买元素，省了合成功夫，适合缺关键材料时",
-    "🧰宝箱是市政厅和豪宅的建造材料，记得囤几个",
-    "购买也支持批量输入，上限和合成一样：资产>100解锁1~5，>1000解锁1~20",
-    "基础元素便宜，高级元素贵但省时间，看你缺什么",
-    "金币来源：商铺产出、金属+火合成、卖元素？不，元素不能卖哦",
-    "商店里的元素买了直接进背包，和合成的一样用",
-    "缺钱就多建商铺，商铺是永动机，每10秒自动产金币",
-    "宝箱也能合成：🔩金属+🔩金属，不一定非要买",
-  ],
-  pet: [
-    "宠物由🧬生命孕育，需要先建🏠小屋才有地方住",
-    "孕育消耗1个🧬生命，生命值越高出稀有宠物概率越大",
-    "满级生命(11)有1/100概率出🐼熊猫，熊猫+5%产出",
-    "宠物饱食度<=50时不生效，记得定时喂食",
-    "宠物生病了也不生效，建🏥宠物医院可以治疗",
-    "建🛖宠物驿站后解锁食物商店，不同宠物吃不同食物",
-    "猫和兔子吃肉/胡萝卜，狗和牛吃肉/草，马和熊猫吃草/竹子",
-    "多只宠物加成叠加，养一群猫也能积少成多",
-    "宠物亲密度越高加成越多，多喂食多互动提升亲密度",
-    "亲密度满级解锁自定义头像，给你的宠物拍张照吧",
-  ],
+  craft: {
+    zh: [
+      "基础四元素靠开局抽奖获得，多开新档试试手气~",
+      "🟫土+💧水=🟤泥，🟤泥+🔥火=🧱砖，砖是造房子的基础",
+      "💨气+🔥火=⚡能量，能量是创造🧬生命的关键",
+      "⚡能量+7种材料都能合成🧬生命：玉石/砖/玻璃/云/木材/花丛/花海",
+      "🌸花+🌸花=💮花丛，同类元素叠加有惊喜",
+      "🪨石头+🪨石头=🏖️沙，沙+🔥火=🪟玻璃",
+      "🔩金属+🔥火=💰金币，缺钱就多合成金属",
+      "🔩金属+🔩金属=🧰宝箱，宝箱是市政厅和豪宅的建造材料",
+      "🌋灰烬+🌱种子=💩肥料，花+肥料=🌺花海，花海也能创造生命",
+      "💧水+🔥火=♨️蒸汽，蒸汽+💨气=☁️云",
+      "元素多了不用慌，点一下元素就自动进合成槽，比拖拽方便",
+      "合成按钮可以输入数字批量合成，资产>100解锁1~5，>1000解锁1~20，>10000解锁1~100",
+    ],
+    en: [
+      "The four base elements come from the starting draw—try new saves for better luck~",
+      "🟫Earth+💧Water=🟤Mud, 🟤Mud+🔥Fire=🧱Brick, brick is the foundation of buildings",
+      "💨Air+🔥Fire=⚡Energy, energy is the key to creating 🧬Life",
+      "⚡Energy + 7 materials all craft 🧬Life: Jade/Brick/Glass/Cloud/Wood/Flower Bush/Flower Sea",
+      "🌸Flower+🌸Flower=💮Flower Bush, stacking same elements has surprises",
+      "🪨Stone+🪨Stone=🏖️Sand, Sand+🔥Fire=🪟Glass",
+      "🔩Metal+🔥Fire=💰Coin, craft more metal when short on coins",
+      "🔩Metal+🔩Metal=🧰Treasure Chest, chests are building materials for City Hall and Manor",
+      "🌋Ash+🌱Seed=💩Fertilizer, Flower+Fertilizer=🌺Flower Sea, Flower Sea also creates Life",
+      "💧Water+🔥Fire=♨️Steam, Steam+💨Air=☁️Cloud",
+      "Too many elements? Just tap one to auto-fill the craft slot, easier than dragging",
+      "Craft button supports batch input: assets>100 unlocks 1~5, >1000 unlocks 1~20, >10000 unlocks 1~100",
+    ]
+  },
+  town: {
+    zh: [
+      "🏪商铺每10秒产出金币，是最基础的收入来源，越早建越赚",
+      "🏛️市政厅全局+10%产出，自己不产金币但能让所有建筑更赚钱",
+      "不同区域成本产出不同：郊外最便宜但产出低，市中心最贵但产出最高",
+      "建造成本=基础成本×区域系数(cm)，产出=基础产出×区域系数(im)",
+      "移动建筑免费！点已有建筑选移动，再点空地即可，多试试布局",
+      "拆除建筑退50%材料，建错了别慌，拆了重来",
+      "🏠小屋是解锁地图和宠物的前提，优先建一个",
+      "🖼️花园提升幸福度，🏥宠物医院降低宠物消耗，🛖驿站解锁宠物食物商店",
+      "市中心有12块地，是地块最多的区域，攒够300金币去市中心发展",
+      "地块买了就是永久的，不会过期，慢慢扩张",
+      "建成🏠小屋+🏪商铺各1个后解锁小镇全景图，快去买地建造吧",
+    ],
+    en: [
+      "🏪Shop produces coins every 10s, the most basic income—build early to earn more",
+      "🏛️City Hall gives +10% global output, no coins itself but makes all buildings more profitable",
+      "Different regions have different costs/outputs: Countryside cheapest but low output, Downtown most expensive but highest",
+      "Build cost = base cost × region multiplier(cm), output = base output × region multiplier(im)",
+      "Moving buildings is FREE! Tap a building, select move, then tap empty land—try different layouts",
+      "Demolishing refunds 50% materials, don't panic if you build wrong—demolish and redo",
+      "🏠Hut is the prerequisite to unlock map and pets—build one first",
+      "🖼️Garden boosts happiness, 🏥Pet Hospital reduces pet consumption, 🛖Station unlocks pet food shop",
+      "Downtown has 12 plots, the most of any region—save 300 coins to develop there",
+      "Purchased land is permanent, never expires—expand at your own pace",
+      "Build 🏠Hut + 🏪Shop (1 each) to unlock the town panorama map—go buy land and build!",
+    ]
+  },
+  shop: {
+    zh: [
+      "商店用金币直接买元素，省了合成功夫，适合缺关键材料时",
+      "🧰宝箱是市政厅和豪宅的建造材料，记得囤几个",
+      "购买也支持批量输入，上限和合成一样：资产>100解锁1~5，>1000解锁1~20",
+      "基础元素便宜，高级元素贵但省时间，看你缺什么",
+      "金币来源：商铺产出、金属+火合成、卖元素？不，元素不能卖哦",
+      "商店里的元素买了直接进背包，和合成的一样用",
+      "缺钱就多建商铺，商铺是永动机，每10秒自动产金币",
+      "宝箱也能合成：🔩金属+🔩金属，不一定非要买",
+    ],
+    en: [
+      "Shop lets you buy elements directly with coins, saves crafting time—great when missing key materials",
+      "🧰Treasure Chests are building materials for City Hall and Manor—stock up on a few",
+      "Buying also supports batch input, same limits as crafting: assets>100 unlocks 1~5, >1000 unlocks 1~20",
+      "Basic elements are cheap, advanced ones are expensive but save time—buy what you need",
+      "Coin sources: Shop output, Metal+Fire crafting, selling elements? No—elements can't be sold!",
+      "Bought elements go straight to your inventory, same as crafted ones",
+      "Short on coins? Build more Shops—they're perpetual motion machines, auto-produce coins every 10s",
+      "Chests can also be crafted: 🔩Metal+🔩Metal, no need to always buy",
+    ]
+  },
+  pet: {
+    zh: [
+      "宠物由🧬生命孕育，需要先建🏠小屋才有地方住",
+      "孕育消耗1个🧬生命，生命值越高出稀有宠物概率越大",
+      "满级生命(11)有1/100概率出🐼熊猫，熊猫+5%产出",
+      "宠物饱食度<=50时不生效，记得定时喂食",
+      "宠物生病了也不生效，建🏥宠物医院可以治疗",
+      "建🛖宠物驿站后解锁食物商店，不同宠物吃不同食物",
+      "猫和兔子吃肉/胡萝卜，狗和牛吃肉/草，马和熊猫吃草/竹子",
+      "多只宠物加成叠加，养一群猫也能积少成多",
+      "宠物亲密度越高加成越多，多喂食多互动提升亲密度",
+      "亲密度满级解锁自定义头像，给你的宠物拍张照吧",
+    ],
+    en: [
+      "Pets are bred from 🧬Life—need to build 🏠Hut first for them to live",
+      "Breeding costs 1 🧬Life, higher Life level = higher chance of rare pets",
+      "Max Life (11) has 1/100 chance of 🐼Panda, Panda gives +5% output",
+      "Pets don't work when satiety <=50—remember to feed them regularly",
+      "Sick pets also don't work—build 🏥Pet Hospital to heal them",
+      "Build 🛖Pet Station to unlock the food shop—different pets eat different food",
+      "Cats & Rabbits eat meat/carrot, Dogs & Cows eat meat/grass, Horses & Pandas eat grass/bamboo",
+      "Multiple pets' bonuses stack—a crowd of cats can add up too",
+      "Higher pet intimacy = more bonus—feed and play often to raise intimacy",
+      "Max intimacy unlocks custom avatar—take a photo of your pet!",
+    ]
+  },
 };
 function npcCraftSmart(){
   const candidates=R.filter(([a,b,out])=>{
@@ -1901,12 +1979,16 @@ function npcCraftSmart(){
   });
   if(candidates.length){
     const [a,b,out]=candidates[Math.floor(Math.random()*candidates.length)];
-    return `你有${ELEMENTS[a].i}${ELEMENTS[a].n}和${ELEMENTS[b].i}${ELEMENTS[b].n}，试试合成${ELEMENTS[out].i}${ELEMENTS[out].n}！`;
+    if(LANG==="en") return `You have ${ELEMENTS[a].i}${elName(a)} and ${ELEMENTS[b].i}${elName(b)}, try crafting ${ELEMENTS[out].i}${elName(out)}!`;
+    return `你有${ELEMENTS[a].i}${elName(a)}和${ELEMENTS[b].i}${elName(b)}，试试合成${ELEMENTS[out].i}${elName(out)}！`;
   }
   return null;
 }
 function npcPetBonusText(){
-  if(!S.petList.length) return "还没有宠物，先建🏠小屋再用🧬生命孕育一只吧！猫兔+1% 狗牛+2% 马+3% 熊猫+5%";
+  if(!S.petList.length){
+    if(LANG==="en") return "No pets yet—build 🏠Hut first then breed one with 🧬Life! Cat/Rabbit +1%, Dog/Cow +2%, Horse +3%, Panda +5%";
+    return "还没有宠物，先建🏠小屋再用🧬生命孕育一只吧！猫兔+1% 狗牛+2% 马+3% 熊猫+5%";
+  }
   const byType={};
   let active=0,inactive=0;
   S.petList.forEach(p=>{
@@ -1917,9 +1999,10 @@ function npcPetBonusText(){
   });
   const parts=Object.entries(byType).map(([id,n])=>{
     const d=PETS.find(x=>x.id===id);
-    return `${d.i}${d.n}×${n}(+${d.bonus}%/只)`;
+    return `${d.i}${petName(d)}×${n}(+${d.bonus}%/${LANG==="en"?"each":"只"})`;
   });
   const total=petBonus();
+  if(LANG==="en") return `You have ${S.petList.length} pets: ${parts.join(", ")}. Current active +${total}% (${active} healthy & fed, ${inactive} on strike)`;
   return `你有${S.petList.length}只宠物：${parts.join("、")}。当前生效+${total}%（${active}只健康饱食，${inactive}只罢工中）`;
 }
 function npcHint(){
@@ -1927,12 +2010,12 @@ function npcHint(){
   let line=null;
   if(tab==="craft"){
     line=npcCraftSmart();
-    if(!line) line=NPC_LINES.craft[Math.floor(Math.random()*NPC_LINES.craft.length)];
+    if(!line) line=NPC_LINES.craft[LANG][Math.floor(Math.random()*NPC_LINES.craft[LANG].length)];
   }else if(tab==="pet"){
     if(Math.random()<0.5) line=npcPetBonusText();
-    else line=NPC_LINES.pet[Math.floor(Math.random()*NPC_LINES.pet.length)];
+    else line=NPC_LINES.pet[LANG][Math.floor(Math.random()*NPC_LINES.pet[LANG].length)];
   }else{
-    const pool=NPC_LINES[tab]||NPC_LINES.craft;
+    const pool=NPC_LINES[tab]?NPC_LINES[tab][LANG]:NPC_LINES.craft[LANG];
     line=pool[Math.floor(Math.random()*pool.length)];
   }
   toast(`🧙‍♂️「${line}」`,5200);
@@ -1991,6 +2074,7 @@ $("#drawBtn").addEventListener("click", ()=>{
 function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); updateBatchInput(); }
 renderAll();
 applyLang();
+updateIntroLang();
 assetsLoad().then(renderAll); // 自定义素材加载完成后重绘一次
 if(!S.drawn){
   // 流程：NPC 引导 → 幸运抽取 → 游戏
