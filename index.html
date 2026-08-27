@@ -774,13 +774,13 @@ window.tierOf=tierOf; // 供控制台调试
 const BUY_RATE = 5; // 商店购买价 = 层级 × 5 金币
 
 const BUILDINGS = [
-  {id:"hut",  n:"小屋",  en:"Hut",  i:"🏠", cost:{brick:5, wood:3},                 income:1},
-  {id:"shop", n:"商铺",  en:"Shop", i:"🏪", cost:{brick:8, wood:5, coin:20},         income:3},
-  {id:"garden",n:"花园", en:"Garden",i:"🌸", cost:{flower:15, coin:10},               income:2},
-  {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:20, jade:5, flower:10, chest:1}, income:5},
-  {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:10, flower:5},          income:0},
-  {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:5, coin:20},              income:0},
-  {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:3}, income:0, passive:"全镇产出+10%", passiveEn:"Town Output +10%"},
+  {id:"hut",  n:"小屋",  en:"Hut",  i:"🏠", cost:{brick:4, wood:2},                 income:2},
+  {id:"shop", n:"商铺",  en:"Shop", i:"🏪", cost:{brick:8, wood:4, coin:20},         income:6},
+  {id:"garden",n:"花园", en:"Garden",i:"🌸", cost:{flower:14, coin:10},               income:4},
+  {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:20, jade:4, flower:10, chest:2}, income:10},
+  {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:10, flower:4},          income:0},
+  {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:4, coin:20},              income:0},
+  {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:4}, income:0, passive:"全镇产出+10%", passiveEn:"Town Output +10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
 const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
@@ -789,11 +789,11 @@ const OFFLINE_CAP = 3600;     // 秒：离线结算封顶 1 小时（收入与�
 // 底图区域：成本/产出双系数，建造时选区域
 // 地图布局（4列×3行网格）：山脚在北、林间东侧、市中心居中、平原西侧、河岸沿南
 const REGIONS = [
-  {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:0.9, im:0.8, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", descEn:"Cheap, low output", plots:6,  land:50},
-  {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.0, im:1.2, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", descEn:"Slightly higher output", plots:8,  land:80},
-  {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", descEn:"Most expensive, highest output", plots:12, land:300},
-  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.8, im:1.0, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:20},
-  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:1.5, im:1.8, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:150},
+  {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:1.0, im:0.5, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", descEn:"Cheap, low output", plots:6,  land:50},
+  {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.5, im:1.5, area:"1/4/3/5",      bg:"#3e5c3a", desc:"产出略高", descEn:"Slightly higher output", plots:8,  land:80},
+  {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.5, im:2.5, area:"2/2/3/4",      bg:"#6e5a7e", desc:"最贵最高产", descEn:"Most expensive, highest output", plots:12, land:300},
+  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.5, im:1.0, area:"2/1/4/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:20},
+  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:2.0, im:2.0, area:"3/2/4/5",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:150},
 ];
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
 function regName(r){ if(!r) return ""; return LANG==="en"?(r.en||r.n):r.n; }
@@ -981,6 +981,7 @@ const I18N = {
     "town.income":"💰+{0}/{1}s",
     "town.incomeToast":"🏘️ 小镇产出 💰+{0}{1}",
     "town.incomeBonus":"（含{0}）",
+    "town.bonusSettle":"🐾🏛️ 加成结算 💰+{0}（累计{1}）",
     "town.passive":"🏛️ {0}",
     "town.buildBtn":"建造",
     "town.builtToast":"{0} 在{1}{2}建造了{3}！",
@@ -1120,6 +1121,7 @@ const I18N = {
     "town.income":"💰+{0}/{1}s",
     "town.incomeToast":"🏘️ Town Income 💰+{0}{1}",
     "town.incomeBonus":" (incl. {0})",
+    "town.bonusSettle":"🐾🏛️ Bonus Settle 💰+{0} (accumulated {1})",
     "town.passive":"🏛️ {0}",
     "town.buildBtn":"Build",
     "town.builtToast":"{0} built {3} at {1}{2}!",
@@ -1231,6 +1233,8 @@ function fresh(){
     totalEarned:0,
     craftedRecipes:[],   // 已合成过的配方组合（["a+b", ...]，a<b排序）
     lastTick:Date.now(),
+    bonusAccumulator:0,  // 低产出时累计的宠物/市政厅加成金币（小数）
+    lastBonusSettle:Date.now(), // 上次加成结算时间
   };
 }
 function migratePetFields(s){
@@ -2384,17 +2388,47 @@ function tick(){
   const now=Date.now();
   const elapsed=Math.min((now-S.lastTick)/1000, OFFLINE_CAP);
   if(elapsed>=INCOME_INTERVAL){
-    // 1) 金币产出（含宠物物种加成）
     const cycles=Math.floor(elapsed/INCOME_INTERVAL);
     let inc=0;
     BUILDINGS.forEach(b=>{ inc+=buildingIncome(b); });
     const petB=petBonus(),hallB=hallBonus();
-    const earn=Math.round(inc*(1+(petB+hallB)/100)*cycles);
-    if(earn>0){
-      S.coin+=earn; S.totalEarned+=earn;
-      let bt=(petB>0?("🐾+"+petB+"%"):"")+(hallB>0?((petB>0?" ":"")+"🏛️+"+hallB+"%"):"");
-      toast(t("town.incomeToast",earn,bt?t("town.incomeBonus",bt):""));
+    const bonusPct=petB+hallB;
+    // 确保旧档有这两个字段
+    if(S.bonusAccumulator===undefined) S.bonusAccumulator=0;
+    if(S.lastBonusSettle===undefined) S.lastBonusSettle=now;
+
+    if(inc>=100){
+      // 高产出：每10秒一起结算展示
+      const earn=Math.round(inc*(1+bonusPct/100)*cycles);
+      if(earn>0){
+        S.coin+=earn; S.totalEarned+=earn;
+        let bt=(petB>0?("🐾+"+petB+"%"):"")+(hallB>0?((petB>0?" ":"")+"🏛️+"+hallB+"%"):"");
+        toast(t("town.incomeToast",earn,bt?t("town.incomeBonus",bt):""));
+      }
+    }else{
+      // 低产出：每10秒只展示基础产出，加成累计到bonusAccumulator
+      const baseEarn=Math.round(inc*cycles);
+      if(baseEarn>0){
+        S.coin+=baseEarn; S.totalEarned+=baseEarn;
+        toast(t("town.incomeToast",baseEarn,""));
+      }
+      if(bonusPct>0){
+        S.bonusAccumulator+=inc*bonusPct/100*cycles;
+      }
     }
+
+    // 每5分钟结算一次累计加成
+    const bonusElapsed=(now-S.lastBonusSettle)/1000;
+    if(bonusElapsed>=300 && S.bonusAccumulator>=1){
+      const bonusCoin=Math.floor(S.bonusAccumulator);
+      if(bonusCoin>0){
+        S.coin+=bonusCoin; S.totalEarned+=bonusCoin;
+        toast(t("town.bonusSettle",bonusCoin,S.bonusAccumulator.toFixed(1)));
+      }
+      S.bonusAccumulator-=bonusCoin;
+      S.lastBonusSettle=now;
+    }
+
     // 2) 宠物状态：每 5 分钟饱食 -10；饱食 0 后 HP -1；HP 0 → 生病（停止衰减，可治疗，不会死亡）
     const dCycles=Math.floor(elapsed/DECAY_INTERVAL);
     for(let i=0;i<dCycles;i++){
