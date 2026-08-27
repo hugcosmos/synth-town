@@ -507,26 +507,21 @@
     <h2 data-i18n="settings.title">⚙️ 设置</h2>
 
     <h3 data-i18n="settings.archive">📦 存档副本</h3>
-    <button class="setBtn" id="exportBtn" data-i18n="btn.export">📤 导出存档为文件<small>下载 JSON 副本，可保存多个，随时回来继续</small></button>
-    <button class="setBtn" id="importBtn" data-i18n="btn.import">📥 导入存档<small>选择之前导出的 JSON 副本，覆盖当前进度</small></button>
+    <button class="setBtn" id="exportBtn" data-i18n="btn.export">📤 导出存档为文件<small data-i18n="btn.exportSmall">下载 JSON 副本，可保存多个，随时回来继续</small></button>
+    <button class="setBtn" id="importBtn" data-i18n="btn.import">📥 导入存档<small data-i18n="btn.importSmall">选择之前导出的 JSON 副本，覆盖当前进度</small></button>
     <input type="file" id="importFile" accept="application/json" style="display:none">
 
     <h3 data-i18n="settings.theme">🎨 配色主题</h3>
     <div id="themeChips"></div>
 
     <h3 data-i18n="settings.bg">🖼️ 自定义背景</h3>
-    <div style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">
-      上传一张图片作为游戏背景（自动压缩到 ≤1920px，存本地 IndexedDB，不占存档空间）。上传后在上方主题中选择「自定义」即可使用。
-    </div>
+    <div data-i18n="settings.bg.desc" style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">上传一张图片作为游戏背景（自动压缩到 ≤1920px，存本地 IndexedDB，不占存档空间）。上传后在上方主题中选择「自定义」即可使用。</div>
     <button class="setBtn" id="bgUploadBtn" data-i18n="btn.bgUpload">📷 上传背景图片</button>
     <button class="setBtn" id="bgResetBtn" style="display:none" data-i18n="btn.bgReset">↩️ 移除自定义背景</button>
     <input type="file" id="bgFile" accept="image/*" style="display:none">
 
     <h3 data-i18n="settings.pack">🖼️ 自定义素材包（高级）</h3>
-    <div style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">
-      上传 theme.json：{ "pets":{…}, "elements":{…}, "regions":{…} }，值为 data:image/png;base64 图片。<br>
-      规格：宠物/元素 128×128、地块 512×256、单张 ≤200KB（自动压缩到规格内）。图片存 IndexedDB，不占存档空间；未替换的回落 emoji。
-    </div>
+    <div data-i18n="settings.pack.desc" style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">上传 theme.json：{ "pets":{…}, "elements":{…}, "regions":{…} }，值为 data:image/png;base64 图片。<br>规格：宠物/元素 128×128、地块 512×256、单张 ≤200KB（自动压缩到规格内）。图片存 IndexedDB，不占存档空间；未替换的回落 emoji。</div>
     <button class="setBtn" id="packBtn" data-i18n="btn.packUpload">📂 上传素材包 theme.json</button>
     <button class="setBtn" id="packResetBtn" data-i18n="btn.packReset">↩️ 恢复默认外观</button>
     <input type="file" id="packFile" accept="application/json" style="display:none">
@@ -835,6 +830,19 @@ const I18N = {
     "town.cancel":"取消",
     "town.selectedBar":"📍 已选地块：<b style=\"color:var(--gold)\">{0}{1}</b>（成本×{2} 产出×{3}）—— 在地图上点其他空地切换",
     "town.onlyEmpty":"只能移到 🟫 空地",
+    "town.mapStats.buildings":"🏘️ 总建筑",
+    "town.mapStats.output":"💰 产出",
+    "town.mapStats.land":"🗺️ 已购地",
+    "town.noBuildings":"还没有建筑",
+    "town.unlockMap":"🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，解锁小镇全景图（买地建造，各区域成本/产出不同）",
+    "town.unlockMap2":"🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个，解锁底图模式（买地建造，各区域成本/产出不同）",
+    "town.moveMode":"🏗️ 移动模式：点一块 🟫 空地移入，或",
+    "town.selectedPlot":"📍 已选 {0}{1} 空地，下方选建筑建造，或",
+    "town.mapTitle":"🗺️ 小镇全景图",
+    "town.buyLand":"买地💰{0}",
+    "town.emptyLand":"空地-点击选中",
+    "town.cancel":"取消",
+    "theme.night":"紫夜", "theme.forest":"森绿", "theme.sand":"暖沙", "theme.snow":"雪境", "theme.custom":"自定义",
     "save.error":"⚠️ 存档写入失败（存储空间不足），进度可能无法保存！",
     "draw.toast":"🎰 初始元素 + 💰{0} 启动金币已到账！",
     "life.info":"🧬生命 ×{0}｜最高生命值 <b style=\"color:var(--ok)\">{1}</b>（{2} 满级，1/100 出 🐼）",
@@ -927,6 +935,19 @@ const I18N = {
     "town.cancel":"Cancel",
     "town.selectedBar":"📍 Selected land: <b style=\"color:var(--gold)\">{0}{1}</b> (cost×{2} output×{3}) — tap other empty land on map to switch",
     "town.onlyEmpty":"Can only move to 🟫 empty land",
+    "town.mapStats.buildings":"🏘️ Buildings",
+    "town.mapStats.output":"💰 Output",
+    "town.mapStats.land":"🗺️ Land",
+    "town.noBuildings":"No buildings yet",
+    "town.unlockMap":"🗺️ Build 🏠Hut + 🏪Shop (1 each) to unlock town panorama (buy land, different regions have different costs/outputs)",
+    "town.unlockMap2":"🗺️ Build 🏠Hut + 🏪Shop (1 each) to unlock map mode (buy land, different regions have different costs/outputs)",
+    "town.moveMode":"🏗️ Move mode: tap a 🟫 empty land to move, or",
+    "town.selectedPlot":"📍 Selected {0}{1} empty land, choose building below, or",
+    "town.mapTitle":"🗺️ Town Panorama",
+    "town.buyLand":"Buy 💰{0}",
+    "town.emptyLand":"Empty - tap to select",
+    "town.cancel":"Cancel",
+    "theme.night":"Purple Night", "theme.forest":"Forest Green", "theme.sand":"Warm Sand", "theme.snow":"Snow Realm", "theme.custom":"Custom",
     "save.error":"⚠️ Save failed (insufficient storage), progress may not be saved!",
     "draw.toast":"🎰 Initial elements + 💰{0} starting coins credited!",
     "life.info":"🧬Life ×{0}｜Max HP <b style=\"color:var(--ok)\">{1}</b> ({2} max, 1/100 for 🐼)",
@@ -938,7 +959,11 @@ function t(key,...args){ let s=(I18N[LANG]&&I18N[LANG][key])||key; args.forEach(
 function applyLang(){
   document.querySelectorAll("[data-i18n]").forEach(el=>{
     const key=el.dataset.i18n;
-    if(I18N[LANG]&&I18N[LANG][key]) el.textContent=I18N[LANG][key];
+    const val=I18N[LANG]&&I18N[LANG][key];
+    if(!val) return;
+    if(el.tagName==="DIV"){ el.innerHTML=val; }
+    else if(el.children.length>0){ for(let node of el.childNodes){ if(node.nodeType===3){ node.textContent=val; break; } } }
+    else{ el.textContent=val; }
   });
   document.title = t("app.title");
 }
@@ -1533,10 +1558,10 @@ const THEMES = {
   custom: {n:"自定义", bg1:"#3a2a63", bg2:"#1b1430", panel:"#2a2044", panel2:"#352a55", line:"#4a3d73"},
 };
 function applyTheme(){
-  const t=THEMES[S.theme]||THEMES.night;
+  const theme=THEMES[S.theme]||THEMES.night;
   const r=document.documentElement.style;
-  r.setProperty("--bg",t.bg2); r.setProperty("--panel",t.panel);
-  r.setProperty("--panel2",t.panel2); r.setProperty("--line",t.line);
+  r.setProperty("--bg",theme.bg2); r.setProperty("--panel",theme.panel);
+  r.setProperty("--panel2",theme.panel2); r.setProperty("--line",theme.line);
   document.body.dataset.theme=S.theme||"night";
   if(S.theme==="custom"){ applyCustomBg(); }
   else { document.body.style.background=""; }
@@ -1544,22 +1569,22 @@ function applyTheme(){
 function renderThemeChips(){
   const box=$("#themeChips"); if(!box) return;
   box.innerHTML="";
-  Object.entries(THEMES).forEach(([id,t])=>{
+  Object.entries(THEMES).forEach(([id,theme])=>{
     const c=document.createElement("div");
     const hasBg = id==="custom" && assetCache.has("bg:custom");
     const disabled = id==="custom" && !hasBg;
     c.className="themeChip"+(S.theme===id?" sel":"")+(disabled?" disabled":"");
+    const name=t("theme."+id);
     if(id==="custom" && hasBg){
-      c.innerHTML=`<span class="sw" style="background-image:url(${assetCache.get("bg:custom")});background-size:cover;background-position:center"></span>${t.n}`;
+      c.innerHTML=`<span class="sw" style="background-image:url(${assetCache.get("bg:custom")});background-size:cover;background-position:center"></span>${name}`;
     } else {
-      c.innerHTML=`<span class="sw" style="background:linear-gradient(135deg,${t.bg1},${t.panel2})"></span>${t.n}${disabled?" 🔒":""}`;
+      c.innerHTML=`<span class="sw" style="background:linear-gradient(135deg,${theme.bg1},${theme.panel2})"></span>${name}${disabled?" 🔒":""}`;
     }
     if(!disabled){
       c.addEventListener("click",()=>{ S.theme=id; applyTheme(); renderThemeChips(); save(); });
     }
     box.appendChild(c);
   });
-  // 移除按钮显隐
   const rb=$("#bgResetBtn");
   if(rb) rb.style.display = assetCache.has("bg:custom") ? "" : "none";
 }
@@ -1821,16 +1846,16 @@ function renderMap(){
   });
   const bc={};
   Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
-  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);return `<span class="mapBadge">${b?b.i:"❓"}<b>${n}</b></span>`;}).join("")||'<span style="font-size:11px;color:var(--dim)">还没有建筑</span>';
+  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);return `<span class="mapBadge">${b?b.i:"❓"}<b>${n}</b></span>`;}).join("")||'<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>';
   let hint="";
-  if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">🏗️ 移动模式：点一块 🟫 空地移入，或 <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">取消</button></div>`;
-  else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">📍 已选 ${regionOf(selectedPlot.region).i}${regName(regionOf(selectedPlot.region))} 空地，下方选建筑建造，或 <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">取消</button></div>`;
-  let html=`<div class="mapStats"><span>🏘️ 总建筑 <b>${totalBld}</b></span><span>💰 产出 <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>🗺️ 已购地 <b>${bought}</b>/42</span></div><div class="mapBadges">${badges}</div>${hint}`;
+  if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
+  else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.selectedPlot",regionOf(selectedPlot.region).i,regName(regionOf(selectedPlot.region)))} <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
+  let html=`<div class="mapStats"><span>${t("town.mapStats.buildings")} <b>${totalBld}</b></span><span>${t("town.mapStats.output")} <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>${t("town.mapStats.land")} <b>${bought}</b>/42</span></div><div class="mapBadges">${badges}</div>${hint}`;
   if(!mapUnlocked()){
-    html+=`<div class="mapLocked">🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个后，解锁小镇全景图（买地建造，各区域成本/产出不同）</div>`;
+    html+=`<div class="mapLocked">${t("town.unlockMap")}</div>`;
     outer.innerHTML=html; return;
   }
-  html+=`<div class="mapHead"><span>🗺️ 小镇全景图</span><span class="compass">🧭 N</span></div><div class="mapGrid"></div>`;
+  html+=`<div class="mapHead"><span>${t("town.mapTitle")}</span><span class="compass">🧭 N</span></div><div class="mapGrid"></div>`;
   outer.innerHTML=html;
   const grid=outer.querySelector(".mapGrid");
   REGIONS.forEach(r=>{
@@ -1844,15 +1869,15 @@ function renderMap(){
     plots.forEach((p,i)=>{
       const sel=selectedPlot&&selectedPlot.region===r.id&&selectedPlot.index===i;
       const ms=moveMode&&moveMode.fromRegion===r.id&&moveMode.fromIndex===i;
-      let c="",t="";
-      if(p===false){c="🔒";t=`买地💰${r.land}`;}
-      else if(p===null){c="";t="空地-点击选中";}
-      else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";t=b?bldName(b):"";}
-      ph+=`<div data-r="${r.id}" data-i="${i}" title="${t}" style="width:${cellSize}px;height:${cellSize}px;display:flex;align-items:center;justify-content:center;font-size:${cellSize*0.6}px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:${p===false?'#00000066':p===null?'#ffffff18':'#ffffff35'};${sel?'outline:2px solid var(--gold);':''}${ms?'outline:2px solid #4cd97b;':''}">${c}</div>`;
+      let c="",tip="";
+      if(p===false){c="🔒";tip=t("town.buyLand",r.land);}
+      else if(p===null){c="";tip=t("town.emptyLand");}
+      else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";tip=b?bldName(b):"";}
+      ph+=`<div data-r="${r.id}" data-i="${i}" title="${tip}" style="width:${cellSize}px;height:${cellSize}px;display:flex;align-items:center;justify-content:center;font-size:${cellSize*0.6}px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:${p===false?'#00000066':p===null?'#ffffff18':'#ffffff35'};${sel?'outline:2px solid var(--gold);':''}${ms?'outline:2px solid #4cd97b;':''}">${c}</div>`;
     });
     ph+="</div>";
     const bc2=plots.filter(p=>p&&p!==null).length;
-    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${regName(r)}</span></div><span class="rm">成本×${r.cm} 产出×${r.im} 地价💰${r.land}</span><span class="rdesc">${r.desc} · ${r.plots}块地</span>${ph}<span style="font-size:10px;color:var(--dim);margin-top:3px;font-weight:600;">🏗️ ${bc2}/${r.plots}</span>`;
+    tile.innerHTML=`<div class="tileHd"><span class="rn">${r.i} ${regName(r)}</span></div><span class="rm">${LANG==="en"?"Cost×":"成本×"}${r.cm} ${LANG==="en"?"Output×":"产出×"}${r.im} ${LANG==="en"?"Land💰":"地价💰"}${r.land}</span><span class="rdesc">${r.desc} · ${r.plots}${LANG==="en"?" plots":"块地"}</span>${ph}<span style="font-size:10px;color:var(--dim);margin-top:3px;font-weight:600;">🏗️ ${bc2}/${r.plots}</span>`;
     tile.querySelectorAll("[data-r]").forEach(cell=>{
       cell.addEventListener("click",ev=>{
         ev.stopPropagation();
@@ -1886,7 +1911,7 @@ function renderShop(){
   }else{
     const hint=document.createElement("div");
     hint.className="shopBar";
-    hint.innerHTML=`🗺️ 建成 🏠小屋 + 🏪商铺 各 1 个，解锁底图模式（买地建造，各区域成本/产出不同）`;
+    hint.innerHTML=`${t("town.unlockMap2")}`;
     box.appendChild(hint);
   }
   const region=selectedPlot?selectedPlot.region:"plain";
