@@ -390,6 +390,19 @@
     .mapGrid{grid-template-columns:repeat(2,1fr);}
     .mapGrid .tile{grid-area:auto !important; min-height:60px;}
     .tabBtn{padding:8px 12px;font-size:12px;}
+    /* 移动端header优化 */
+    header{padding:6px 12px 6px;}
+    .hdr-top h1{font-size:14px; letter-spacing:0.5px;}
+    .hdr-bottom{gap:6px; margin-top:4px;}
+    .stats{flex-wrap:nowrap; gap:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+    .stats::-webkit-scrollbar{display:none;}
+    .stat{padding:2px 8px; font-size:11px;}
+    .hdr-actions{gap:4px;}
+    #resetBtn,#settingsBtn{padding:2px 8px; font-size:11px;}
+    #resetBtn{display:none;}
+    #tabs{padding:6px 10px 0; gap:4px;}
+    .tabBtn{padding:6px 10px; font-size:11px; flex:1; text-align:center;}
+    #toast{top:56px; font-size:12px; padding:8px 16px; max-width:90vw;}
   }
 
 </style>
