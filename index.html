@@ -660,7 +660,11 @@ function regName(r){ if(!r) return ""; return LANG==="en"?(r.en||r.n):r.n; }
 function initPlots(){
   if(!S.plots) S.plots={};
   REGIONS.forEach(r=>{
-    if(!Array.isArray(S.plots[r.id])) S.plots[r.id]=new Array(r.plots).fill(false);
+    if(!Array.isArray(S.plots[r.id])){
+      S.plots[r.id]=new Array(r.plots).fill(false);
+      // 新存档：郊外前两块地免费（空地），降低新手门槛
+      if(r.id==="plain"){ S.plots[r.id][0]=null; S.plots[r.id][1]=null; }
+    }
   });
 }
 function migratePlots(){
@@ -842,6 +846,22 @@ const I18N = {
     "town.buyLand":"买地💰{0}",
     "town.emptyLand":"空地-点击选中",
     "town.cancel":"取消",
+    "town.moveModeHint":"🏗️ 移动模式：在地图上点一块 🟫 空地移入建筑",
+    "town.selectLandHint":"👆 先在地图上点一块 🟫 空地（或 🔒 买地），再选建筑建造",
+    "town.buyLandNeed":"💰 买地需要 {0} 金币",
+    "town.boughtLand":"🏞️ 在{0}{1}买下一块地（-💰{2}）",
+    "town.buildSuccess":"{0} 在{1}{2}建造了{3}！",
+    "town.moveSuccess":"🏗️ {0} 移到了{1}{2}",
+    "town.noLandPlain":"郊外无空地，解锁地图后买新地",
+    "town.selectLandFirst":"先在地图上点一块 🟫 空地",
+    "town.moveOrDemolish":"{0}\n\n确定 = 🏗️ 移动到空地\n取消 = 💥 拆除(退50%)",
+    "pet.lifeLabel":"🧬{0}",
+    "pet.cureNeed":"💰 治疗需要 {0} 金币",
+    "pet.cured":"🏥 {0} 康复了！（-💰{1}）",
+    "shop.boughtFood":"🛒 买了 {0}{1}（-💰{2}）",
+    "save.exported":"📤 {0}存档已导出（v{1}）",
+    "save.importConfirm":"导入存档（v{0}{1}）将覆盖当前进度，确定？{2}",
+    "pack.applied":"🖼️ 素材包生效：替换了 {0} 张图",
     "theme.night":"紫夜", "theme.forest":"森绿", "theme.sand":"暖沙", "theme.snow":"雪境", "theme.custom":"自定义",
     "save.error":"⚠️ 存档写入失败（存储空间不足），进度可能无法保存！",
     "draw.toast":"🎰 初始元素 + 💰{0} 启动金币已到账！",
@@ -947,6 +967,22 @@ const I18N = {
     "town.buyLand":"Buy 💰{0}",
     "town.emptyLand":"Empty - tap to select",
     "town.cancel":"Cancel",
+    "town.moveModeHint":"🏗️ Move mode: tap a 🟫 empty land on map to move building",
+    "town.selectLandHint":"👆 Tap a 🟫 empty land (or 🔒 buy land) on map, then select building",
+    "town.buyLandNeed":"💰 Need {0} coins to buy land",
+    "town.boughtLand":"🏞️ Bought a land at {0}{1} (-💰{2})",
+    "town.buildSuccess":"{0} built {3} at {1}{2}!",
+    "town.moveSuccess":"🏗️ {0} moved to {1}{2}",
+    "town.noLandPlain":"No empty land in countryside, unlock map to buy new land",
+    "town.selectLandFirst":"Tap a 🟫 empty land on map first",
+    "town.moveOrDemolish":"{0}\n\nOK = 🏗️ Move to empty land\nCancel = 💥 Demolish (50% refund)",
+    "pet.lifeLabel":"🧬{0}",
+    "pet.cureNeed":"💰 Need {0} coins to heal",
+    "pet.cured":"🏥 {0} recovered! (-💰{1})",
+    "shop.boughtFood":"🛒 Bought {0}{1} (-💰{2})",
+    "save.exported":"📤 {0} save exported (v{1})",
+    "save.importConfirm":"Import save (v{0}{1}) will overwrite current progress, OK?{2}",
+    "pack.applied":"🖼️ Asset pack applied: replaced {0} images",
     "theme.night":"Purple Night", "theme.forest":"Forest Green", "theme.sand":"Warm Sand", "theme.snow":"Snow Realm", "theme.custom":"Custom",
     "save.error":"⚠️ Save failed (insufficient storage), progress may not be saved!",
     "draw.toast":"🎰 Initial elements + 💰{0} starting coins credited!",
@@ -1349,7 +1385,7 @@ function renderPets(){
   const n=count("life");
   // 顶部：生命与孕育
   let html=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
-  html+=`🧬生命 ×${n}${n>0?`｜${LANG==="en"?"Max HP":"最高生命值"} <b style="color:var(--ok)">${bestLifeHp()}</b>（${MAX_LIFE_HP} ${LANG==="en"?"max, 1/100 for 🐼":"满级，1/100 出 🐼"}）`:''}<br>`;  if(hasB("hut")){
+  html+=`🧬${elName("life")} ×${n}${n>0?`｜${LANG==="en"?"Max HP":"最高生命值"} <b style="color:var(--ok)">${bestLifeHp()}</b>（${MAX_LIFE_HP} ${LANG==="en"?"max, 1/100 for 🐼":"满级，1/100 出 🐼"}）`:''}<br>`;  if(hasB("hut")){
     html+=`<button id="hatchBtn" ${n>0?"":"disabled style='opacity:.4;cursor:not-allowed'"} style="margin-top:6px;background:linear-gradient(135deg,#4cd97b,#2aa858);border:none;color:#fff;border-radius:8px;padding:8px 20px;font-size:14px;cursor:pointer;font-weight:700;">${t("life.hatchBtn")}（消耗1个🧬）</button>`;
   }else{
     html+=`<span style="font-size:11px">${t("pet.needHut")}</span>`;
@@ -1378,7 +1414,7 @@ function renderPets(){
       const f=FOODS[b.dataset.buyfood];
       if(S.coin<f.price) return;
       S.coin-=f.price; S.food[b.dataset.buyfood]=(S.food[b.dataset.buyfood]||0)+1;
-      toast(`🛒 ${LANG==="en"?"Bought ":"买了 "}${f.i}${foodName(f)}（-💰${f.price}）`);
+      toast(t("shop.boughtFood",f.i,foodName(f),f.price));
       renderAll(); save();
     });
   });
@@ -1542,10 +1578,10 @@ function curePet(idx){
   const p=S.petList[idx]; if(!p) return;
   if(!hasB("hospital")){ toast("🔒 需先建 🏥宠物医院"); return; }
   const cost=(p.maxHp-p.hp)*2;
-  if(S.coin<cost){ toast(`💰 治疗需要 ${cost} 金币`); return; }
+  if(S.coin<cost){ toast(t("pet.cureNeed",cost)); return; }
   S.coin-=cost;
   p.hp=p.maxHp; p.sick=false;
-  toast(`🏥 ${PETS.find(x=>x.id===p.id).n} 康复了！（-💰${cost}）`);
+  toast(t("pet.cured",PETS.find(x=>x.id===p.id).n,cost));
   renderAll(); save();
 }
 
@@ -1731,7 +1767,7 @@ $("#exportBtn").addEventListener("click", ()=>{
   a.download=`synth-town-${suffix}-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-  toast(`📤 ${suffix}存档已导出（v${SAVE_VERSION}）`);
+  toast(t("save.exported",suffix,SAVE_VERSION));
 });
 // 导入存档副本
 $("#importBtn").addEventListener("click", ()=>$("#importFile").click());
@@ -1744,7 +1780,7 @@ $("#importFile").addEventListener("change", async e=>{
     const fileVersion = data.version || 1;
     const needMigrate = fileVersion < SAVE_VERSION;
     const typeNote = data.exportType==="lightweight"?"（轻量版，不含头像）":"";
-    if(!confirm(`导入存档（v${fileVersion}${typeNote}）将覆盖当前进度，确定？${needMigrate?`\n\n⚠️ 检测到旧版本存档，导入后将自动迁移到 v${SAVE_VERSION}`:""}`)) return;
+    if(!confirm(t("save.importConfirm",fileVersion,typeNote,needMigrate?"\n\n⚠️ "+(LANG==="en"?"Old version save detected, will auto-migrate to v":"检测到旧版本存档，导入后将自动迁移到 v")+SAVE_VERSION:""))) return;
     S=Object.assign(fresh(), data.save);
     S.petList=S.petList||[]; S.food=S.food||{}; S.regions=S.regions||{}; S.lifePool=S.lifePool||[];
     // 迁移旧版宠物计数 → 实例
@@ -1785,7 +1821,7 @@ $("#packFile").addEventListener("change", async e=>{
   try{
     const n=await importPack(JSON.parse(await f.text()));
     renderAll();
-    toast(`🖼️ 素材包生效：替换了 ${n} 张图`);
+    toast(t("pack.applied",n));
   }catch(err){ toast("❌ 素材包导入失败："+err.message); }
 });
 $("#packResetBtn").addEventListener("click", async ()=>{
@@ -1882,10 +1918,10 @@ function renderMap(){
       cell.addEventListener("click",ev=>{
         ev.stopPropagation();
         const rid=cell.dataset.r,idx=+cell.dataset.i,p=S.plots[rid][idx];
-        if(moveMode){if(p===null)completeMove(rid,idx);else toast("只能移到空地");return;}
+        if(moveMode){if(p===null)completeMove(rid,idx);else toast(t("town.onlyEmpty"));return;}
         if(p===false)buyPlot(rid,idx);
         else if(p===null)selectPlot(rid,idx);
-        else{const b=BUILDINGS.find(x=>x.id===p);if(confirm(`${b?b.i+bldName(b):(LANG==="en"?"Building":"建筑")}\n\n确定 = 🏗️ 移动到空地\n取消 = 💥 拆除(退50%)`))startMove(rid,idx);else demolishPlot(rid,idx);}
+        else{const b=BUILDINGS.find(x=>x.id===p);if(confirm(t("town.moveOrDemolish",b?b.i+bldName(b):(LANG==="en"?"Building":"建筑"))))startMove(rid,idx);else demolishPlot(rid,idx);}
       });
     });
     grid.appendChild(tile);
@@ -1905,8 +1941,8 @@ function renderShop(){
     const bar=document.createElement("div");
     bar.className="shopBar";
     if(selectedPlot){const r=regionOf(selectedPlot.region);bar.innerHTML=t("town.selectedBar",r.i,regName(r),r.cm,r.im);}
-    else if(moveMode){bar.innerHTML=`🏗️ 移动模式：在地图上点一块 🟫 空地移入建筑`;}
-    else{bar.innerHTML=`👆 先在地图上点一块 🟫 空地（或 🔒 买地），再选建筑建造`;}
+    else if(moveMode){bar.innerHTML=t("town.moveModeHint");}
+    else{bar.innerHTML=t("town.selectLandHint");}
     box.appendChild(bar);
   }else{
     const hint=document.createElement("div");
@@ -1937,9 +1973,9 @@ let moveMode=null;       // {fromRegion,fromIndex,bid} 移动模式
 function buyPlot(region,index){
   const r=regionOf(region), plots=S.plots[region];
   if(!plots||plots[index]!==false) return;
-  if(S.coin<r.land){ toast(`💰 买地需要 ${r.land} 金币`); return; }
+  if(S.coin<r.land){ toast(t("town.buyLandNeed",r.land)); return; }
   S.coin-=r.land; plots[index]=null;
-  toast(`🏞️ 在${r.i}${regName(r)}买下一块地（-💰${r.land}）`);
+  toast(t("town.boughtLand",r.i,regName(r),r.land));
   renderAll(); save();
 }
 function selectPlot(region,index){
@@ -1957,9 +1993,9 @@ function build(b,cost){
       const plots=S.plots.plain;
       let idx=plots.findIndex(p=>p===null);
       if(idx<0){idx=plots.findIndex(p=>p===false);if(idx>=0&&S.coin>=regionOf("plain").land){S.coin-=regionOf("plain").land;plots[idx]=null;}}
-      if(idx<0){toast("郊外无空地，解锁地图后买新地");return;}
+      if(idx<0){toast(t("town.noLandPlain"));return;}
       selectedPlot={region:"plain",index:idx};
-    }else{toast("先在地图上点一块 🟫 空地");return;}
+    }else{toast(t("town.selectLandFirst"));return;}
   }
   if(!canAfford(cost)) return;
   const {region,index}=selectedPlot;
@@ -1970,7 +2006,7 @@ function build(b,cost){
   });
   S.plots[region][index]=b.id;
   S.buildings[b.id]=(S.buildings[b.id]||0)+1;
-  toast(`${b.i} 在${regionOf(region).i}${regionOf(region).n}建造了${bldName(b)}！`);
+  toast(t("town.buildSuccess",b.i,regionOf(region).i,regName(regionOf(region)),bldName(b)));
   selectedPlot=null;
   renderAll(); save();
 }
@@ -1988,7 +2024,7 @@ function completeMove(toRegion,toIndex){
   const {fromRegion,fromIndex,bid}=moveMode;
   S.plots[fromRegion][fromIndex]=null;
   S.plots[toRegion][toIndex]=bid;
-  toast(`🏗️ ${ELEMENTS[bid]?ELEMENTS[bid].i:""}${ELEMENTS[bid]?elName(bid):bid} 移到了${regionOf(toRegion).i}${regionOf(toRegion).n}`);
+  toast(t("town.moveSuccess",(ELEMENTS[bid]?ELEMENTS[bid].i:"")+(ELEMENTS[bid]?elName(bid):bid),regionOf(toRegion).i,regName(regionOf(toRegion))));
   moveMode=null;
   renderAll(); save();
 }
