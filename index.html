@@ -15,7 +15,8 @@
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{overscroll-behavior:none;} /* 关键：禁掉移动端下拉刷新/橡皮筋滚动 */
   body{
-    color:var(--text); font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    color:var(--text); font-family:"SF Pro Text","PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    font-weight:400; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     min-height:100vh; display:flex; flex-direction:column;
   }
   body.dragging{user-select:none; -webkit-user-select:none;} /* 拖拽中全局禁选中，防文字拖拽叠影 */
@@ -59,20 +60,22 @@
     position:sticky; top:0; z-index:10; backdrop-filter:blur(6px);
   }
   .hdr-top{display:flex; justify-content:center; align-items:center;}
-  .hdr-top h1{font-size:16px; letter-spacing:1px; margin:0;}
-  .hdr-bottom{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px;}
+  .hdr-top h1{font-size:17px; font-weight:700; letter-spacing:1.5px; margin:0;}
+  .hdr-bottom{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;}
   .stats{display:flex; gap:6px; flex-wrap:wrap; margin-left:0; flex:1; overflow-x:auto;}
   .stat{
-    background:var(--panel); border:1px solid var(--line); border-radius:16px;
-    padding:3px 10px; font-size:12px; white-space:nowrap;
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:4px 12px; font-size:12px; font-weight:500; white-space:nowrap;
+    display:flex; align-items:center; gap:3px;
   }
-  .stat b{color:var(--gold);}
+  .stat b{color:var(--gold); font-weight:700; font-variant-numeric:tabular-nums;}
   .hdr-actions{display:flex; gap:6px; flex-shrink:0;}
-  #resetBtn,#settingsBtn{
-    background:none; border:1px solid var(--line); color:var(--dim); border-radius:16px;
-    padding:3px 10px; font-size:12px; cursor:pointer; white-space:nowrap;
+  #resetBtn,#settingsBtn,#langBtn{
+    background:none; border:1px solid var(--line); color:var(--dim); border-radius:14px;
+    padding:4px 12px; font-size:12px; font-weight:500; cursor:pointer; white-space:nowrap;
+    transition:all .15s;
   }
-  #resetBtn:hover,#settingsBtn:hover{color:var(--text); border-color:var(--gold);}
+  #resetBtn:hover,#settingsBtn:hover,#langBtn:hover{color:var(--text); border-color:var(--gold);}
 
   main{
     flex:1; padding:14px 18px; width:100%; max-width:1200px; margin:0 auto;
@@ -393,19 +396,32 @@
     .mapGrid{grid-template-columns:repeat(2,1fr);}
     .mapGrid .tile{grid-area:auto !important; min-height:60px;}
     .tabBtn{padding:8px 12px;font-size:12px;}
-    /* 移动端header优化 */
-    header{padding:6px 12px 6px;}
-    .hdr-top h1{font-size:14px; letter-spacing:0.5px;}
-    .hdr-bottom{gap:6px; margin-top:4px;}
-    .stats{flex-wrap:nowrap; gap:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+    /* 移动端header：两行布局 */
+    header{padding:8px 12px 6px;}
+    .hdr-top{display:none;} /* 移动端隐藏标题 */
+    .hdr-bottom{flex-direction:column; gap:6px; margin-top:0;}
+    .hdr-actions{justify-content:center; gap:8px; order:1;}
+    #resetBtn,#settingsBtn,#langBtn{
+      padding:4px 12px; font-size:12px; font-weight:500;
+      border-radius:14px; letter-spacing:0.3px;
+    }
+    .stats{
+      order:2; width:100%; justify-content:space-between; gap:4px;
+      flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    }
     .stats::-webkit-scrollbar{display:none;}
-    .stat{padding:2px 8px; font-size:11px;}
-    .hdr-actions{gap:4px;}
-    #resetBtn,#settingsBtn,#langBtn{padding:2px 6px; font-size:10px;}
-    #resetBtn{display:inline-block;}
-    #tabs{padding:6px 10px 0; gap:4px;}
-    .tabBtn{padding:6px 10px; font-size:11px; flex:1; text-align:center;}
-    #toast{top:56px; font-size:12px; padding:8px 16px; max-width:90vw;}
+    .stat{
+      padding:3px 8px; font-size:11px; font-weight:500;
+      border-radius:10px; flex:1; text-align:center; min-width:0;
+      display:flex; align-items:center; justify-content:center; gap:2px;
+    }
+    .stat b{font-weight:700; font-variant-numeric:tabular-nums;}
+    #tabs{padding:6px 10px 0; gap:6px;}
+    .tabBtn{
+      padding:7px 8px; font-size:12px; font-weight:500;
+      flex:1; text-align:center; border-radius:10px; letter-spacing:0.3px;
+    }
+    #toast{top:80px; font-size:13px; padding:9px 18px; max-width:90vw; font-weight:500;}
   }
 
 </style>
@@ -532,7 +548,6 @@
 
 <div id="introOverlay">
   <button id="introLangBtn" onclick="toggleLang();updateIntroLang();" style="position:absolute;top:16px;right:16px;background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:4px 12px;font-size:12px;cursor:pointer;">🌐 EN</button>
-  <h2 id="introTitle">欢迎来到 元素合成小镇 ⚗️</h2>
   <div class="npc">🧙‍♂️</div>
   <div class="bubble" id="introBubble">
     <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
@@ -544,10 +559,10 @@
 </div>
 
 <div id="drawOverlay">
-  <h2>🎰 开局幸运抽取</h2>
-  <div class="sub">抽取四大基础元素的初始数量（每个 10~99，金色为高运 50+）</div>
+  <h2 id="drawTitle">🎰 开局幸运抽取</h2>
+  <div class="sub" id="drawSub">抽取四大基础元素的初始数量（每个 10~99，金色为高运 50+）</div>
   <div id="drawCards"></div>
-  <button id="drawBtn">开始游戏 ▶</button>
+  <button id="drawBtn" data-i18n="draw.start">开始游戏 ▶</button>
 </div>
 
 <script>
@@ -694,6 +709,11 @@ const FOODS = {
   bamboo:{n:"竹笋",   en:"Bamboo", i:"🎍", price:20},
 };
 function foodName(f){ if(!f) return ""; return LANG==="en"?(f.en||f.n):f.n; }
+function updateDrawLang(){
+  const t=$("#drawTitle"), s=$("#drawSub");
+  if(t) t.textContent=t("draw.title");
+  if(s) s.textContent=t("draw.sub");
+}
 // 宠物：由 🧬生命 孕育；bonus = 该物种给全镇产出的加成 %
 // 获取难度与加成严格正相关：猫兔(+1%) < 狗牛(+2%) < 小马(+3%) < 熊猫(+5%, 仅满级生命1/100)
 const PETS = [
@@ -744,6 +764,9 @@ const I18N = {
     "discovered":"已发现",
     "slot.hint":"点击元素",
     "lang.toggle":"🌐 EN",
+    "draw.title":"🎰 开局幸运抽取",
+    "draw.sub":"抽取四大基础元素的初始数量（每个 10~99，金色为高运 50+）",
+    "draw.start":"开始游戏 ▶",
   },
   en: {
     "app.title":"⚗️ Element Craft Town",
@@ -761,6 +784,9 @@ const I18N = {
     "discovered":"Discovered",
     "slot.hint":"Tap element",
     "lang.toggle":"🌐 中",
+    "draw.title":"🎰 Starting Lucky Draw",
+    "draw.sub":"Draw initial counts of the four base elements (10~99 each, gold = lucky 50+)",
+    "draw.start":"Start Game ▶",
   }
 };
 let LANG = localStorage.getItem("synth-town-lang") || "zh";
@@ -772,14 +798,13 @@ function applyLang(){
   });
   document.title = t("app.title");
 }
-function toggleLang(){ LANG = LANG==="zh"?"en":"zh"; localStorage.setItem("synth-town-lang",LANG); applyLang(); renderAll(); }
+function toggleLang(){ LANG = LANG==="zh"?"en":"zh"; localStorage.setItem("synth-town-lang",LANG); applyLang(); renderAll(); updateIntroLang(); updateDrawLang(); }
 function elName(id){ const e=ELEMENTS[id]; if(!e) return id; return LANG==="en"?(e.en||e.n):e.n; }
 function bldName(b){ if(!b) return ""; return LANG==="en"?(b.en||b.n):b.n; }
 function updateIntroLang(){
-  const t=$("#introTitle"), b=$("#introBubble"), btn=$("#introLangBtn");
-  if(!t||!b) return;
+  const b=$("#introBubble"), btn=$("#introLangBtn");
+  if(!b) return;
   if(LANG==="en"){
-    t.textContent="Welcome to Element Craft Town ⚗️";
     b.innerHTML=`
       <span class="step">🧙‍♂️「Welcome, traveler! To settle in this town, remember three things——」</span>
       <span class="step"><b>① Craft</b>　Tap two elements into the craft bench, craft new elements for free. <small>Examples: 💨Air+🔥Fire=⚡Energy, 🟤Mud+🔥Fire=🧱Brick, ⚡Energy+🌱Seed=🌲Tree, 🌲Tree+⚡Energy=🪵Wood</small></span>
@@ -788,7 +813,6 @@ function updateIntroLang(){
     $("#introBtn").textContent="Accept guidance, start adventure ▶";
     if(btn) btn.textContent="🌐 中";
   }else{
-    t.textContent="欢迎来到 元素合成小镇 ⚗️";
     b.innerHTML=`
       <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
       <span class="step"><b>① 合成</b>　点两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
@@ -2034,13 +2058,14 @@ function showDraw(){
   BASE.forEach(id=>{ drawnCounts[id]=10+Math.floor(Math.random()*90); }); // 10~99
   drawnCounts.coin=10+Math.floor(Math.random()*40); // 少量启动金币 10~50
   const DRAW_ITEMS=BASE.concat("coin");
-  const CARD_META={coin:{n:"金币",i:"🪙"}};
+  const CARD_META={coin:{n:"金币",en:"Coin",i:"🪙"}};
 
   DRAW_ITEMS.forEach((id,idx)=>{
     const m=CARD_META[id]||ELEMENTS[id];
+    const name = id==="coin" ? (LANG==="en"?m.en:m.n) : elName(id);
     const c=document.createElement("div");
     c.className="drawCard";
-    c.innerHTML=`<span class="di">${m.i}</span><span class="dn">${m.n}</span><span class="dc">?</span>`;
+    c.innerHTML=`<span class="di">${m.i}</span><span class="dn">${name}</span><span class="dc">?</span>`;
     cards.appendChild(c);
     // 翻牌 + 数字滚动
     setTimeout(()=>{
@@ -2067,7 +2092,7 @@ $("#drawBtn").addEventListener("click", ()=>{
   S.lastTick=Date.now();
   $("#drawOverlay").classList.remove("show");
   renderAll(); save();
-  toast(`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
+  toast(LANG==="en"?`🎰 Initial elements + 💰${S.coin} starting coins credited!`:`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
 });
 
 /* ============ 总渲染 ============ */
@@ -2075,6 +2100,7 @@ function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElSho
 renderAll();
 applyLang();
 updateIntroLang();
+updateDrawLang();
 assetsLoad().then(renderAll); // 自定义素材加载完成后重绘一次
 if(!S.drawn){
   // 流程：NPC 引导 → 幸运抽取 → 游戏
