@@ -452,7 +452,7 @@
     <section class="panel">
       <h2 data-i18n="panel.elements">元素库（点一下填入合成槽）</h2>
       <div id="elementGrid"></div>
-      <div id="discovered"><span data-i18n="discovered">已发现</span> 4 / <span id="totalRecipes">?</span></div>
+      <div id="discovered"><span data-i18n="discovered">已发现</span> <span id="discCount">0</span> / <span id="totalRecipes">?</span></div>
     </section>
     <section class="panel" id="craftPanel">
       <h2 style="align-self:stretch" data-i18n="panel.craft">🧪 合成台</h2>
@@ -640,7 +640,7 @@ const BUILDINGS = [
   {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:20, jade:5, flower:10, chest:1}, income:5},
   {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:10, flower:5},          income:0},
   {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:5, coin:20},              income:0},
-  {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:3}, income:0, passive:"全镇产出+10%"},
+  {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:3}, income:0, passive:"全镇产出+10%", passiveEn:"Town Output +10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
 const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
@@ -1097,7 +1097,7 @@ function renderElements(){
     else makeDraggable(d, id);
     g.appendChild(d);
   });
-  $("#discovered").firstChild.textContent = `${t("discovered")} ${Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length} / `;
+  $("#discCount").textContent = Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length;
   $("#totalRecipes").textContent = new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest").concat(BASE)).size;
 }
 
@@ -1846,7 +1846,7 @@ function renderMap(){
   });
   const bc={};
   Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
-  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);return `<span class="mapBadge">${b?b.i:"❓"}<b>${n}</b></span>`;}).join("")||'<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>';
+  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);return `<span class="mapBadge">${b?b.i:"❓"}<b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
   let hint="";
   if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.selectedPlot",regionOf(selectedPlot.region).i,regName(regionOf(selectedPlot.region)))} <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
@@ -1924,7 +1924,7 @@ function renderShop(){
     const incPer=buildingIncome(b);
     const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:k==="chest"?S.chest:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?elName(k):"金币"}×${v}</span>`;}).join("");
     const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked());
-    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
+    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
   });
@@ -2239,7 +2239,7 @@ function showDraw(){
     // 翻牌 + 数字滚动
     setTimeout(()=>{
       c.classList.add("on");
-      const luckyLine = id==="coin" ? drawnCounts.coin>=30 : drawnCounts[id]>=50;
+      const luckyLine = drawnCounts[id]>=50;
       if(luckyLine) c.classList.add("lucky");
       const numEl=c.querySelector(".dc");
       const target=drawnCounts[id]; const t0=Date.now();
