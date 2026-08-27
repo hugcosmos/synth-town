@@ -840,6 +840,13 @@ function buildingIncome(b){
   });
   return inc;
 }
+// 从 plots 重建 buildings 计数（导入/迁移后调用，确保两数据源一致）
+function rebuildBuildings(){
+  S.buildings={};
+  Object.values(S.plots||{}).forEach(plots=>{
+    plots.forEach(p=>{ if(p&&p!==null&&BUILDINGS.find(b=>b.id===p)) S.buildings[p]=(S.buildings[p]||0)+1; });
+  });
+}
 
 // 宠物食物：分物种口味，只能金币购买（驿站上架后），不可合成
 const FOODS = {
@@ -1205,6 +1212,7 @@ function updateIntroLang(){
   }
 }
 let S = load();
+rebuildBuildings();
 
 function fresh(){
   return {
@@ -1677,13 +1685,17 @@ function hatch(){
   if(!hasB("hut")){ toast(t("pet.needHutToast")); return; }
   if(!S.lifePool.length){ toast(t("pet.lifeError")); return; }
   const maxHp=Math.max(...S.lifePool);
-  S.lifePool.splice(S.lifePool.indexOf(maxHp),1);
-  S.unlocked.life--;
   const pid=rollPet(maxHp);
   const d=PETS.find(x=>x.id===pid);
   const defaultName=randomPetName();
-  const name=prompt(t("pet.namePrompt",d.i+petName(d)), defaultName);
-  const petName=(name&&name.trim())?name.trim().slice(0,15):defaultName;
+  let petName=defaultName;
+  try{
+    const name=prompt(t("pet.namePrompt",d.i+petName(d)), defaultName);
+    if(name&&name.trim()) petName=name.trim().slice(0,15);
+  }catch(e){ petName=defaultName; }
+  // 资源消耗放在宠物创建之前，确保成功后才消耗
+  S.lifePool.splice(S.lifePool.indexOf(maxHp),1);
+  S.unlocked.life--;
   S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false, name:petName, bornAt:Date.now(), intimacy:0, avatar:null});
   if(pid==="panda") toast(t("pet.pandaBorn",petName));
   else toast(t("pet.born",d.i+petName,maxHp,d.bonus));
@@ -2119,6 +2131,15 @@ $("#importFile").addEventListener("change", async e=>{
       Object.values(S.plots||{}).forEach(arr=>{ for(let i=0;i<arr.length;i++){ if(arr[i]===null) arr[i]=false; } });
       S.plotsVersion=1;
     }
+    // 导入后校验+重建：确保plots/buildings一致，关键字段存在
+    if(!S.plots) S.plots={};
+    REGIONS.forEach(r=>{ if(!Array.isArray(S.plots[r.id])) S.plots[r.id]=new Array(r.plots).fill(false); });
+    if(!S.petList) S.petList=[];
+    if(!S.food) S.food={};
+    if(!S.lifePool) S.lifePool=[];
+    if(typeof S.coin!=="number") S.coin=0;
+    if(typeof S.chest!=="number") S.chest=0;
+    rebuildBuildings();
     applyTheme(); clearSlots(); renderAll(); save();
     $("#settingsOverlay").classList.remove("show");
     toast(needMigrate?t("save.migrateToast",SAVE_VERSION):t("save.importToast"));
@@ -2366,9 +2387,7 @@ function tick(){
     // 1) 金币产出（含宠物物种加成）
     const cycles=Math.floor(elapsed/INCOME_INTERVAL);
     let inc=0;
-    BUILDINGS.forEach(b=>{
-      if(S.buildings[b.id]) inc+=buildingIncome(b);
-    });
+    BUILDINGS.forEach(b=>{ inc+=buildingIncome(b); });
     const petB=petBonus(),hallB=hallBonus();
     const earn=Math.round(inc*(1+(petB+hallB)/100)*cycles);
     if(earn>0){
