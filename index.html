@@ -138,6 +138,7 @@
   }
   .shopItem:hover{border-color:var(--accent); transform:translateY(-1px);}
   .shopItem .top{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .buildLockNote{color:var(--dim);font-size:11px;margin-bottom:6px;padding:4px 8px;background:var(--panel);border-radius:6px;line-height:1.4;}
   .shopItem .ico{font-size:26px;}
   .shopItem .nm{font-weight:600; font-size:14px;}
   .shopItem .built{margin-left:auto; font-size:11px; color:var(--dim); text-align:right; line-height:1.3;}
@@ -3094,9 +3095,9 @@ function renderShop(){
     const hallFull=b.id==="hall"&&(S.buildings.hall||0)>=2;
     const unlocked=buildingUnlocked(b);
     const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked())&&!hallFull&&unlocked;
-    const lockNote=!unlocked?`<span style="color:var(--dim);font-size:11px">🔒 ${buildingLockHint(b)}</span>`:"";
+    const lockNote=!unlocked?`<div class="buildLockNote">🔒 ${buildingLockHint(b)}</div>`:"";
     const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
-    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}${lockNote}</div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
+    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
   });
