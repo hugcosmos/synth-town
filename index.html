@@ -524,6 +524,26 @@
     .recipeItem{font-size:11px; padding:4px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
     .recipeTierTitle{font-size:12px;}
   }
+  /* 成就页 */
+  #badgesOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  #badgesOverlay.show{display:flex;}
+  #badgesBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;}
+  .badgeCard{display:flex;gap:14px;align-items:center;padding:14px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;}
+  .badgeCard.locked{opacity:.5;filter:grayscale(.7);}
+  .badgeIcon{width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--gold);}
+  .badgeInfo{flex:1;min-width:0;}
+  .badgeName{font-weight:700;font-size:15px;margin-bottom:4px;}
+  .badgeDesc{font-size:12px;color:var(--dim);margin-bottom:6px;}
+  .badgeProgress{height:6px;background:#00000055;border-radius:3px;overflow:hidden;}
+  .badgeProgressBar{height:100%;background:linear-gradient(90deg,var(--gold),#ffd700);transition:width .5s;}
+  /* 勋章解锁动画 */
+  #badgeUnlockOverlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;}
+  #badgeUnlockOverlay.show{display:flex;}
+  #badgeUnlockImg{width:200px;height:200px;border-radius:50%;animation:badgePop 1.2s cubic-bezier(.34,1.56,.64,1) forwards;box-shadow:0 0 60px rgba(255,215,0,.6);}
+  #badgeUnlockText{margin-top:24px;font-size:22px;font-weight:700;color:#ffd700;text-align:center;animation:badgeFade .8s .4s both;text-shadow:0 0 20px rgba(255,215,0,.5);}
+  @keyframes badgePop{0%{transform:scale(0) rotate(-180deg);opacity:0;}60%{transform:scale(1.2) rotate(10deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
+  @keyframes badgeFade{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .badgeParticle{position:absolute;width:6px;height:6px;background:#ffd700;border-radius:50%;pointer-events:none;}
 
 </style>
 </head>
@@ -546,6 +566,8 @@
   <button class="tabBtn" data-tab="town" data-i18n="tab.town">🗺️ 小镇</button>
   <button class="tabBtn" data-tab="shop" data-i18n="tab.shop">🛒 商店</button>
   <button class="tabBtn" data-tab="pet" data-i18n="tab.pet">🐾 宠物</button>
+  <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()">🌳 <span data-i18n="tab.park">乐园</span></button>
+  <button class="tabBtn" id="badgeTabBtn" onclick="openBadges()">🏆 <span data-i18n="tab.badges">成就</span></button>
 </nav>
 
 <main>
@@ -589,7 +611,12 @@
     <section class="panel">
       <h2 data-i18n="panel.shop">💰 元素商店</h2>
       <div style="font-size:11px;color:var(--dim);margin-bottom:8px"><span data-i18n="shop.desc">只卖 3 级及以下常见元素 · 价格 = 层级 × 5 金币</span></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="shopBuyTab" class="subTab active" style="flex:1;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);cursor:pointer;font-weight:700;font-size:13px;" onclick="switchShopSub('buy')">🛒 <span data-i18n="shop.buy">购买</span></button>
+        <button id="shopTradeTab" class="subTab" style="flex:1;padding:6px;border:1px solid var(--line);border-radius:8px;background:transparent;cursor:pointer;font-weight:700;font-size:13px;" onclick="switchShopSub('trade')">♻️ <span data-i18n="shop.trade">置换</span></button>
+      </div>
       <div id="elShop"></div>
+      <div id="tradePanel" style="display:none"></div>
     </section>
   </section>
 
@@ -599,6 +626,16 @@
       <h2 data-i18n="panel.pet">🐾 宠物园</h2>
       <div id="petPanel" style="font-size:12px;color:var(--dim);margin-bottom:8px"></div>
       <div id="petList"></div>
+    </section>
+  </section>
+
+  <!-- 动物乐园页 -->
+  <section id="view-park" class="view">
+    <section class="panel" style="padding:0;overflow:hidden;">
+      <div id="parkContainer" style="position:relative;width:100%;aspect-ratio:3/4;background:url('assets/park/park-bg.png') center/cover no-repeat;border-radius:12px;overflow:hidden;">
+        <div id="parkSlots"></div>
+      </div>
+      <div id="parkHint" style="padding:8px 12px;font-size:12px;color:var(--dim);text-align:center;"></div>
     </section>
   </section>
 </main>
@@ -681,6 +718,25 @@
     <div style="text-align:right;margin-top:12px;">
       <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" onclick="closePetDetail()" data-i18n="btn.close">关闭</button>
     </div>
+  </div>
+</div>
+
+<!-- 成就页 -->
+<div id="badgesOverlay">
+  <div id="badgesBox">
+    <h2 style="text-align:center;margin-bottom:16px;" data-i18n="badges.title">🏆 成就殿堂</h2>
+    <div id="badgesContent"></div>
+    <div style="text-align:right;margin-top:16px;">
+      <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" onclick="closeBadges()" data-i18n="btn.close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 勋章解锁动画 -->
+<div id="badgeUnlockOverlay">
+  <div id="badgeUnlockContent">
+    <div id="badgeUnlockImg"></div>
+    <div id="badgeUnlockText"></div>
   </div>
 </div>
 
@@ -1242,6 +1298,10 @@ function fresh(){
     lastTick:Date.now(),
     bonusAccumulator:0,  // 低产出时累计的宠物/市政厅加成金币（小数）
     lastBonusSettle:Date.now(), // 上次加成结算时间
+    pandaRewardClaimed:false, // 熊猫保底是否已领取
+    badges:{}, // 勋章解锁状态
+    parkSlots:null, // 动物乐园窝位分配（null时自动初始化）
+    buildingNames:{}, // 建筑自定义名 {region_index: name}
   };
 }
 function migratePetFields(s){
@@ -1678,6 +1738,234 @@ function renderElShop(){
   });
 }
 
+/* ============ 置换商店 ============ */
+let shopSubTab="buy";
+function switchShopSub(sub){
+  shopSubTab=sub;
+  $("#shopBuyTab").classList.toggle("active",sub==="buy");
+  $("#shopBuyTab").style.background=sub==="buy"?"var(--panel2)":"transparent";
+  $("#shopTradeTab").classList.toggle("active",sub==="trade");
+  $("#shopTradeTab").style.background=sub==="trade"?"var(--panel2)":"transparent";
+  $("#elShop").style.display=sub==="buy"?"":"none";
+  $("#tradePanel").style.display=sub==="trade"?"":"none";
+  if(sub==="trade") renderTradePanel();
+}
+const TRADE_EXCLUDE = new Set(["life","chest","coin","charcoal","tower"]);
+function renderTradePanel(){
+  const box=$("#tradePanel"); if(!box) return;
+  let html=`<div style="font-size:11px;color:var(--dim);margin-bottom:8px">${LANG==="en"?"Sell elements at 80% of buy price (tier×4). Pets convert to coins.":"元素按购买价80%回收（等级×4金币），宠物可折算金币。"}</div>`;
+  // 元素置换
+  const elIds=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]&&count(k)>0&&!TRADE_EXCLUDE.has(k)).sort((a,b)=>tierOf(a)-tierOf(b));
+  html+=`<div style="font-weight:700;font-size:13px;margin:8px 0 4px;">${LANG==="en"?"📦 Elements":"📦 元素"}</div>`;
+  if(!elIds.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No sellable elements":"暂无可置换元素"}</div>`; }
+  elIds.forEach(id=>{
+    const e=ELEMENTS[id], price=tierOf(id)*4, own=count(id);
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
+      <span style="font-size:18px">${e.i}</span>
+      <span style="font-size:13px">${elName(id)}</span>
+      <span style="font-size:10px;color:var(--dim)">×${own}</span>
+      <span class="qtyWrap" style="margin-left:auto"><button type="button" class="qtyBtn" data-tqmin="${id}">−</button><input type="text" class="tradeQty" data-id="${id}" inputmode="numeric" pattern="[0-9]*" min="1" max="${own}" value="1" autocomplete="off" style="width:44px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text);font-size:12px;text-align:center;"><button type="button" class="qtyBtn" data-tqplus="${id}">＋</button></span>
+      <button data-tradeel="${id}" style="background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰<span class="tradePrice">${price}</span></button>
+    </div>`;
+  });
+  // 宠物置换
+  html+=`<div style="font-weight:700;font-size:13px;margin:12px 0 4px;">${LANG==="en"?"🐾 Pets":"🐾 宠物"}</div>`;
+  if(!S.petList.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No pets":"暂无宠物"}</div>`; }
+  S.petList.forEach((p,idx)=>{
+    const d=PETS.find(x=>x.id===p.id);
+    const refund=Math.floor((p.maxHp||5)*5+(p.intimacy||0)*0.5);
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
+      <span style="font-size:18px">${d?d.i:"🐾"}</span>
+      <span style="font-size:13px">${p.name}</span>
+      <span style="font-size:10px;color:var(--dim)">HP${p.maxHp} 亲密度${p.intimacy}</span>
+      <button data-tradepet="${idx}" style="margin-left:auto;background:#e74c3c;border:none;color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰${refund}</button>
+    </div>`;
+  });
+  box.innerHTML=html;
+  // 元素置换数量步进
+  box.querySelectorAll(".tradeQty").forEach(inp=>{
+    const id=inp.dataset.id, own=count(id), price=tierOf(id)*4;
+    const priceEl=inp.closest("div").querySelector(".tradePrice");
+    inp.addEventListener("input",()=>{
+      const v=Math.max(1,Math.min(own,Math.floor(+inp.value)||1));
+      inp.value=v; priceEl.textContent=price*v;
+    });
+  });
+  box.querySelectorAll("[data-tqmin]").forEach(b=>b.addEventListener("click",()=>{
+    const inp=b.parentElement.querySelector(".tradeQty"); inp.value=Math.max(1,(+inp.value||1)-1); inp.dispatchEvent(new Event("input"));
+  }));
+  box.querySelectorAll("[data-tqplus]").forEach(b=>b.addEventListener("click",()=>{
+    const inp=b.parentElement.querySelector(".tradeQty"); inp.value=Math.min(+inp.max,(+inp.value||1)+1); inp.dispatchEvent(new Event("input"));
+  }));
+  // 元素置换
+  box.querySelectorAll("[data-tradeel]").forEach(btn=>btn.addEventListener("click",()=>{
+    const id=btn.dataset.tradeel, own=count(id);
+    const inp=btn.closest("div").querySelector(".tradeQty");
+    const n=Math.max(1,Math.min(own,Math.floor(+inp.value)||1));
+    const price=tierOf(id)*4, earn=price*n;
+    if(!confirm(LANG==="en"?`Sell ${n}× ${elName(id)} for 💰${earn}?`:`确认卖出 ${n}× ${elName(id)}，获得 💰${earn}？`)) return;
+    S.unlocked[id]=Math.max(0,(S.unlocked[id]||0)-n);
+    S.coin+=earn; S.totalEarned+=earn;
+    toast(LANG==="en"?`♻️ Sold ${n}× ${elName(id)} → +💰${earn}`:`♻️ 卖出 ${n}× ${elName(id)} → +💰${earn}`);
+    renderAll(); save();
+  }));
+  // 宠物置换
+  box.querySelectorAll("[data-tradepet]").forEach(btn=>btn.addEventListener("click",()=>{
+    const idx=+btn.dataset.tradepet, p=S.petList[idx]; if(!p) return;
+    const refund=Math.floor((p.maxHp||5)*5+(p.intimacy||0)*0.5);
+    if(!confirm(LANG==="en"?`Sell ${p.name} for 💰${refund}? (This cannot be undone!)`:`确认送走 ${p.name}，获得 💰${refund}？（不可恢复！）`)) return;
+    S.petList.splice(idx,1);
+    S.coin+=refund; S.totalEarned+=refund;
+    toast(LANG==="en"?`♻️ ${p.name} left for 💰${refund}`:`♻️ ${p.name} 离开了，获得 💰${refund}`);
+    renderAll(); save();
+  }));
+}
+
+/* ============ 勋章系统 ============ */
+const BADGES = [
+  {id:"elementMaster", name:"元素之王", en:"Element Master", img:"assets/badges/element-master.png",
+   descZh:"发现全部29种元素", descEn:"Discover all 29 elements",
+   check:()=>foundElementKinds()>=totalElementKinds(),
+   progress:()=>[foundElementKinds(),totalElementKinds()]},
+  {id:"animalKing", name:"动物大王", en:"Animal King", img:"assets/badges/animal-king.png",
+   descZh:"集齐6种动物（猫/兔/狗/牛/马/熊猫）", descEn:"Collect all 6 pet species (Cat/Rabbit/Dog/Cow/Horse/Panda)",
+   check:()=>{const t=new Set(S.petList.map(p=>p.id));return ["cat","rabbit","dog","cow","horse","panda"].every(x=>t.has(x));},
+   progress:()=>{const t=new Set(S.petList.map(p=>p.id));const n=["cat","rabbit","dog","cow","horse","panda"].filter(x=>t.has(x)).length;return [n,6];}},
+  {id:"realEstateTycoon", name:"地产大亨", en:"Real Estate Tycoon", img:"assets/badges/real-estate-tycoon.png",
+   descZh:"解锁全部42块地皮且每块都有建筑", descEn:"Unlock all 42 plots with buildings on each",
+   check:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return total>=42&&built>=42;},
+   progress:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return [built,42];}}
+];
+function openBadges(){ renderBadges(); $("#badgesOverlay").classList.add("show"); }
+function closeBadges(){ $("#badgesOverlay").classList.remove("show"); }
+function renderBadges(){
+  const box=$("#badgesContent"); if(!box) return;
+  if(!S.badges) S.badges={};
+  let html="";
+  BADGES.forEach(b=>{
+    const unlocked=!!S.badges[b.id];
+    const [cur,total]=b.progress();
+    const pct=Math.min(100,Math.round(cur/total*100));
+    html+=`<div class="badgeCard ${unlocked?"":"locked"}">
+      <img class="badgeIcon" src="${b.img}" alt="${b.name}" onerror="this.style.background='var(--panel)';this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>'">
+      <div class="badgeInfo">
+        <div class="badgeName">${unlocked?"✅ ":"🔒 "}${LANG==="en"?b.en:b.name}</div>
+        <div class="badgeDesc">${LANG==="en"?b.descEn:b.descZh}</div>
+        <div class="badgeProgress"><div class="badgeProgressBar" style="width:${pct}%"></div></div>
+        <div style="font-size:11px;color:var(--dim);margin-top:3px;">${cur}/${total} (${pct}%)</div>
+      </div>
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+function checkBadges(){
+  if(!S.badges) S.badges={};
+  BADGES.forEach(b=>{
+    if(!S.badges[b.id]&&b.check()){
+      S.badges[b.id]=true;
+      showBadgeUnlock(b);
+    }
+  });
+}
+function showBadgeUnlock(b){
+  const ov=$("#badgeUnlockOverlay"); if(!ov) return;
+  $("#badgeUnlockImg").innerHTML=`<img src="${b.img}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'font-size:120px;text-align:center;line-height:200px;\\'>🏆</div>'">`;
+  $("#badgeUnlockText").textContent=(LANG==="en"?"🏆 Unlocked: ":"🏆 解锁成就：")+(LANG==="en"?b.en:b.name);
+  ov.classList.add("show");
+  // 金光粒子
+  for(let i=0;i<20;i++){
+    const p=document.createElement("div");
+    p.className="badgeParticle";
+    p.style.left=(40+Math.random()*20)+"%";
+    p.style.top=(35+Math.random()*20)+"%";
+    p.style.animation=`particleFly ${1+Math.random()}s ease-out forwards`;
+    p.style.animationDelay=(Math.random()*0.5)+"s";
+    ov.appendChild(p);
+    setTimeout(()=>p.remove(),2000);
+  }
+  setTimeout(()=>ov.classList.remove("show"),2600);
+}
+// 粒子动画CSS（动态注入）
+(function(){const s=document.createElement("style");s.textContent="@keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate("+(Math.random()*200-100)+"px,"+(-100-Math.random()*100)+"px) scale(0);opacity:0;}}";document.head.appendChild(s);})();
+
+/* ============ 动物乐园 ============ */
+// 10个窝位位置（百分比，左列x=20% 右列x=75%，y分5档）
+const PARK_SLOTS = [
+  {x:20,y:22},{x:75,y:22},
+  {x:20,y:37},{x:75,y:37},
+  {x:20,y:52},{x:75,y:52},
+  {x:20,y:67},{x:75,y:67},
+  {x:20,y:82},{x:75,y:82},
+];
+function hasPanda(){ return S.petList.some(p=>p.id==="panda"); }
+function tryOpenPark(){
+  if(!hasPanda()){
+    toast(LANG==="en"?"🐼 Need a Panda to unlock the Animal Park!":"🐼 需要一只熊猫才能解锁动物乐园！");
+    return;
+  }
+  switchTab("park");
+}
+function ensureParkSlots(){
+  if(!S.parkSlots||S.parkSlots.length!==10){
+    S.parkSlots=new Array(10).fill(null);
+    S.petList.forEach((p,i)=>{ if(i<10) S.parkSlots[i]=i; });
+  }
+  // 清理无效引用
+  S.parkSlots=S.parkSlots.map(idx=>idx===null?null:(S.petList[idx]?idx:null));
+  // 把不在窝里的宠物塞进去
+  const inSlot=new Set(S.parkSlots.filter(x=>x!==null));
+  S.petList.forEach((p,i)=>{
+    if(!inSlot.has(i)){
+      const empty=S.parkSlots.indexOf(null);
+      if(empty>=0){ S.parkSlots[empty]=i; inSlot.add(i); }
+    }
+  });
+}
+function renderPark(){
+  const box=$("#parkSlots"); if(!box) return;
+  if(!hasPanda()){ box.innerHTML=""; $("#parkHint").textContent=LANG==="en"?"🔒 Breed a 🐼Panda to unlock the Animal Park!":"🔒 孕育一只🐼熊猫即可解锁动物乐园！"; return; }
+  ensureParkSlots();
+  $("#parkHint").textContent=LANG==="en"?"Drag pets to swap nests · Click to view profile":"拖拽宠物交换窝位 · 点击查看资料";
+  box.innerHTML="";
+  PARK_SLOTS.forEach((pos,slotIdx)=>{
+    const petIdx=S.parkSlots[slotIdx];
+    const pet=petIdx!==null?S.petList[petIdx]:null;
+    const d=pet?PETS.find(x=>x.id===pet.id):null;
+    const div=document.createElement("div");
+    div.style.cssText=`position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);width:22%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;`;
+    div.draggable=!!pet;
+    div.dataset.slot=slotIdx;
+    if(pet){
+      const avatarHtml=pet.avatar?`<img src="${pet.avatar}" style="width:80%;height:80%;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.8);">`:`<span style="font-size:clamp(24px,6vw,48px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:petBounce 2.2s ease-in-out infinite;">${d?d.i:"🐾"}</span>`;
+      div.innerHTML=avatarHtml;
+      div.title=pet.name;
+      div.addEventListener("click",()=>openPetDetail(petIdx));
+      // 拖拽
+      div.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",slotIdx); div.style.opacity=".5"; });
+      div.addEventListener("dragend",()=>{ div.style.opacity="1"; });
+    }else{
+      div.innerHTML=`<span style="font-size:clamp(16px,4vw,28px);opacity:.3;">🏠</span>`;
+    }
+    div.addEventListener("dragover",e=>{ e.preventDefault(); div.style.background="rgba(255,255,255,.2)"; });
+    div.addEventListener("dragleave",()=>{ div.style.background=""; });
+    div.addEventListener("drop",e=>{
+      e.preventDefault(); div.style.background="";
+      const from=+e.dataTransfer.getData("text/plain");
+      if(isNaN(from)||from===slotIdx) return;
+      // 交换窝位
+      const tmp=S.parkSlots[from]; S.parkSlots[from]=S.parkSlots[slotIdx]; S.parkSlots[slotIdx]=tmp;
+      renderPark(); save();
+    });
+    box.appendChild(div);
+  });
+}
+// 乐园NPC提示
+const NPC_PARK_LINES={
+  zh:["欢迎来到动物乐园！拖拽宠物可以交换窝位哦～","熊猫是乐园的守护者，有它在大家都很安心！","每只宠物都有自己的小窝，点击可以查看资料～","把宠物养得饱饱的、亲密度高高的，它们会更开心！","乐园里最多住10只宠物，满了就要送走一些啦～"],
+  en:["Welcome to the Animal Park! Drag pets to swap nests!","Panda is the guardian of the park—everyone feels safe with it!","Each pet has its own nest. Click to view its profile!","Keep pets well-fed and high-intimacy for happier pets!","Max 10 pets in the park. Full? Time to say goodbye to some~"]
+};
+function npcParkLine(){ const arr=NPC_PARK_LINES[LANG]||NPC_PARK_LINES.zh; return arr[Math.floor(Math.random()*arr.length)]; }
+
 /* ============ 宠物系统 ============ */
 const hasB = id => (S.buildings[id]||0)>0;
 function intimacyLevel(intimacy){ return Math.min(10, Math.floor((intimacy||0)/10)); }
@@ -1696,14 +1984,31 @@ const PET_NAMES=["小橘","旺财","咪咪","豆豆","球球","毛毛","团团",
 function randomPetName(){ const arr=LANG==="en"?PET_NAMES_EN:PET_NAMES; return arr[Math.floor(Math.random()*arr.length)]; }
 const PET_NAMES_EN=["Luna","Max","Bella","Charlie","Lucy","Cooper","Daisy","Buddy","Lola","Sadie","Milo","Ruby","Toby","Chloe","Bear","Molly","Jack","Lily","Leo","Zoe","Duke","Nala","Rocky","Stella","Tucker","Mia","Bentley","Willow","Oliver","Penelope","Simba","Coco","Jasper","Bailey","Riley","Archie","Ollie","Louie","Finn","Theo","Hugo","Oscar","George","Henry","Arthur","Noah","Felix","Shadow","Pepper","Salty","Biscuit","Muffin","Cookie","Honey","Cinnamon","Maple","Willow","Aspen","Cedar","Birch","Fern","Ivy","Daisy","Rose","Lily","Violet","Poppy","Iris","Jasmine","Lavender","Magnolia","Marigold","Pansy","Peony","Petunia","Sunflower","Tulip","Zinnia","Bluebell","Buttercup","Clover","Dandelion","Heather","Mistletoe"];
 function petBonus(){
-  // 物种加成 + 亲密度加成（每级+0.5%，满级+5%），健康且饱食度>50 时生效，可叠加
-  return S.petList.reduce((s,p)=>{
-    if(p.sick || p.sat<=50) return s;
-    const d=PETS.find(x=>x.id===p.id);
-    return s+(d?d.bonus:0)+intimacyBonus(p.intimacy);
-  },0);
+  // 宠物不再提供金币产出加成（2026-08 规则调整），保留函数兼容引用
+  return 0;
 }
-function hallBonus(){ return hasB("hall")?10:0; }
+function hallBonus(){ return Math.min(2, S.buildings.hall||0)*10; } // 每个市政厅+10%，最多2个叠加+20%
+/* 建筑解锁链：检查前置条件是否满足 */
+function buildingUnlocked(b){
+  const has=id=>(S.buildings[id]||0)>0;
+  if(b.id==="garden"||b.id==="manor") return has("hut")&&has("shop");
+  if(b.id==="station"||b.id==="hospital") return has("hut")||has("shop");
+  if(b.id==="hall") return has("hut")&&has("shop")&&has("garden")&&has("manor")&&has("station")&&has("hospital");
+  return true;
+}
+function buildingLockHint(b){
+  const has=id=>(S.buildings[id]||0)>0;
+  if(b.id==="garden"||b.id==="manor") return LANG==="en"?"Need 🏠Hut + 🛒Shop":"需要🏠小屋+🛒商店";
+  if(b.id==="station"||b.id==="hospital") return LANG==="en"?"Need 🏠Hut or 🛒Shop":"需要🏠小屋或🛒商店";
+  if(b.id==="hall"){
+    const need=[];
+    if(!has("hut")) need.push("🏠"); if(!has("shop")) need.push("🛒");
+    if(!has("garden")) need.push("🌺"); if(!has("manor")) need.push("🏰");
+    if(!has("station")) need.push("🏕️"); if(!has("hospital")) need.push("🏥");
+    return (LANG==="en"?"Need all: ":"需要全部建成：")+need.join(" ");
+  }
+  return "";
+}
 function bestLifeHp(){ return S.lifePool.length ? Math.max(...S.lifePool) : 0; }
 function renderPets(){
   const panel=$("#petPanel"), list=$("#petList");
@@ -1717,8 +2022,7 @@ function renderPets(){
     html+=`<span style="font-size:11px">${t("pet.needHut")}</span>`;
   }
   html+=`</div>`;
-  // 产出加成
-  html+=`<div style="font-size:12px;margin-bottom:10px">${t("pet.bonus",petBonus())}</div>`;
+  // 宠物不再提供产出加成（2026-08 规则调整），移除加成显示
   // 食物商店（需驿站）
   html+=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
   html+=`<b style="font-size:13px">${t("pet.foodTitle")}</b>${hasB("station")?"":" <span style='font-size:11px;color:var(--dim)'>"+t("pet.needStation")+"</span>"}`;
@@ -1798,6 +2102,15 @@ function hatch(){
   if(!hasB("hut")){ toast(t("pet.needHutToast")); return; }
   if(!S.lifePool.length){ toast(t("pet.lifeError")); return; }
   const maxHp=Math.max(...S.lifePool);
+  // 宠物上限10只：满10只不再孵化，自动折算金币
+  if(S.petList.length>=10){
+    const refund=Math.floor(maxHp*5); // 新孵化宠物亲密度为0，折算=maxHp×5
+    S.lifePool.splice(S.lifePool.indexOf(maxHp),1);
+    S.unlocked.life--;
+    toast(LANG==="en"?`🐾 Pet slot full (10/10)! ${maxHp}HP life converted to +💰${refund}`:`🐾 宠物已满(10/10)！${maxHp}HP生命折算为 +💰${refund}`);
+    renderAll(); save();
+    return;
+  }
   const pid=rollPet(maxHp);
   const d=PETS.find(x=>x.id===pid);
   const defaultName=randomPetName();
@@ -1811,8 +2124,30 @@ function hatch(){
   S.unlocked.life--;
   S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false, name:petName, bornAt:Date.now(), intimacy:0, avatar:null});
   if(pid==="panda") toast(t("pet.pandaBorn",petName));
-  else toast(t("pet.born",d.i+petName,maxHp,d.bonus));
+  else{
+    toast(t("pet.born",d.i+petName,maxHp,d.bonus));
+    // 第9只非熊猫时提醒：养满所有宠物系统奖励熊猫
+    const nonPanda=S.petList.filter(p=>p.id!=="panda").length;
+    if(nonPanda===9 && !S.petList.some(p=>p.id==="panda")){
+      setTimeout(()=>toast(LANG==="en"?"🐾 9 non-panda pets! Max all HP/satiety/intimacy → system rewards a 🐼Panda!":"🐾 已有9只非熊猫！把所有宠物HP/饱食/亲密度养满 → 系统奖励🐼熊猫！",5000),800);
+    }
+  }
+  checkPandaReward();
   renderAll(); save();
+}
+/* 熊猫保底：9只非熊猫全满配时系统奖励第10只熊猫 */
+function checkPandaReward(){
+  if(S.pandaRewardClaimed) return;
+  if(S.petList.some(p=>p.id==="panda")) return; // 已有熊猫不触发
+  const nonPanda=S.petList.filter(p=>p.id!=="panda");
+  if(nonPanda.length<9) return;
+  const allMax=nonPanda.every(p=>p.hp>=p.maxHp&&p.sat>=100&&p.intimacy>=100);
+  if(!allMax) return;
+  if(S.petList.length>=10) return; // 没位置了
+  S.pandaRewardClaimed=true;
+  const pandaName=randomPetName();
+  S.petList.push({id:"panda", hp:11, maxHp:11, sat:100, sick:false, name:pandaName, bornAt:Date.now(), intimacy:0, avatar:null});
+  setTimeout(()=>toast(LANG==="en"?`🎊 System reward: 🐼${pandaName} joins your town! (all 9 non-panda pets maxed!)`:`🎊 系统奖励：🐼${pandaName}加入小镇！（9只非熊猫全部满配）`,5000),500);
 }
 function feedPet(idx){
   const p=S.petList[idx]; if(!p||p.sick) return;
@@ -1820,9 +2155,12 @@ function feedPet(idx){
   if((S.food[d.food]||0)<1){ toast(t("pet.noFood",FOODS[d.food].i+foodName(FOODS[d.food]))); return; }
   S.food[d.food]--;
   p.sat=Math.min(100, p.sat+40);
+  const oldLvl=intimacyLevel(p.intimacy);
   p.intimacy=Math.min(100, (p.intimacy||0)+2);
   const lvl=intimacyLevel(p.intimacy);
   toast(t("pet.ate",p.name,FOODS[d.food].i,p.sat,lvl));
+  if(lvl>oldLvl) petLevelUpToast(p);
+  checkPandaReward();
   renderAll(); save();
 }
 function interactPet(idx){
@@ -1831,10 +2169,34 @@ function interactPet(idx){
   if(p.interactDate!==today){ p.interactDate=today; p.interactCount=0; }
   if((p.interactCount||0)>=3){ toast(t("pet.interactMax",p.name)); return; }
   p.interactCount=(p.interactCount||0)+1;
+  const oldLvl=intimacyLevel(p.intimacy);
   p.intimacy=Math.min(100, (p.intimacy||0)+5);
   const lvl=intimacyLevel(p.intimacy);
   toast(t("pet.interacted",p.name,lvl,p.interactCount));
+  if(lvl>oldLvl) petLevelUpToast(p);
+  checkPandaReward();
   renderAll(); save();
+}
+/* 亲密度升级时以动物口吻给惊喜提示 */
+const PET_LEVEL_LINES={
+  cat:["喵～和主人更近啦！","喵呜，再摸摸我嘛～","喵…主人的手好暖","喵～今天也最喜欢主人了！"],
+  dog:["汪汪！最喜欢主人了！","汪！一起去散步吧！","汪汪汪！主人最棒！","汪～尾巴停不下来了！"],
+  rabbit:["蹦蹦！主人最好了！","兔兔要抱抱～","蹦跶蹦跶，好开心！","兔～主人的胡萝卜最好吃！"],
+  cow:["哞～主人辛苦了！","哞哞，草真好吃！","哞…谢谢主人照顾","哞～今天也很满足！"],
+  horse:["咴咴！一起奔跑吧！","嘶～主人骑我嘛！","咴咴，跑得真快！","嘶～主人是最好的骑手！"],
+  panda:["竹子…还想吃…","呼呼，主人陪我玩！","熊猫…要抱抱！","嗯～今天的竹子最香！"]
+};
+function petLevelUpToast(p){
+  const lvl=intimacyLevel(p.intimacy);
+  const lines=PET_LEVEL_LINES[p.id]||PET_LEVEL_LINES.cat;
+  const line=lines[Math.floor(Math.random()*lines.length)];
+  const d=PETS.find(x=>x.id===p.id);
+  const emoji=d?d.i:"🐾";
+  if(lvl>=10){
+    toast(`${emoji}「${p.name}：🎉 亲密度满级啦！可以给我换自定义头像了！」`,4000);
+  }else{
+    toast(`${emoji}「${p.name}：${line}（亲密度 Lv.${lvl}）」`,3500);
+  }
 }
 function renamePet(idx){
   const p=S.petList[idx]; if(!p) return;
@@ -1869,7 +2231,6 @@ function renderPetDetail(){
       <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;"><div style="width:${p.intimacy}%;background:linear-gradient(90deg,#ff7eb3,#ff758c);height:100%;"></div></div>
     </div>
     <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;">
-      <div>${t("pet.outputBonus")}<b style="color:var(--gold)">+${total}%</b>${t("pet.bonusDetail",d.bonus,ibonus)}</div>
       <div style="color:var(--dim);margin-top:4px;">${p.sick?t("pet.sick"):p.sat<=50?t("pet.hungry"):t("pet.healthy")}</div>
       ${lvl>=10?`<div style="color:#ff7eb3;margin-top:4px;">${t("pet.maxIntimacy")}</div>`:`<div style="color:var(--dim);margin-top:4px;">${t("pet.unlockHint")}</div>`}
     </div>
@@ -2289,7 +2650,12 @@ $("#importFile").addEventListener("change", async e=>{
     if(typeof S.coin!=="number") S.coin=0;
     if(typeof S.chest!=="number") S.chest=0;
     rebuildBuildings();
+    if(typeof S.pandaRewardClaimed!=="boolean") S.pandaRewardClaimed=false;
+    if(!S.badges) S.badges={};
+    if(!S.parkSlots) S.parkSlots=null;
+    if(!S.buildingNames) S.buildingNames={};
     applyTheme(); clearSlots(); renderAll(); save();
+    checkPandaReward(); // 老用户兼容：导入后检查是否满足熊猫保底
     $("#settingsOverlay").classList.remove("show");
     toast(needMigrate?t("save.migrateToast",SAVE_VERSION):t("save.importToast"));
   }catch(err){ toast(t("save.importFail")+err.message); }
@@ -2389,7 +2755,7 @@ function renderMap(){
       let c="",tip="";
       if(p===false){c="🔒";tip=t("town.buyLand",r.land);}
       else if(p===null){c="";tip=t("town.emptyLand");}
-      else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";tip=b?bldName(b):"";}
+      else{const b=BUILDINGS.find(x=>x.id===p);c=b?b.i:"❓";const key=r.id+"_"+i;tip=b?((S.buildingNames&&S.buildingNames[key])||bldName(b)):"";}
       ph+=`<div data-r="${r.id}" data-i="${i}" title="${tip}" style="width:${cellSize}px;height:${cellSize}px;display:flex;align-items:center;justify-content:center;font-size:${cellSize*0.6}px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:${p===false?'#00000066':p===null?'#ffffff18':'#ffffff35'};${sel?'outline:2px solid var(--gold);':''}${ms?'outline:2px solid #4cd97b;':''}">${c}</div>`;
     });
     ph+="</div>";
@@ -2402,7 +2768,12 @@ function renderMap(){
         if(moveMode){if(p===null)completeMove(rid,idx);else toast(t("town.onlyEmpty"));return;}
         if(p===false)buyPlot(rid,idx);
         else if(p===null)selectPlot(rid,idx);
-        else{const b=BUILDINGS.find(x=>x.id===p);if(confirm(t("town.moveOrDemolish",b?b.i+bldName(b):(LANG==="en"?"Building":"建筑"))))startMove(rid,idx);else demolishPlot(rid,idx);}
+        else{const b=BUILDINGS.find(x=>x.id===p);const key=rid+"_"+idx;const curName=(S.buildingNames&&S.buildingNames[key])||bldName(b);
+          if(confirm(LANG==="en"?`${b?b.i:"🏗️"} ${curName}\n\nOK = Rename, Cancel = Move/Demolish`:`${b?b.i:"🏗️"} ${curName}\n\n确定=改名，取消=移动/拆除`)){
+            const nm=prompt(LANG==="en"?"Rename building (max 20 chars):":"给建筑起名（最多20字符）：",curName);
+            if(nm&&nm.trim()){ if(!S.buildingNames)S.buildingNames={}; S.buildingNames[key]=nm.trim().slice(0,20); toast(LANG==="en"?"✅ Renamed to: ":"✅ 已改名为："+S.buildingNames[key]); renderAll(); save(); }
+          }else if(confirm(t("town.moveOrDemolish",b?b.i+curName:(LANG==="en"?"Building":"建筑"))))startMove(rid,idx);else demolishPlot(rid,idx);
+        }
       });
     });
     grid.appendChild(tile);
@@ -2434,14 +2805,26 @@ function renderShop(){
   const region=selectedPlot?selectedPlot.region:"plain";
   const r=regionOf(region);
   BUILDINGS.forEach(b=>{
-    const cost=regionCost(b,region);
+    let cost=regionCost(b,region);
+    // 市政厅：最多2个，第二个建造成本×1.5
+    if(b.id==="hall"){
+      const hallCount=S.buildings.hall||0;
+      if(hallCount>=2){ /* 满2个，下面会禁用 */ }
+      else if(hallCount===1){
+        const c2={}; Object.entries(cost).forEach(([k,v])=>{c2[k]=Math.ceil(v*1.5);}); cost=c2;
+      }
+    }
     const div=document.createElement("div");
     div.className="shopItem";
     const built=S.buildings[b.id]||0;
     const incPer=buildingIncome(b);
     const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:k==="chest"?S.chest:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?elName(k):"金币"}×${v}</span>`;}).join("");
-    const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked());
-    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span></div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
+    const hallFull=b.id==="hall"&&(S.buildings.hall||0)>=2;
+    const unlocked=buildingUnlocked(b);
+    const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked())&&!hallFull&&unlocked;
+    const lockNote=!unlocked?`<span style="color:var(--dim);font-size:11px">🔒 ${buildingLockHint(b)}</span>`:"";
+    const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
+    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}${lockNote}</div><div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
   });
@@ -2468,6 +2851,11 @@ function selectPlot(region,index){
 }
 function cancelSelection(){ selectedPlot=null; moveMode=null; renderAll(); }
 function build(b,cost){
+  // 市政厅最多2个
+  if(b.id==="hall"&&(S.buildings.hall||0)>=2){
+    toast(LANG==="en"?"🏛️ Max 2 City Halls already built!":"🏛️ 最多只能建2个市政厅！");
+    return;
+  }
   if(!selectedPlot){
     if(!mapUnlocked()){
       initPlots();
@@ -2487,7 +2875,16 @@ function build(b,cost){
   });
   S.plots[region][index]=b.id;
   S.buildings[b.id]=(S.buildings[b.id]||0)+1;
-  toast(t("town.buildSuccess",b.i,regionOf(region).i,regName(regionOf(region)),bldName(b)));
+  // 建筑默认名
+  if(!S.buildingNames) S.buildingNames={};
+  const key=region+"_"+index;
+  if(b.id==="hall"){
+    const hallCount=S.buildings.hall||0;
+    S.buildingNames[key]=hallCount>=2?(LANG==="en"?"Senate":"参议院"):(LANG==="en"?"House":"众议院");
+  }else{
+    S.buildingNames[key]=bldName(b);
+  }
+  toast(t("town.buildSuccess",b.i,regionOf(region).i,regName(regionOf(region)),S.buildingNames[key]||bldName(b)));
   selectedPlot=null;
   renderAll(); save();
 }
@@ -2524,6 +2921,7 @@ function demolishPlot(region,index){
   });
   S.plots[region][index]=null;
   S.buildings[bid]=Math.max(0,(S.buildings[bid]||0)-1);
+  if(S.buildingNames) delete S.buildingNames[region+"_"+index];
   toast(t("town.demolished",b?bldName(b):bid));
   renderAll(); save();
 }
@@ -2729,24 +3127,25 @@ function npcCraftSmart(){
 }
 function npcPetBonusText(){
   if(!S.petList.length){
-    if(LANG==="en") return "No pets yet—build 🏠Hut first then breed one with 🧬Life! Cat/Rabbit +1%, Dog/Cow +2%, Horse +3%, Panda +5%";
-    return "还没有宠物，先建🏠小屋再用🧬生命孕育一只吧！猫兔+1% 狗牛+2% 马+3% 熊猫+5%";
+    if(LANG==="en") return "No pets yet—build 🏠Hut first then breed one with 🧬Life! Max 10 pets, all 9 non-panda at max stats rewards a 🐼Panda!";
+    return "还没有宠物，先建🏠小屋再用🧬生命孕育一只吧！最多10只，9只非熊猫全满配系统奖励🐼熊猫！";
   }
   const byType={};
-  let active=0,inactive=0;
-  S.petList.forEach(p=>{
-    const d=PETS.find(x=>x.id===p.id);
-    if(!d) return;
-    byType[p.id]=(byType[p.id]||0)+1;
-    if(p.sick||p.sat<=50) inactive++; else active++;
-  });
+  S.petList.forEach(p=>{ byType[p.id]=(byType[p.id]||0)+1; });
   const parts=Object.entries(byType).map(([id,n])=>{
     const d=PETS.find(x=>x.id===id);
-    return `${d.i}${petName(d)}×${n}(+${d.bonus}%/${LANG==="en"?"each":"只"})`;
+    return `${d.i}${petName(d)}×${n}`;
   });
-  const total=petBonus();
-  if(LANG==="en") return `You have ${S.petList.length} pets: ${parts.join(", ")}. Current active +${total}% (${active} healthy & fed, ${inactive} on strike)`;
-  return `你有${S.petList.length}只宠物：${parts.join("、")}。当前生效+${total}%（${active}只健康饱食，${inactive}只罢工中）`;
+  const nonPanda=S.petList.filter(p=>p.id!=="panda").length;
+  const allMax=nonPanda>=9&&S.petList.filter(p=>p.id!=="panda").every(p=>p.hp>=p.maxHp&&p.sat>=100&&p.intimacy>=100);
+  if(LANG==="en"){
+    if(allMax) return `You have ${S.petList.length} pets: ${parts.join(", ")}. All non-panda pets are maxed—claim your 🐼Panda reward!`;
+    if(nonPanda>=9) return `You have ${S.petList.length} pets: ${parts.join(", ")}. 9 non-panda pets—max all HP/satiety/intimacy for a 🐼Panda reward!`;
+    return `You have ${S.petList.length} pets: ${parts.join(", ")}. Feed and play to raise intimacy (Lv.10 unlocks custom avatar)!`;
+  }
+  if(allMax) return `你有${S.petList.length}只宠物：${parts.join("、")}。所有非熊猫已满配——快去领取🐼熊猫奖励！`;
+  if(nonPanda>=9) return `你有${S.petList.length}只宠物：${parts.join("、")}。已有9只非熊猫——把HP/饱食/亲密度全养满，系统奖励🐼熊猫！`;
+  return `你有${S.petList.length}只宠物：${parts.join("、")}。喂食和互动提升亲密度（满级解锁自定义头像）！`;
 }
 let _lastNpcHint=null;
 function npcHint(){
@@ -2768,6 +3167,8 @@ function npcHint(){
       if(pool.length>1){ while(pool[idx]===_lastNpcHint){ idx=Math.floor(Math.random()*pool.length); } }
       line=pool[idx];
     }
+  }else if(tab==="park"){
+    line=npcParkLine();
   }else{
     const pool=NPC_LINES[tab]?NPC_LINES[tab][LANG]:NPC_LINES.craft[LANG];
     let idx=Math.floor(Math.random()*pool.length);
@@ -2829,7 +3230,7 @@ $("#drawBtn").addEventListener("click", ()=>{
 });
 
 /* ============ 总渲染 ============ */
-function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); updateBatchInput(); }
+function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); renderPark(); updateBatchInput(); checkBadges(); }
 renderAll();
 applyLang();
 updateIntroLang();
