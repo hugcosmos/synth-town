@@ -1384,6 +1384,7 @@ function fresh(){
     drawn:false,         // 是否已完成开局抽奖
     coin:0, chest:0,
     lifePool:[],        // 每个 🧬生命 的生命值
+    discoveredLifeHps:[],// 曾经合成过的生命HP值（消耗后仍算已发现）
     pets:{},            // 旧版兼容（迁移用）
     petList:[],         // 宠物实例 [{id,hp,maxHp,sat,sick}]
     food:{},            // 食物库存 foodId -> 数量
@@ -1526,10 +1527,13 @@ function ensureLifePoolSync(){
 function totalElementKinds(){ return BASE.length+normalElementSet().size+LIFE_HPS.length+1; } // +1 宝箱
 function foundElementKinds(){
   ensureLifePoolSync();
+  if(!S.discoveredLifeHps) S.discoveredLifeHps=[];
+  // 从lifePool同步已发现的HP（兼容旧档）
+  (S.lifePool||[]).forEach(h=>{ if(!S.discoveredLifeHps.includes(h)) S.discoveredLifeHps.push(h); });
   const found=new Set(BASE);
   const show=normalElementSet();
   Object.keys(S.unlocked).forEach(k=>{ if(show.has(k)) found.add(k); });
-  (S.lifePool||[]).forEach(h=>found.add("life:"+h));
+  (S.discoveredLifeHps||[]).forEach(h=>found.add("life:"+h));
   if((S.chest||0)>0) found.add("chest");
   return found.size;
 }
@@ -1557,16 +1561,23 @@ function renderElements(){
     else makeDraggable(d, id);
     g.appendChild(d);
   });
-  // 生命按 HP 分组展示（HP 值来自 lifePool，与配方书分级一致）
+  // 生命按 HP 分组展示（遍历已发现的HP，数量为0时显示0且变灰，与其他元素一致）
   ensureLifePoolSync();
+  if(!S.discoveredLifeHps) S.discoveredLifeHps=[];
+  (S.lifePool||[]).forEach(h=>{ if(!S.discoveredLifeHps.includes(h)) S.discoveredLifeHps.push(h); });
   const hpCount={};
   (S.lifePool||[]).forEach(h=>{hpCount[h]=(hpCount[h]||0)+1;});
-  Object.keys(hpCount).sort((a,b)=>a-b).forEach(hp=>{
+  [...new Set(S.discoveredLifeHps)].sort((a,b)=>a-b).forEach(hp=>{
+    const cnt=hpCount[hp]||0;
     const d=document.createElement("div");
-    d.className="el"; d.dataset.id="life";
-    d.innerHTML=`<span class="ico">${assetHtml("elements","life",ELEMENTS.life.i,"26px")}</span><span class="name">${elName("life")}</span><span class="cnt" style="color:var(--ok);font-size:10px;">HP${hp} ×${hpCount[hp]}</span>`;
-    if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace("life"));
-    else makeDraggable(d, "life");
+    d.className="el"+(cnt<=0?" empty":""); d.dataset.id="life";
+    d.innerHTML=`<span class="ico">${assetHtml("elements","life",ELEMENTS.life.i,"26px")}</span><span class="name">${elName("life")}</span><span class="cnt" style="color:${cnt>0?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
+    if(cnt>0){
+      if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace("life"));
+      else makeDraggable(d, "life");
+    }else{
+      d.addEventListener("click",()=>toast(LANG==="en"?`No HP${hp} life left, synthesize more!`:`HP${hp}的生命已用完，再合成一些吧！`));
+    }
     g.appendChild(d);
   });
   $("#discCount").textContent = foundElementKinds();
@@ -1950,7 +1961,7 @@ $("#craftBtn").addEventListener("click", ()=>{
     [selA,selB].forEach(k=>{S.unlocked[k]=Math.max(0,S.unlocked[k]);});
     if(out==="coin"){S.coin+=5;coinGain+=5;}
     else if(out==="chest"){S.chest+=1;S.coin+=10;chestGain++;}
-    else if(out==="life"){S.unlocked.life=(S.unlocked.life||0)+1;S.lifePool.push(cost);}
+    else if(out==="life"){S.unlocked.life=(S.unlocked.life||0)+1;S.lifePool.push(cost); if(!S.discoveredLifeHps.includes(cost)) S.discoveredLifeHps.push(cost);}
     else{S.unlocked[out]=(S.unlocked[out]||0)+1;}
     done++;
   }
@@ -3078,7 +3089,7 @@ $("#importFile").addEventListener("change", async e=>{
     S=Object.assign(fresh(), data.save);
     // 旧档无plotsVersion标记时，重置为0以触发null→false修复（fresh()默认是1会跳过修复）
     if(data.save.plotsVersion===undefined) S.plotsVersion=0;
-    S.petList=S.petList||[]; S.food=S.food||{}; S.regions=S.regions||{}; S.lifePool=S.lifePool||[];
+    S.petList=S.petList||[]; S.food=S.food||{}; S.regions=S.regions||{}; S.lifePool=S.lifePool||[]; S.discoveredLifeHps=S.discoveredLifeHps||[];
     // 迁移旧版宠物计数 → 实例
     Object.entries(S.pets||{}).forEach(([id,n])=>{
       for(let i=0;i<n;i++) S.petList.push({id, hp:5, maxHp:5, sat:100, sick:false});
