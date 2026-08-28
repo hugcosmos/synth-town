@@ -1334,13 +1334,43 @@ function renderStats(){
   const el=$("#stats"); if(!el) return;
   let bld=0;
   Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{if(p&&p!==null)bld++;}));
-  const disc=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length;
-  const total=new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest").concat(BASE)).size;
+  const disc=foundElementKinds();
+  const total=totalElementKinds();
   const petN=S.petList?.length||0;
   const bldLbl=LANG==="en"?"Buildings":"建筑";
   const petLbl=LANG==="en"?"Pets":"宠物";
   const discLbl=LANG==="en"?"Found":"发现";
   el.innerHTML=`<div class="stat">💰 <b>${S.coin}</b></div><div class="stat">🏘️ <b>${bld}</b></div><div class="stat">🐾 <b>${petN}</b></div><div class="stat">🔬 <b>${disc}</b>/${total}</div>`;
+}
+
+/* ============ 元素发现统计 ============
+   元素库可展示的元素种类：
+   基础 4 + 普通可合成 19（非金币/宝箱/生命）+ 生命按 HP 5 种 + 宝箱 1 = 29
+   金币(coin)、废弃占位元素(charocal/tower) 不纳入统计与展示 */
+const LIFE_HPS=[...new Set(R.filter(r=>r[2]==="life").map(r=>craftCost(r[0],r[1])))].sort((a,b)=>a-b);
+function normalElementSet(){
+  return new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest"&&x!=="life"));
+}
+function elementShowSet(){
+  return new Set(BASE.concat([...normalElementSet()]));
+}
+// 保证 lifePool 与 S.unlocked.life 一致（旧档兜底：只有总数没有 HP 明细时按默认 HP 补齐）
+function ensureLifePoolSync(){
+  if(!S.lifePool) S.lifePool=[];
+  const n=S.unlocked.life||0;
+  if(S.lifePool.length===n) return;
+  while(S.lifePool.length<n) S.lifePool.push(tierOf("life"));
+  if(S.lifePool.length>n) S.lifePool.length=n;
+}
+function totalElementKinds(){ return BASE.length+normalElementSet().size+LIFE_HPS.length+1; } // +1 宝箱
+function foundElementKinds(){
+  ensureLifePoolSync();
+  const found=new Set(BASE);
+  const show=normalElementSet();
+  Object.keys(S.unlocked).forEach(k=>{ if(show.has(k)) found.add(k); });
+  (S.lifePool||[]).forEach(h=>found.add("life:"+h));
+  if((S.chest||0)>0) found.add("chest");
+  return found.size;
 }
 
 /* ============ 元素库 ============ */
@@ -1355,25 +1385,31 @@ function renderElements(){
   boxCard.innerHTML=`<span class="ico">🧰</span><span class="name">${elName("chest")}${boxTip}</span><span class="cnt">×${S.chest||0}</span>`;
   boxCard.addEventListener("click",()=>toast(t("npc.chestHint")||(LANG==="en"?"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料")));
   g.appendChild(boxCard);
+  const showSet=elementShowSet();
   Object.keys(S.unlocked).forEach(id=>{
-    const e=ELEMENTS[id]; if(!e) return;
+    const e=ELEMENTS[id]; if(!e||!showSet.has(id)) return;
     const d=document.createElement("div");
     d.className="el"+(count(id)<=0?" empty":""); d.dataset.id=id;
-    let tierTag=`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
-    // 生命特殊展示：显示 HP 范围（生命Pool内最低~最高）
-    if(id==="life"){
-      const pool=S.lifePool||[];
-      const hpMin=pool.length?Math.min(...pool):0;
-      const hpMax=pool.length?Math.max(...pool):0;
-      tierTag=pool.length?`<small style="color:var(--ok)">HP ${hpMin}${hpMax>hpMin?`~${hpMax}`:""}</small>`:`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
-    }
+    const tierTag=`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
     d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}${tierTag}</span><span class="cnt">×${count(id)}</span>`;
     if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
     else makeDraggable(d, id);
     g.appendChild(d);
   });
-  $("#discCount").textContent = Object.keys(S.unlocked).filter(k=>ELEMENTS[k]).length;
-  $("#totalRecipes").textContent = new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest").concat(BASE)).size;
+  // 生命按 HP 分组展示（HP 值来自 lifePool，与配方书分级一致）
+  ensureLifePoolSync();
+  const hpCount={};
+  (S.lifePool||[]).forEach(h=>{hpCount[h]=(hpCount[h]||0)+1;});
+  Object.keys(hpCount).sort((a,b)=>a-b).forEach(hp=>{
+    const d=document.createElement("div");
+    d.className="el"; d.dataset.id="life";
+    d.innerHTML=`<span class="ico">${assetHtml("elements","life",ELEMENTS.life.i,"26px")}</span><span class="name">${elName("life")} <small style="color:var(--ok)">(HP ${hp})</small></span><span class="cnt">×${hpCount[hp]}</span>`;
+    if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace("life"));
+    else makeDraggable(d, "life");
+    g.appendChild(d);
+  });
+  $("#discCount").textContent = foundElementKinds();
+  $("#totalRecipes").textContent = totalElementKinds();
 }
 
 /* ============ 拖拽（Pointer Events，兼容触屏） ============ */
