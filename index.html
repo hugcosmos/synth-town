@@ -235,11 +235,13 @@
   #npcBtn{
     position:fixed; right:18px; bottom:18px; z-index:50;
     width:56px; height:56px; border-radius:50%; border:2px solid var(--gold);
-    background:var(--panel2); font-size:28px; cursor:pointer;
+    background:var(--panel2); font-size:28px; cursor:grab;
     box-shadow:0 4px 16px rgba(0,0,0,.45); transition:transform .12s;
+    touch-action:none; user-select:none; -webkit-user-select:none;
   }
   #npcBtn:hover{transform:scale(1.1);}
-  #npcBtn:active{transform:scale(.95);}
+  #npcBtn:active{transform:scale(.95);cursor:grabbing;}
+  #npcBtn.dragging{transition:none;opacity:.8;}
 
   /* 设置面板 */
   #settingsBtn{
@@ -1099,7 +1101,7 @@ const I18N = {
     "pet.namePrompt":"给你的{0}起个名字吧（最多15个字符）：",
     "pet.renamePrompt":"给 {0} 改个名字（最多15个字符）：",
     "pet.pandaBorn":"🎊 传说降临！满级生命孕育出 🐼{0}！！",
-    "pet.born":"🐾 孕育出 {0}（HP {1}，基础+{2}% 加成）",
+    "pet.born":"🐾 孕育出 {0}（HP {1}，基础价值 {2}💰）",
     "pet.noFood":"缺 {0}，去驿站买",
     "pet.ate":"🍽️ {0} 吃了 {1}（饱食{2}，亲密度+2 → Lv.{3}）",
     "pet.interactMax":"💕 {0} 今天已经互动够了，明天再来吧",
@@ -1110,7 +1112,7 @@ const I18N = {
     "pet.bonusDetail":"产出加成：<b style=\"color:var(--gold)\">+{0}%</b>（物种+{1}% + 亲密度+{2}%）",
     "pet.sick":"🤒 生病中，不生效",
     "pet.hungry":"😴 饱食度不足，不生效",
-    "pet.healthy":"✅ 健康饱食，加成生效中",
+    "pet.healthy":"✅ 健康饱食，状态良好",
     "pet.maxIntimacy":"🎉 亲密度满级，已解锁自定义头像！",
     "pet.satiety":"🍖 饱食度",
     "pet.intimacy":"💕 亲密度",
@@ -1118,7 +1120,7 @@ const I18N = {
     "pet.bonusDetail":"（物种+{0}% + 亲密度+{1}%）",
     "pet.sick":"🤒 生病中，不生效",
     "pet.hungry":"😴 饱食度不足，不生效",
-    "pet.healthy":"✅ 健康饱食，加成生效中",    "pet.unlockHint":"亲密度满级(Lv.10)解锁自定义头像",
+    "pet.healthy":"✅ 健康饱食，状态良好",    "pet.unlockHint":"亲密度满级(Lv.10)解锁自定义头像",
     "pet.bornJust":"刚刚出生",
     "pet.bornMin":"{0}分钟前出生",
     "pet.bornHour":"{0}小时前出生",
@@ -1243,7 +1245,7 @@ const I18N = {
     "pet.namePrompt":"Name your {0} (max 15 chars):",
     "pet.renamePrompt":"Rename {0} (max 15 chars):",
     "pet.pandaBorn":"🎊 Legendary! Max Life bred 🐼{0}!!",
-    "pet.born":"🐾 Bred {0} (HP {1}, base +{2}% bonus)",
+    "pet.born":"🐾 Bred {0} (HP {1}, base value {2}💰)",
     "pet.noFood":"Need {0}, buy at station",
     "pet.ate":"🍽️ {0} ate {1} (satiety {2}, intimacy +2 → Lv.{3})",
     "pet.interactMax":"💕 {0} has played enough today, come back tomorrow",
@@ -1254,7 +1256,7 @@ const I18N = {
     "pet.bonusDetail":"Output bonus: <b style=\"color:var(--gold)\">+{0}%</b> (species +{1}% + intimacy +{2}%)",
     "pet.sick":"🤒 Sick, not active",
     "pet.hungry":"😴 Hungry, not active",
-    "pet.healthy":"✅ Healthy & fed, bonus active",
+    "pet.healthy":"✅ Healthy & fed, doing well",
     "pet.maxIntimacy":"🎉 Max intimacy, custom avatar unlocked!",
     "pet.satiety":"🍖 Satiety",
     "pet.intimacy":"💕 Intimacy",
@@ -1262,7 +1264,7 @@ const I18N = {
     "pet.bonusDetail":"(Species +{0}% + Intimacy +{1}%)",
     "pet.sick":"🤒 Sick, not active",
     "pet.hungry":"😴 Hungry, not active",
-    "pet.healthy":"✅ Healthy & fed, bonus active",    "pet.unlockHint":"Max intimacy (Lv.10) unlocks custom avatar",
+    "pet.healthy":"✅ Healthy & fed, doing well",    "pet.unlockHint":"Max intimacy (Lv.10) unlocks custom avatar",
     "pet.bornJust":"Just born",
     "pet.bornMin":"{0} min ago",
     "pet.bornHour":"{0} hr ago",
@@ -2187,7 +2189,8 @@ function npcBadgesLine(){
 /* ============ 宠物系统 ============ */
 const hasB = id => (S.buildings[id]||0)>0;
 function intimacyLevel(intimacy){ return Math.min(10, Math.floor((intimacy||0)/10)); }
-function intimacyBonus(intimacy){ return intimacyLevel(intimacy)*0.5; } // 每级+0.5%，满级+5%
+function intimacyBonus(intimacy){ return intimacyLevel(intimacy)*0.5; } // 每级+0.5%，满级+5%（仅用于价值计算，不再产出金币加成）
+function petValue(p){ return Math.floor((p.maxHp||5)*5 + (p.intimacy||0)*0.5); } // 宠物置换价值：maxHp×5 + 亲密度×0.5
 function formatBornTime(ts){
   const diff=Date.now()-(ts||Date.now());
   const mins=Math.floor(diff/60000);
@@ -2288,7 +2291,7 @@ function renderPets(){
     const d=PETS.find(x=>x.id===p.id);
     const f=FOODS[d.food];
     const lvl=intimacyLevel(p.intimacy);
-    const totalBonus=d.bonus+intimacyBonus(p.intimacy);
+    const value=petValue(p);
     const card=document.createElement("div");
     card.className="petCard";
     card.addEventListener("click",e=>{ if(e.target.closest(".petActBtn")) return; openPetDetail(idx); });
@@ -2302,7 +2305,7 @@ function renderPets(){
       <div class="petCardHead">
         <img class="petCardAvatar" src="${avatarSrc}" alt="${petName(d)}">
         <div class="petCardInfo">
-          <div class="petCardName">${p.name} ${sickTag}<span style="background:#ff7eb333;color:#ff7eb3;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700;">💕Lv.${lvl}</span><small style="color:var(--gold)">+${totalBonus}%</small></div>
+          <div class="petCardName">${p.name} ${sickTag}<span style="background:#ff7eb333;color:#ff7eb3;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700;">💕Lv.${lvl}</span><small style="color:var(--gold)">💰${value}</small></div>
           <div class="petCardSub">${d.i}${petName(d)}｜${formatBornTime(p.bornAt)}｜${LANG==="en"?"Eats":"吃"}${f.i}${foodName(f)}</div>
         </div>
       </div>
@@ -2365,7 +2368,7 @@ function hatch(){
   S.petList.push({id:pid, hp:maxHp, maxHp, sat:100, sick:false, name:petName, bornAt:Date.now(), intimacy:0, avatar:null});
   if(pid==="panda") toast(t("pet.pandaBorn",petName));
   else{
-    toast(t("pet.born",d.i+petName,maxHp,d.bonus));
+    toast(t("pet.born",d.i+petName,maxHp,maxHp*5));
     // 第9只非熊猫时强烈提醒（confirm弹窗）
     const newNonPanda=S.petList.filter(p=>p.id!=="panda").length;
     if(newNonPanda===9 && !S.petList.some(p=>p.id==="panda")){
@@ -2464,7 +2467,7 @@ function renderPetDetail(){
   const d=PETS.find(x=>x.id===p.id);
   const lvl=intimacyLevel(p.intimacy);
   const ibonus=intimacyBonus(p.intimacy);
-  const total=d.bonus+ibonus;
+  const value=petValue(p);
   const packImg=assetCache.get("pets:"+p.id);
   const defaultImg=packImg||`assets/pets/${p.id}.png`;
   const avatarHtml=p.avatar?`<img src="${p.avatar}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">`:`<img src="${defaultImg}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);animation:petBounce 2.2s ease-in-out infinite;">`;
@@ -2484,6 +2487,8 @@ function renderPetDetail(){
       <div style="height:6px;background:#00000055;border-radius:3px;overflow:hidden;"><div style="width:${p.intimacy}%;background:linear-gradient(90deg,#ff7eb3,#ff758c);height:100%;"></div></div>
     </div>
     <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>${LANG==="en"?"💰 Current Value":"💰 当前价值"}</span><span style="color:var(--gold);font-weight:700;">${value} 💰</span></div>
+      <div style="color:var(--dim);font-size:10px;">${LANG==="en"?"Value = maxHP×5 + intimacy×0.5 (trade-in at shop)":"价值 = 最大生命值×5 + 亲密度×0.5（置换商店可兑换）"}</div>
       <div style="color:var(--dim);margin-top:4px;">${p.sick?t("pet.sick"):p.sat<=50?t("pet.hungry"):t("pet.healthy")}</div>
       ${lvl>=10?`<div style="color:#ff7eb3;margin-top:4px;">${t("pet.maxIntimacy")}</div>`:`<div style="color:var(--dim);margin-top:4px;">${t("pet.unlockHint")}</div>`}
     </div>
@@ -3448,6 +3453,49 @@ function npcHint(){
   toast(`🧙‍♂️「${line}」`,5200);
 }
 $("#npcBtn").addEventListener("click", npcHint);
+
+/* ============ NPC按钮可拖拽移动 ============ */
+(function(){
+  const btn=$("#npcBtn");
+  const POS_KEY="synth-town-npc-pos";
+  // 恢复位置
+  try{
+    const pos=JSON.parse(localStorage.getItem(POS_KEY));
+    if(pos&&pos.x&&pos.y){ btn.style.left=pos.x+"px"; btn.style.top=pos.y+"px"; btn.style.right="auto"; btn.style.bottom="auto"; }
+  }catch(e){}
+  let dragging=false, moved=false, startX=0, startY=0, origX=0, origY=0;
+  btn.addEventListener("pointerdown", e=>{
+    dragging=true; moved=false;
+    startX=e.clientX; startY=e.clientY;
+    const rect=btn.getBoundingClientRect();
+    origX=rect.left; origY=rect.top;
+    btn.classList.add("dragging");
+    btn.setPointerCapture(e.pointerId);
+  });
+  btn.addEventListener("pointermove", e=>{
+    if(!dragging) return;
+    const dx=e.clientX-startX, dy=e.clientY-startY;
+    if(Math.abs(dx)>5||Math.abs(dy)>5) moved=true;
+    if(moved){
+      const nx=Math.max(4,Math.min(window.innerWidth-60,origX+dx));
+      const ny=Math.max(4,Math.min(window.innerHeight-60,origY+dy));
+      btn.style.left=nx+"px"; btn.style.top=ny+"px";
+      btn.style.right="auto"; btn.style.bottom="auto";
+    }
+  });
+  btn.addEventListener("pointerup", e=>{
+    if(!dragging) return;
+    dragging=false;
+    btn.classList.remove("dragging");
+    try{ btn.releasePointerCapture(e.pointerId); }catch(err){}
+    if(moved){
+      const rect=btn.getBoundingClientRect();
+      localStorage.setItem(POS_KEY,JSON.stringify({x:rect.left,y:rect.top}));
+    }
+  });
+  // 拖拽时阻止click触发npcHint
+  btn.addEventListener("click", e=>{ if(moved){ e.stopImmediatePropagation(); moved=false; } }, true);
+})();
 // 切换Tab时自动提示一条
 const _origSwitch=switchTab;
 switchTab=function(tab){ _origSwitch(tab); }; // 切换tab不再自动触发NPC提示，点击NPC按钮才触发
