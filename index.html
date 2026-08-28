@@ -165,6 +165,12 @@
   }
   #toast.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; cursor:pointer;}
 
+  /* 批量数量步进按钮 */
+  .qtyBtn{width:24px;height:24px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:6px;font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;}
+  .qtyBtn:active{background:var(--panel);}
+  .qtyWrap{display:inline-flex;align-items:center;gap:3px;}
+
+
   /* 拖拽幽灵 */
   .ghost{position:fixed; pointer-events:none; z-index:999; font-size:34px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));}
 
@@ -279,14 +285,13 @@
   .lockInfo{flex:1; min-width:0;}
   .lockTitle{font-size:14px; font-weight:700; color:#5c4a0e;}
   .lockDesc{font-size:11px; color:#8b6914; margin-top:2px;}
-  .lockInput{display:flex; gap:6px; flex-shrink:0;}
-  .lockInput input{padding:6px 10px; border:2px solid rgba(139,105,20,.5); border-radius:8px;
-    background:repeating-linear-gradient(90deg,rgba(255,255,255,.9) 0,rgba(255,255,255,.9) 26px,rgba(139,105,20,.15) 26px,rgba(139,105,20,.15) 27px);
-    color:#3a2a00; font-size:16px; font-weight:700; text-align:center; letter-spacing:14px; font-family:"Courier New",monospace;
-    text-indent:7px; outline:none;}
-  #basicPwd{width:116px;}
-  #advancedPwd{width:168px;}
-  .lockInput input:disabled{opacity:.4; cursor:not-allowed;}
+  .lockInput{display:flex; gap:6px; flex-shrink:0; align-items:center; flex-wrap:wrap; justify-content:center;}
+  .pwdBox{display:inline-flex; gap:5px; align-items:center;}
+  .pwdCell{width:30px; height:36px; padding:0; border:2px solid rgba(139,105,20,.5); border-radius:8px;
+    background:rgba(255,255,255,.92); color:#3a2a00; font-size:16px; font-weight:700; text-align:center;
+    outline:none; -webkit-text-security:disc;}
+  .pwdCell:focus{border-color:var(--gold); box-shadow:0 0 0 2px rgba(139,105,20,.25);}
+  .pwdCell:disabled{opacity:.4; cursor:not-allowed; -webkit-text-security:none;}
   .lockInput button{background:linear-gradient(135deg,#8b6914,#a67c00); border:none; color:#fff;
     border-radius:6px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;}
   .lockInput button:disabled{opacity:.4; cursor:not-allowed;}
@@ -514,9 +519,7 @@
     .lockTitle{font-size:13px;}
     .lockDesc{font-size:10px;}
     .lockInput{justify-content:center;}
-    #basicPwd{width:100px;}
-    #advancedPwd{width:140px;}
-    .lockInput input{font-size:14px; letter-spacing:12px; text-indent:6px;}
+    .pwdCell{width:26px; height:32px; font-size:14px;}
     .recipeList{grid-template-columns:repeat(2,1fr); gap:4px;}
     .recipeItem{font-size:11px; padding:4px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
     .recipeTierTitle{font-size:12px;}
@@ -563,7 +566,9 @@
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
         <button id="craftBtn" disabled data-i18n="btn.craft">✨ 合成</button>
         <span id="batchWrap" style="display:none;align-items:center;gap:4px;font-size:12px;color:var(--dim);">
-          ×<input type="number" id="batchInput" min="1" max="5" value="1" style="width:52px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);font-size:13px;text-align:center;">
+          <button type="button" id="batchMinus" class="qtyBtn">−</button>
+          ×<input type="text" id="batchInput" inputmode="numeric" pattern="[0-9]*" min="1" max="5" value="1" autocomplete="off" style="width:52px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);font-size:13px;text-align:center;">
+          <button type="button" id="batchPlus" class="qtyBtn">＋</button>
         </span>
       </div>
       <div id="result"></div>
@@ -617,7 +622,7 @@
             <div class="lockDesc" data-i18n="recipe.basicDesc">输入密码解锁所有3级及以下配方</div>
           </div>
           <div class="lockInput">
-            <input type="password" id="basicPwd" placeholder="••••" maxlength="4">
+            <div class="pwdBox" id="basicPwdBox"></div>
             <button id="basicUnlockBtn" data-i18n="recipe.unlock">解锁</button>
           </div>
         </div>
@@ -628,7 +633,7 @@
             <div class="lockDesc" data-i18n="recipe.advancedDesc">解锁基础配方后出现，输入密码解锁高级配方</div>
           </div>
           <div class="lockInput">
-            <input type="password" id="advancedPwd" placeholder="••••••" maxlength="6" disabled>
+            <div class="pwdBox" id="advancedPwdBox"></div>
             <button id="advancedUnlockBtn" data-i18n="recipe.unlock" disabled>解锁</button>
           </div>
         </div>
@@ -707,7 +712,7 @@ const ELEMENTS = {
   mud:{n:"泥",en:"Mud",i:"🟤"}, brick:{n:"砖",en:"Brick",i:"🧱"}, rain:{n:"雨",en:"Rain",i:"🌧️"}, seed:{n:"种子",en:"Seed",i:"🌱"},
   flower:{n:"花",en:"Flower",i:"🌸"}, bunch:{n:"花丛",en:"Flower Bush",i:"💮"}, energy:{n:"能量",en:"Energy",i:"⚡"}, tree:{n:"树",en:"Tree",i:"🌲"},
   wood:{n:"木材",en:"Wood",i:"🪵"}, stone:{n:"石头",en:"Stone",i:"🪨"}, metal:{n:"金属",en:"Metal",i:"🔩"}, coin:{n:"金币",en:"Coin",i:"💰"},
-  chest:{n:"金币宝箱",en:"Treasure Chest",i:"🧰"}, jade:{n:"玉石",en:"Jade",i:"💎"}, ash:{n:"灰烬",en:"Ash",i:"🌋"}, fertilizer:{n:"肥料",en:"Fertilizer",i:"💩"},
+  chest:{n:"宝箱",en:"Treasure Chest",i:"🧰"}, jade:{n:"玉石",en:"Jade",i:"💎"}, ash:{n:"灰烬",en:"Ash",i:"🌋"}, fertilizer:{n:"肥料",en:"Fertilizer",i:"💩"},
   garden_flowers:{n:"花海",en:"Flower Sea",i:"🌺"}, glass:{n:"玻璃",en:"Glass",i:"🪟"}, sand:{n:"沙",en:"Sand",i:"🏖️"}, cloud:{n:"云",en:"Cloud",i:"☁️"},
   steam:{n:"蒸汽",en:"Steam",i:"♨️"}, life:{n:"生命",en:"Life",i:"🧬"}, charocal:{n:"木炭",en:"Charcoal",i:"🖤"}, tower:{n:"塔楼",en:"Tower",i:"🗼"},
 };
@@ -931,6 +936,7 @@ const I18N = {
     "settings.bg.desc":"上传一张图片作为游戏背景（自动压缩到 ≤1920px，存本地 IndexedDB，不占存档空间）。上传后在上方主题中选择「自定义」即可使用。",
     "settings.pack.desc":"上传 theme.json：{ \"pets\":{…}, \"elements\":{…}, \"regions\":{…} }，值为 data:image/png;base64 图片。规格：宠物/元素 128×128、地块 512×256、单张 ≤200KB（自动压缩到规格内）。图片存 IndexedDB，不占存档空间；未替换的回落 emoji。",
     "npc.title":"召唤长老：随机提示一条原料已齐的隐藏配方",
+    "npc.chestHint":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料",
     "reset.confirm":"确定重置全部进度吗？不可恢复。",
     "craft.usedUp":"{0} 已用完，再去合成一些吧",
     "craft.invalid":"❌ 无效组合，换个思路试试",
@@ -1071,6 +1077,7 @@ const I18N = {
     "settings.bg.desc":"Upload an image as game background (auto-compressed to ≤1920px, stored in local IndexedDB, no save space used). After upload, select 'Custom' in themes above to use.",
     "settings.pack.desc":"Upload theme.json: { \"pets\":{…}, \"elements\":{…}, \"regions\":{…} }, values are data:image/png;base64 images. Specs: pets/elements 128×128, regions 512×256, each ≤200KB (auto-compressed). Images stored in IndexedDB; unreplaced items fall back to emoji.",
     "npc.title":"Summon Elder: random hint for a craftable hidden recipe",
+    "npc.chestHint":"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall",
     "reset.confirm":"Reset all progress? This cannot be undone.",
     "craft.usedUp":"{0} is used up, craft some more",
     "craft.invalid":"❌ Invalid combination, try another approach",
@@ -1293,6 +1300,8 @@ function save(){
 const $ = s=>document.querySelector(s);
 function toast(msg, dur=2200){
   const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  // 清除 tooltip 残留的定位样式，普通 toast 永远回到顶部居中
+  t.style.left=""; t.style.top=""; t.style.transform="";
   clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),dur);
   t.onclick=()=>{ t.classList.remove("show"); clearTimeout(t._tm); };
 }
@@ -1338,11 +1347,27 @@ function renderStats(){
 function renderElements(){
   const g=$("#elementGrid");
   g.innerHTML="";
+  // 宝箱固定卡片（始终展示，可合成但需囤积）
+  const boxCard=document.createElement("div");
+  boxCard.className="el"+(S.chest>0?"":" empty");
+  boxCard.dataset.id="chest";
+  const boxTip=S.chest>0?`<small style="color:var(--gold);font-size:9px">${LANG==="en"?"material":"建造材料"}</small>`:"";
+  boxCard.innerHTML=`<span class="ico">🧰</span><span class="name">${elName("chest")}${boxTip}</span><span class="cnt">×${S.chest||0}</span>`;
+  boxCard.addEventListener("click",()=>toast(t("npc.chestHint")||(LANG==="en"?"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料")));
+  g.appendChild(boxCard);
   Object.keys(S.unlocked).forEach(id=>{
     const e=ELEMENTS[id]; if(!e) return;
     const d=document.createElement("div");
     d.className="el"+(count(id)<=0?" empty":""); d.dataset.id=id;
-    d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small></span><span class="cnt">×${count(id)}</span>`;
+    let tierTag=`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
+    // 生命特殊展示：显示 HP 范围（生命Pool内最低~最高）
+    if(id==="life"){
+      const pool=S.lifePool||[];
+      const hpMin=pool.length?Math.min(...pool):0;
+      const hpMax=pool.length?Math.max(...pool):0;
+      tierTag=pool.length?`<small style="color:var(--ok)">HP ${hpMin}${hpMax>hpMin?`~${hpMax}`:""}</small>`:`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
+    }
+    d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}${tierTag}</span><span class="cnt">×${count(id)}</span>`;
     if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
     else makeDraggable(d, id);
     g.appendChild(d);
@@ -1446,10 +1471,43 @@ function updateBatchInput(){
 }
 /* 批量上限：金币>100→5, >1000→20, >10000→100, 否则0(未解锁) */
 function batchMax(){
-  if(S.coin>10000) return 100;
-  if(S.coin>1000) return 20;
-  if(S.coin>100) return 5;
+  const nw=netWorth();
+  if(nw>10000) return 100;
+  if(nw>1000) return 20;
+  if(nw>100) return 5;
   return 0;
+}
+// 净资产 = 金币 + 宝箱×10 + 元素(等级×5) + 宠物(maxHp×5) + 建筑(全价成本) + 地皮(区域地价, 排除免费两块)
+function netWorth(){
+  let v=S.coin||0;
+  v+=(S.chest||0)*10;
+  // 元素库存（含未孕育的生命）
+  Object.entries(S.unlocked||{}).forEach(([id,n])=>{
+    if(n>0&&ELEMENTS[id]) v+=n*tierOf(id)*BUY_RATE;
+  });
+  // 宠物：按生命值折算（生命孕育成宠物后价值随 maxHp 走）
+  (S.petList||[]).forEach(p=>{ v+=(p.maxHp||5)*BUY_RATE; });
+  // 建筑+地皮
+  Object.entries(S.plots||{}).forEach(([rid,plots])=>{
+    const r=regionOf(rid);
+    plots.forEach((p,i)=>{
+      if(!p) return;
+      const isFree=rid==="plain"&&(i===0||i===1)&&p===null;
+      if(isFree) return;
+      v+=r.land; // 地皮（空地或建筑地块都算地价）
+      if(p===null) return; // 空置已购地：只算地价
+      const b=BUILDINGS.find(x=>x.id===p);
+      if(!b) return;
+      // 建筑全价成本（不折价）
+      const c=regionCost(b,rid);
+      Object.entries(c).forEach(([k,amt])=>{
+        if(k==="coin") v+=amt;
+        else if(k==="chest") v+=amt*10;
+        else v+=amt*tierOf(k)*BUY_RATE;
+      });
+    });
+  });
+  return Math.floor(v);
 }
 /* 批量输入实时 clamp，防止超过上限 */
 document.addEventListener("input",ev=>{
@@ -1458,6 +1516,21 @@ document.addEventListener("input",ev=>{
     const mx=+t.max||1, v=Math.floor(+t.value)||1;
     t.value=Math.max(1,Math.min(mx,v));
   }
+});
+/* 批量步进按钮 */
+function qtyStep(input,delta){
+  const mx=+input.max||1, v=Math.floor(+input.value)||1;
+  input.value=Math.max(1,Math.min(mx,v+delta));
+  input.dispatchEvent(new Event("input",{bubbles:true}));
+}
+$("#batchMinus").addEventListener("click",()=>qtyStep($("#batchInput"),-1));
+$("#batchPlus").addEventListener("click",()=>qtyStep($("#batchInput"),1));
+document.addEventListener("click",ev=>{
+  const btn=ev.target.closest(".qtyBtn");
+  if(!btn) return;
+  const qm=btn.dataset.qmin, qp=btn.dataset.qplus;
+  if(qm){ const inp=document.querySelector(`.shopQty[data-id="${qm}"]`); if(inp) qtyStep(inp,-1); }
+  if(qp){ const inp=document.querySelector(`.shopQty[data-id="${qp}"]`); if(inp) qtyStep(inp,1); }
 });
 
 /* 点击槽位清空 */
@@ -1531,14 +1604,14 @@ function renderElShop(){
     const e=ELEMENTS[id], price=tierOf(id)*BUY_RATE;
     const row=document.createElement("div");
     row.style.cssText="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;";
-    const qtyInput = mx>0 ? `<input type="number" class="shopQty" data-id="${id}" min="1" max="${mx}" value="1" style="width:44px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text);font-size:12px;text-align:center;">` : "";
+    const qtyInput = mx>0 ? `<span class="qtyWrap"><button type="button" class="qtyBtn" data-qmin="${id}">−</button><input type="text" class="shopQty" data-id="${id}" inputmode="numeric" pattern="[0-9]*" min="1" max="${mx}" value="1" autocomplete="off" style="width:44px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text);font-size:12px;text-align:center;"><button type="button" class="qtyBtn" data-qplus="${id}">＋</button></span>` : "";
     row.innerHTML=`
       <span style="font-size:18px">${e.i}</span>
       <span style="font-size:13px">${elName(id)}</span>
       <span style="font-size:10px;color:var(--dim)">${tierOf(id)}${LANG==="en"?"Lvl":"级"}·×${count(id)}</span>
       ${qtyInput}
       <button data-id="${id}" style="margin-left:auto;background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰<span class="btnPrice">${price}</span></button>`;
-    const btn=row.querySelector("button");
+    const btn=row.querySelector("button[data-id]");
     const qty=row.querySelector(".shopQty");
     const priceEl=row.querySelector(".btnPrice");
     // 数量变化时更新按钮总价
@@ -1967,15 +2040,15 @@ function recipeKey(a,b){ return [a,b].sort().join("+"); }
 function renderRecipeBook(){
   const u=getRecipeUnlock();
   const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard");
-  const basicPwd=$("#basicPwd"), basicBtn=$("#basicUnlockBtn");
-  const advPwd=$("#advancedPwd"), advBtn=$("#advancedUnlockBtn");
+  const basicPwdBox=$("#basicPwdBox"), basicBtn=$("#basicUnlockBtn");
+  const advPwdBox=$("#advancedPwdBox"), advBtn=$("#advancedUnlockBtn");
   const content=$("#recipeContent");
   const crafted=new Set(S.craftedRecipes||[]);
-  // 按层级统计：总数、已合成数、密码解锁数
+  // 按层级统计：总数、已合成数、密码解锁数（生命按实际等级=材料之和，宝箱纳入）
   const tierStats={};
   R.forEach(([a,b,out])=>{
-    if(out==="coin"||out==="chest") return;
-    const t=tierOf(out);
+    if(out==="coin") return;
+    const t=out==="life"?craftCost(a,b):tierOf(out);
     if(!tierStats[t]) tierStats[t]={total:0,crafted:0};
     tierStats[t].total++;
     if(crafted.has(recipeKey(a,b))) tierStats[t].crafted++;
@@ -1991,7 +2064,7 @@ function renderRecipeBook(){
     basicCard.style.display="flex";
     basicCard.classList.remove("unlocked");
     basicCard.querySelector(".lockIcon").textContent="🔒";
-    basicPwd.style.display=""; basicBtn.style.display="";
+    basicPwdBox.style.display=""; basicBtn.style.display="";
     basicCard.querySelector(".lockDesc").textContent=t("recipe.basicDesc");
   }
   // 高级锁：4级+都已合成 → 不显示；密码已解锁 → 不显示；基础未解锁且未全合成 → 不显示
@@ -2003,14 +2076,14 @@ function renderRecipeBook(){
     advCard.style.display="flex";
     advCard.classList.remove("locked","unlocked");
     advCard.querySelector(".lockIcon").textContent="🔐";
-    advPwd.disabled=false; advBtn.disabled=false;
-    advPwd.style.display=""; advBtn.style.display="";
+    advPwdBox.style.display=""; advBtn.disabled=false; advBtn.style.display="";
+    advPwdBox.querySelectorAll(".pwdCell").forEach(c=>c.disabled=false);
     advCard.querySelector(".lockDesc").textContent=t("recipe.advancedDesc");
   }
   // 配方内容：只要有已合成或已解锁的配方就显示
   const hasAnyVisible=R.some(([a,b,out])=>{
-    if(out==="coin"||out==="chest") return false;
-    const t=tierOf(out);
+    if(out==="coin") return false;
+    const t=out==="life"?craftCost(a,b):tierOf(out);
     return crafted.has(recipeKey(a,b))||(t<=3&&u.basic)||(t>3&&u.advanced);
   });
   if(hasAnyVisible){
@@ -2024,8 +2097,8 @@ function renderRecipes(u,crafted){
   const basicSec=$("#recipeBasicSection"), advSec=$("#recipeAdvancedSection");
   const byTier={};
   R.forEach(([a,b,out])=>{
-    if(out==="coin"||out==="chest") return;
-    const t=tierOf(out);
+    if(out==="coin") return;
+    const t=out==="life"?craftCost(a,b):tierOf(out);
     if(!byTier[t]) byTier[t]=[];
     byTier[t].push([a,b,out]);
   });
@@ -2040,7 +2113,9 @@ function renderRecipes(u,crafted){
     let html=`<div class="recipeTierGroup"><div class="recipeTierTitle">${t("recipe.tier",tier)}</div><div class="recipeList">`;
     recipes.forEach(([a,b,out])=>{
       const ea=ELEMENTS[a], eb=ELEMENTS[b], eo=ELEMENTS[out];
-      html+=`<div class="recipeItem"><span>${ea.i}</span><span class="plus">+</span><span>${eb.i}</span><span class="arrow">→</span><span class="result">${eo.i}${elName(out)}</span></div>`;
+      let resultLabel=eo.i+elName(out);
+      if(out==="life") resultLabel+=`<small style="color:var(--ok)">(HP ${craftCost(a,b)})</small>`;
+      html+=`<div class="recipeItem"><span>${ea.i}</span><span class="plus">+</span><span>${eb.i}</span><span class="arrow">→</span><span class="result">${resultLabel}</span></div>`;
     });
     html+=`</div></div>`;
     if(isBasic) basicHtml+=html; else advHtml+=html;
@@ -2052,18 +2127,52 @@ function renderRecipes(u,crafted){
 $("#recipeBtn").addEventListener("click", ()=>{ renderRecipeBook(); $("#recipeOverlay").classList.add("show"); });
 $("#recipeCloseBtn").addEventListener("click", ()=>$("#recipeOverlay").classList.remove("show"));
 $("#recipeOverlay").addEventListener("click", e=>{ if(e.target.id==="recipeOverlay") $("#recipeOverlay").classList.remove("show"); });
+/* 密码格子构建 */
+let basicCells=[], advCells=[];
+function buildPwdCells(container, len, numeric, onComplete){
+  container.innerHTML="";
+  const cells=[];
+  for(let i=0;i<len;i++){
+    const inp=document.createElement("input");
+    inp.type="text"; inp.maxLength=1; inp.className="pwdCell"; inp.autocomplete="off";
+    if(numeric){ inp.inputMode="numeric"; inp.pattern="[0-9]*"; }
+    inp.addEventListener("input",()=>{
+      let ch=inp.value;
+      ch=numeric?ch.replace(/[^0-9]/g,""):ch.replace(/[^a-zA-Z0-9]/g,"");
+      inp.value=ch;
+      if(ch && i<len-1){ cells[i+1].focus(); cells[i+1].select(); }
+      const val=cells.map(x=>x.value).join("");
+      if(val.length===len && onComplete) onComplete(val.toLowerCase());
+    });
+    inp.addEventListener("keydown",e=>{
+      if(e.key==="Backspace" && !inp.value && i>0){ cells[i-1].focus(); cells[i-1].value=""; }
+    });
+    cells.push(inp); container.appendChild(inp);
+  }
+  return cells;
+}
+function clearPwd(cells){ cells.forEach(c=>{ c.value=""; }); if(cells[0]) cells[0].focus(); }
+function buildPwdBoxes(){
+  basicCells=buildPwdCells($("#basicPwdBox"), 4, true, (val)=>{
+    if(val===BASIC_PWD){ const u=getRecipeUnlock(); u.basic=true; setRecipeUnlock(u); clearPwd(basicCells); renderRecipeBook(); }
+    else{ toast(t("recipe.wrongPwd")); clearPwd(basicCells); }
+  });
+  advCells=buildPwdCells($("#advancedPwdBox"), 6, false, (val)=>{
+    if(val===ADVANCED_PWD){ const u=getRecipeUnlock(); u.advanced=true; setRecipeUnlock(u); clearPwd(advCells); renderRecipeBook(); }
+    else{ toast(t("recipe.wrongPwd")); clearPwd(advCells); }
+  });
+  advCells.forEach(c=>c.disabled=true);
+}
 $("#basicUnlockBtn").addEventListener("click", ()=>{
-  const pwd=$("#basicPwd").value.trim();
-  if(pwd===BASIC_PWD){ const u=getRecipeUnlock(); u.basic=true; setRecipeUnlock(u); renderRecipeBook(); }
-  else{ toast(t("recipe.wrongPwd")); $("#basicPwd").value=""; }
+  const val=basicCells.map(c=>c.value).join("").toLowerCase();
+  if(val===BASIC_PWD){ const u=getRecipeUnlock(); u.basic=true; setRecipeUnlock(u); clearPwd(basicCells); renderRecipeBook(); }
+  else{ toast(t("recipe.wrongPwd")); clearPwd(basicCells); }
 });
 $("#advancedUnlockBtn").addEventListener("click", ()=>{
-  const pwd=$("#advancedPwd").value.trim();
-  if(pwd===ADVANCED_PWD){ const u=getRecipeUnlock(); u.advanced=true; setRecipeUnlock(u); renderRecipeBook(); }
-  else{ toast(t("recipe.wrongPwd")); $("#advancedPwd").value=""; }
+  const val=advCells.map(c=>c.value).join("").toLowerCase();
+  if(val===ADVANCED_PWD){ const u=getRecipeUnlock(); u.advanced=true; setRecipeUnlock(u); clearPwd(advCells); renderRecipeBook(); }
+  else{ toast(t("recipe.wrongPwd")); clearPwd(advCells); }
 });
-$("#basicPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#basicUnlockBtn").click(); });
-$("#advancedPwd").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#advancedUnlockBtn").click(); });
 $("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") tooltipTopRight($("#basicUnlockBtn"), t("recipe.hoverHint")); });
 $("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") tooltipTopRight($("#advancedUnlockBtn"), t("recipe.hoverHint")); });
 /* ============ 设置面板 ============ */
@@ -2439,7 +2548,8 @@ function tick(){
       });
     }
     S.lastTick=now;
-    renderAll(); save();
+    // 只刷新金币等状态数字，不重建 DOM（避免每 10 秒重置用户正在编辑的购买/合成数量）
+    renderStats(); save();
   }
 }
 
@@ -2688,6 +2798,7 @@ renderAll();
 applyLang();
 updateIntroLang();
 updateDrawLang();
+buildPwdBoxes(); // 配方密码格子
 assetsLoad().then(renderAll); // 自定义素材加载完成后重绘一次
 if(!S.drawn){
   // 流程：NPC 引导 → 幸运抽取 → 游戏
