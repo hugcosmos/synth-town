@@ -2033,18 +2033,27 @@ function renderPark(){
     const pet=petIdx!==null?S.petList[petIdx]:null;
     const d=pet?PETS.find(x=>x.id===pet.id):null;
     const div=document.createElement("div");
-    div.style.cssText=`position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);width:22%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;`;
+    div.style.cssText=`position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);width:22%;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:visible;`;
     div.draggable=!!pet;
     div.dataset.slot=slotIdx;
     if(pet){
-      const avatarHtml=pet.avatar?`<img src="${pet.avatar}" style="width:80%;height:80%;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.8);">`:`<span style="font-size:clamp(24px,6vw,48px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:petBounce 2.2s ease-in-out infinite;">${d?d.i:"🐾"}</span>`;
-      div.innerHTML=avatarHtml;
+      const defaultImg=`assets/pets/${pet.id}.png`;
+      const avatarHtml=pet.avatar
+        ?`<img src="${pet.avatar}" style="width:70%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.3);">`
+        :`<img src="${defaultImg}" style="width:70%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.3);animation:petBounce 2.2s ease-in-out infinite;" onerror="this.outerHTML='<span style=\\'font-size:clamp(20px,5vw,40px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:petBounce 2.2s ease-in-out infinite;\\'>${d?d.i:'🐾'}</span>'">`;
+      const nameLabel=LANG==="en"?`${pet.name}'s Home`:`${pet.name}之家`;
+      div.innerHTML=`
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;">
+          ${avatarHtml}
+          <span style="font-size:clamp(8px,2.2vw,12px);font-weight:700;color:#fff;background:linear-gradient(135deg,#8B4513,#A0522D);padding:1px 8px;border-radius:8px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);">${nameLabel}</span>
+        </div>`;
       div.title=pet.name;
       div.addEventListener("click",()=>openPetDetail(petIdx));
       // 拖拽
       div.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",slotIdx); div.style.opacity=".5"; });
       div.addEventListener("dragend",()=>{ div.style.opacity="1"; });
     }else{
+      div.style.aspectRatio="1";
       div.innerHTML=`<span style="font-size:clamp(16px,4vw,28px);opacity:.3;">🏠</span>`;
     }
     div.addEventListener("dragover",e=>{ e.preventDefault(); div.style.background="rgba(255,255,255,.2)"; });
