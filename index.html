@@ -1735,6 +1735,84 @@ document.querySelectorAll(".slot").forEach(function(el){
   });
 });
 
+/* ============ 合成成功粒子爆发（纯Canvas，不影响现有功能） ============ */
+function craftParticleBurst(cx, cy, emoji){
+  const canvas=document.createElement("canvas");
+  canvas.style.cssText="position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9999;";
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext("2d");
+  const colors=["#ffd700","#ffed4e","#ffa500","#fff","#7fff7f","#ff7eb3"];
+  const particles=[];
+  const count=45;
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=2+Math.random()*7;
+    particles.push({
+      x:cx, y:cy,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed-2,
+      size:3+Math.random()*5,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      life:0, maxLife:50+Math.random()*30,
+      rotation:Math.random()*Math.PI*2,
+      rotSpeed:(Math.random()-0.5)*0.3,
+      type:Math.random()<0.15?"emoji":(Math.random()<0.5?"star":"dot")
+    });
+  }
+  // 中心闪光
+  let flash=1.0;
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // 中心闪光
+    if(flash>0){
+      const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,80*flash);
+      grad.addColorStop(0,"rgba(255,215,0,"+(0.6*flash)+")");
+      grad.addColorStop(1,"rgba(255,215,0,0)");
+      ctx.fillStyle=grad;
+      ctx.beginPath(); ctx.arc(cx,cy,80*flash,0,Math.PI*2); ctx.fill();
+      flash-=0.05;
+    }
+    let alive=false;
+    particles.forEach(p=>{
+      p.life++;
+      if(p.life>=p.maxLife) return;
+      alive=true;
+      p.vy+=0.12; // 重力
+      p.x+=p.vx; p.y+=p.vy;
+      p.rotation+=p.rotSpeed;
+      const alpha=1-p.life/p.maxLife;
+      const scale=1-p.life/p.maxLife*0.5;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rotation);
+      ctx.globalAlpha=alpha;
+      if(p.type==="emoji"){
+        ctx.font=(p.size*3*scale)+"px serif";
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(emoji,0,0);
+      }else if(p.type==="star"){
+        ctx.fillStyle=p.color;
+        const s=p.size*scale;
+        ctx.beginPath();
+        for(let i=0;i<5;i++){
+          const a=(i*4*Math.PI/5)-Math.PI/2;
+          const r=i%2===0?s:s*0.4;
+          ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+        }
+        ctx.closePath(); ctx.fill();
+      }else{
+        ctx.fillStyle=p.color;
+        ctx.beginPath(); ctx.arc(0,0,p.size*scale,0,Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+    });
+    if(alive||flash>0){ requestAnimationFrame(animate); }
+    else{ canvas.remove(); }
+  }
+  animate();
+}
+
 /* ============ 合成 ============ */
 $("#craftBtn").addEventListener("click", ()=>{
   if(!selA||!selB) return;
@@ -1773,6 +1851,11 @@ $("#craftBtn").addEventListener("click", ()=>{
   if(done<wantN)ot+=` <small style="color:var(--dim)">${t("craft.partial",done,wantN)}</small>`;
   res.innerHTML=`<span class="pop">${ot}</span>`;
   if(isNew&&done>0){res.innerHTML=`<span class="new pop">${t("craft.newBadge")}</span> ${res.innerHTML}`;toast(t("craft.newElement",elName(out),ELEMENTS[out].i));}
+  // 合成成功粒子爆发
+  if(done>0){
+    const _slots=$("#slots");
+    if(_slots){ const _r=_slots.getBoundingClientRect(); craftParticleBurst(_r.left+_r.width/2,_r.top+_r.height/2,ELEMENTS[out].i); }
+  }
   clearTimeout(resultTimer);resultTimer=setTimeout(clearResult,2500);
   if(done>0){ const rk=[selA,selB].sort().join("+"); if(!S.craftedRecipes.includes(rk)) S.craftedRecipes.push(rk); }
   clearSlots();updateCraftBtn();const _bi=$("#batchInput");if(_bi)_bi.value=1;
