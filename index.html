@@ -1318,6 +1318,7 @@ function fresh(){
     badges:{}, // 勋章解锁状态
     parkSlots:null, // 动物乐园窝位分配（null时自动初始化）
     buildingNames:{}, // 建筑自定义名 {region_index: name}
+    _pandaSlotWarned:false, // 熊猫保底满位警告是否已提示
   };
 }
 function migratePetFields(s){
@@ -1832,7 +1833,9 @@ function renderTradePanel(){
     if(!confirm(LANG==="en"?`Sell ${p.name} for 💰${refund}? (This cannot be undone!)`:`确认送走 ${p.name}，获得 💰${refund}？（不可恢复！）`)) return;
     S.petList.splice(idx,1);
     S.coin+=refund; S.totalEarned+=refund;
+    S._pandaSlotWarned=false; // 送走宠物后重置熊猫保底警告，允许再次检查
     toast(LANG==="en"?`♻️ ${p.name} left for 💰${refund}`:`♻️ ${p.name} 离开了，获得 💰${refund}`);
+    checkPandaReward(); // 送走后立即检查是否满足熊猫保底条件
     renderAll(); save();
   }));
 }
@@ -2055,6 +2058,19 @@ function renderPets(){
     html+=`<span style="font-size:11px">${t("pet.needHut")}</span>`;
   }
   html+=`</div>`;
+  // 熊猫保底常驻提示：满10只但没熊猫时
+  const hasPanda=S.petList.some(p=>p.id==="panda");
+  if(S.petList.length>=10 && !hasPanda){
+    const nonPanda=S.petList.filter(p=>p.id!=="panda");
+    const allMax=nonPanda.every(p=>p.hp>=p.maxHp&&p.sat>=100&&p.intimacy>=100);
+    html+=`<div style="background:linear-gradient(135deg,#fff3cd,#ffeaa7);border:1px solid #f39c12;border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;color:#856404;">
+      🐼 <b>${LANG==="en"?"Panda Guarantee Alert!":"熊猫保底提醒！"}</b><br>
+      ${allMax
+        ?(LANG==="en"?"All 9 non-panda pets are maxed! Sell one non-panda at the <b>♻️ Trade Shop</b> → system auto-rewards 🐼Panda!":"9只非熊猫已全部满配！去<b>♻️置换商店</b>送走一只非熊猫 → 系统自动奖励🐼熊猫！")
+        :(LANG==="en"?"You have 10 pets but no Panda. Max 9 non-panda pets (HP/satiety/intimacy), then sell one at the <b>♻️ Trade Shop</b> → system rewards 🐼Panda!":"你已有10只宠物但没有熊猫。把9只非熊猫养满配（HP/饱食/亲密度），然后去<b>♻️置换商店</b>送走一只 → 系统奖励🐼熊猫！")
+      }
+    </div>`;
+  }
   // 宠物不再提供产出加成（2026-08 规则调整），移除加成显示
   // 食物商店（需驿站）
   html+=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;">`;
@@ -2135,14 +2151,23 @@ function hatch(){
   if(!hasB("hut")){ toast(t("pet.needHutToast")); return; }
   if(!S.lifePool.length){ toast(t("pet.lifeError")); return; }
   const maxHp=Math.max(...S.lifePool);
+  const hasPanda=S.petList.some(p=>p.id==="panda");
+  const nonPandaCount=S.petList.filter(p=>p.id!=="panda").length;
   // 宠物上限10只：满10只不再孵化，自动折算金币
   if(S.petList.length>=10){
-    const refund=Math.floor(maxHp*5); // 新孵化宠物亲密度为0，折算=maxHp×5
+    const refund=Math.floor(maxHp*5);
     S.lifePool.splice(S.lifePool.indexOf(maxHp),1);
     S.unlocked.life--;
     toast(LANG==="en"?`🐾 Pet slot full (10/10)! ${maxHp}HP life converted to +💰${refund}`:`🐾 宠物已满(10/10)！${maxHp}HP生命折算为 +💰${refund}`);
     renderAll(); save();
     return;
+  }
+  // 第10只合成前警告：如果还没有熊猫且已有9只非熊猫
+  if(S.petList.length===9 && !hasPanda){
+    const warn=LANG==="en"
+      ?`⚠️ You have 9 non-panda pets and NO Panda! This will be your 10th pet slot.\n\nPanda guarantee: max all 9 non-panda pets (HP/satiety/intimacy) → system rewards a 🐼Panda as the 10th.\n\nIf you breed another non-panda now, there will be NO slot for Panda! Recommend maxing current pets first.\n\nContinue breeding anyway?`
+      :`⚠️ 你已有9只非熊猫且还没有熊猫！这将是第10个宠物位！\n\n熊猫保底：把9只非熊猫的HP/饱食/亲密度全部养满 → 系统奖励第10只🐼熊猫。\n\n如果现在再合成一只非熊猫，熊猫就永远没位置了！建议先把现有宠物养满配。\n\n确定还要继续合成吗？`;
+    if(!confirm(warn)) return;
   }
   const pid=rollPet(maxHp);
   const d=PETS.find(x=>x.id===pid);
@@ -2159,28 +2184,41 @@ function hatch(){
   if(pid==="panda") toast(t("pet.pandaBorn",petName));
   else{
     toast(t("pet.born",d.i+petName,maxHp,d.bonus));
-    // 第9只非熊猫时提醒：养满所有宠物系统奖励熊猫
-    const nonPanda=S.petList.filter(p=>p.id!=="panda").length;
-    if(nonPanda===9 && !S.petList.some(p=>p.id==="panda")){
-      setTimeout(()=>toast(LANG==="en"?"🐾 9 non-panda pets! Max all HP/satiety/intimacy → system rewards a 🐼Panda!":"🐾 已有9只非熊猫！把所有宠物HP/饱食/亲密度养满 → 系统奖励🐼熊猫！",5000),800);
+    // 第9只非熊猫时强烈提醒（confirm弹窗）
+    const newNonPanda=S.petList.filter(p=>p.id!=="panda").length;
+    if(newNonPanda===9 && !S.petList.some(p=>p.id==="panda")){
+      setTimeout(()=>{
+        const msg=LANG==="en"
+          ?`🐾 You now have 9 non-panda pets!\n\nMax ALL of them (HP=max, satiety=100, intimacy=100) → system rewards a 🐼Panda as the 10th pet.\n\n⚠️ Do NOT breed a 10th non-panda, or there will be no slot for Panda!`
+          :`🐾 你已有9只非熊猫！\n\n把它们全部养满配（HP=满值、饱食=100、亲密度=100）→ 系统奖励第10只🐼熊猫！\n\n⚠️ 千万不要再合成第10只非熊猫，否则熊猫就没位置了！`;
+        alert(msg);
+      },600);
     }
   }
   checkPandaReward();
   renderAll(); save();
 }
-/* 熊猫保底：9只非熊猫全满配时系统奖励第10只熊猫 */
+/* 熊猫保底：9只非熊猫全满配时系统奖励第10只熊猫；满10只非熊猫时提示腾位置 */
 function checkPandaReward(){
   if(S.pandaRewardClaimed) return;
-  if(S.petList.some(p=>p.id==="panda")) return; // 已有熊猫不触发
+  if(S.petList.some(p=>p.id==="panda")) return;
   const nonPanda=S.petList.filter(p=>p.id!=="panda");
   if(nonPanda.length<9) return;
   const allMax=nonPanda.every(p=>p.hp>=p.maxHp&&p.sat>=100&&p.intimacy>=100);
   if(!allMax) return;
-  if(S.petList.length>=10) return; // 没位置了
-  S.pandaRewardClaimed=true;
-  const pandaName=randomPetName();
-  S.petList.push({id:"panda", hp:11, maxHp:11, sat:100, sick:false, name:pandaName, bornAt:Date.now(), intimacy:0, avatar:null});
-  setTimeout(()=>toast(LANG==="en"?`🎊 System reward: 🐼${pandaName} joins your town! (all 9 non-panda pets maxed!)`:`🎊 系统奖励：🐼${pandaName}加入小镇！（9只非熊猫全部满配）`,5000),500);
+  // 有位置：直接奖励熊猫
+  if(S.petList.length<10){
+    S.pandaRewardClaimed=true;
+    const pandaName=randomPetName();
+    S.petList.push({id:"panda", hp:11, maxHp:11, sat:100, sick:false, name:pandaName, bornAt:Date.now(), intimacy:0, avatar:null});
+    setTimeout(()=>toast(LANG==="en"?`🎊 System reward: 🐼${pandaName} joins your town! (all 9 non-panda pets maxed!)`:`🎊 系统奖励：🐼${pandaName}加入小镇！（9只非熊猫全部满配）`,5000),500);
+    return;
+  }
+  // 满10只非熊猫且全满配：提示腾位置（不自动奖励，因为没位置）
+  if(!S._pandaSlotWarned){
+    S._pandaSlotWarned=true;
+    setTimeout(()=>toast(LANG==="en"?"🐼 All 9 non-panda pets are maxed! But you have 10 pets and no slot for Panda. Sell one non-panda at the Trade Shop, and the system will auto-reward 🐼Panda!":"🐼 9只非熊猫已全部满配！但你已有10只宠物，熊猫没位置了。去置换商店送走一只非熊猫，系统会自动奖励🐼熊猫！",6000),500);
+  }
 }
 function feedPet(idx){
   const p=S.petList[idx]; if(!p||p.sick) return;
@@ -2687,6 +2725,7 @@ $("#importFile").addEventListener("change", async e=>{
     if(!S.badges) S.badges={};
     if(!S.parkSlots) S.parkSlots=null;
     if(!S.buildingNames) S.buildingNames={};
+    if(typeof S._pandaSlotWarned!=="boolean") S._pandaSlotWarned=false;
     applyTheme(); clearSlots(); renderAll(); save();
     checkPandaReward(); // 老用户兼容：导入后检查是否满足熊猫保底
     $("#settingsOverlay").classList.remove("show");
