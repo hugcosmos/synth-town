@@ -1665,7 +1665,7 @@ $("#craftBtn").addEventListener("click", ()=>{
     else{if(count(selA)<1||count(selB)<1)break;}
     S.unlocked[selA]--;S.unlocked[selB]--;
     [selA,selB].forEach(k=>{S.unlocked[k]=Math.max(0,S.unlocked[k]);});
-    if(out==="coin"){S.coin+=1;coinGain++;}
+    if(out==="coin"){S.coin+=5;coinGain+=5;}
     else if(out==="chest"){S.chest+=1;S.coin+=10;chestGain++;}
     else if(out==="life"){S.unlocked.life=(S.unlocked.life||0)+1;S.lifePool.push(cost);}
     else{S.unlocked[out]=(S.unlocked[out]||0)+1;}
