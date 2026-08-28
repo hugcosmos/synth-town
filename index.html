@@ -253,12 +253,12 @@
   /* 配方书 */
   #recipeOverlay{
     position:fixed; inset:0; background:rgba(12,8,26,.88); z-index:1003;
-    display:none; align-items:center; justify-content:center; padding:16px;
+    display:none; align-items:center; justify-content:center; padding:24px;
   }
   #recipeOverlay.show{display:flex;}
   .recipeBook{
-    display:flex; max-width:680px; width:100%; max-height:88vh;
-    background:linear-gradient(135deg,#8b6914,#a67c00); border-radius:8px;
+    display:flex; max-width:560px; width:100%; max-height:80vh;
+    background:linear-gradient(135deg,#8b6914,#a67c00); border-radius:12px;
     box-shadow:0 20px 60px rgba(0,0,0,.6), inset 0 0 30px rgba(0,0,0,.3);
     overflow:hidden; position:relative;
   }
@@ -270,14 +270,16 @@
     background:repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(0,0,0,.1) 8px,rgba(0,0,0,.1) 9px);}
   .bookPage{
     flex:1; background:linear-gradient(180deg,#f5ecd7,#ede0c0);
-    padding:20px 24px; overflow-y:auto; color:#3a2a00; position:relative;
+    padding:20px 24px 16px; overflow-y:auto; color:#3a2a00; position:relative;
+    display:flex; flex-direction:column;
   }
   .bookPage::before{content:""; position:absolute; top:0; left:0; right:0; bottom:0;
     background:radial-gradient(ellipse at 30% 20%,rgba(139,105,20,.08),transparent 60%); pointer-events:none;}
-  .bookHeader{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; position:relative; z-index:1;}
+  .bookHeader{display:flex; justify-content:center; align-items:center; margin-bottom:16px; position:relative; z-index:1;}
   .bookHeader h2{margin:0; font-size:20px; font-weight:700; color:#5c4a0e; letter-spacing:1px;}
-  .bookClose{background:none; border:none; font-size:18px; cursor:pointer; color:#8b6914; padding:4px 8px; border-radius:4px;}
-  .bookClose:hover{background:rgba(139,105,20,.15);}
+  .bookFooter{margin-top:auto; padding-top:14px; border-top:1px solid rgba(139,105,20,.2); display:flex; justify-content:center; position:relative; z-index:1;}
+  .bookCloseBtn{background:#8b6914; border:none; color:#f5ecd7; border-radius:8px; padding:10px 32px; font-size:14px; font-weight:700; cursor:pointer; transition:background .15s;}
+  .bookCloseBtn:hover{background:#a67c00;}
   .lockCard{
     background:rgba(255,255,255,.6); border:1px solid rgba(139,105,20,.3); border-radius:10px;
     padding:14px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px; position:relative; z-index:1;
@@ -546,7 +548,11 @@
     .tabBtn .tabEmoji{font-size:16px;}
     #toast{top:80px; font-size:13px; padding:9px 18px; max-width:90vw; font-weight:500;}
     /* 配方书移动端 */
-    .recipeBook{max-width:100%; max-height:92vh;}
+    #recipeOverlay{padding:16px;}
+    .recipeBook{max-width:92%; max-height:78vh; border-radius:10px;}
+    .bookPage{padding:16px 16px 12px;}
+    .bookHeader h2{font-size:17px;}
+    .bookSpine{width:16px;}
     .bookSpine{width:12px;}
     .bookPage{padding:14px 12px;}
     .bookHeader h2{font-size:16px;}
@@ -713,7 +719,6 @@
     <div class="bookPage">
       <div class="bookHeader">
         <h2 data-i18n="recipe.title">📖 炼金配方书</h2>
-        <button id="recipeCloseBtn" class="bookClose">✕</button>
       </div>
       <div id="recipeLocks">
         <div class="lockCard" id="basicLockCard">
@@ -742,6 +747,9 @@
       <div id="recipeContent" style="display:none">
         <div id="recipeBasicSection"></div>
         <div id="recipeAdvancedSection" style="display:none"></div>
+      </div>
+      <div class="bookFooter">
+        <button id="recipeCloseBtn" class="bookCloseBtn" data-i18n="recipe.close">关闭配方书</button>
       </div>
     </div>
   </div>
@@ -1049,7 +1057,7 @@ const I18N = {
     "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
     "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭", "btn.recipe":"🔮 配方",
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
-    "recipe.title":"📖 炼金配方书", "recipe.basicTitle":"基础配方（1-3级）", "recipe.basicDesc":"输入密码解锁所有3级及以下配方", "recipe.advancedTitle":"高级配方（4级及以上）", "recipe.advancedDesc":"解锁基础配方后出现，输入密码解锁高级配方", "recipe.unlock":"解锁", "recipe.unlocked":"✅ 已解锁", "recipe.wrongPwd":"❌ 密码错误", "recipe.tier":"{0}级配方", "recipe.hoverHint":"去小红书找作者询问密码",
+    "recipe.title":"📖 炼金配方书", "recipe.close":"关闭配方书", "recipe.basicTitle":"基础配方（1-3级）", "recipe.basicDesc":"输入密码解锁所有3级及以下配方", "recipe.advancedTitle":"高级配方（4级及以上）", "recipe.advancedDesc":"解锁基础配方后出现，输入密码解锁高级配方", "recipe.unlock":"解锁", "recipe.unlocked":"✅ 已解锁", "recipe.wrongPwd":"❌ 密码错误", "recipe.tier":"{0}级配方", "recipe.hoverHint":"去小红书找作者询问密码",
     "btn.export":"📤 导出存档为文件", "btn.import":"📥 导入存档", "btn.resetSave":"🗑️ 重置存档",
     "btn.bgUpload":"📷 上传背景图片", "btn.bgReset":"↩️ 移除自定义背景",
     "settings.bgResetConfirm":"确定移除自定义背景？",
@@ -1193,7 +1201,7 @@ const I18N = {
     "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
     "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close", "btn.recipe":"🔮 Recipe",
     "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
-    "recipe.title":"📖 Alchemy Recipe Book", "recipe.basicTitle":"Basic Recipes (Tier 1-3)", "recipe.basicDesc":"Enter password to unlock all tier 3 and below recipes", "recipe.advancedTitle":"Advanced Recipes (Tier 4+)", "recipe.advancedDesc":"Appears after unlocking basic recipes, enter password to unlock advanced", "recipe.unlock":"Unlock", "recipe.unlocked":"✅ Unlocked", "recipe.wrongPwd":"❌ Wrong password", "recipe.tier":"Tier {0} Recipes", "recipe.hoverHint":"Find the author on Xiaohongshu for the password",
+    "recipe.title":"📖 Alchemy Recipe Book", "recipe.close":"Close", "recipe.basicTitle":"Basic Recipes (Tier 1-3)", "recipe.basicDesc":"Enter password to unlock all tier 3 and below recipes", "recipe.advancedTitle":"Advanced Recipes (Tier 4+)", "recipe.advancedDesc":"Appears after unlocking basic recipes, enter password to unlock advanced", "recipe.unlock":"Unlock", "recipe.unlocked":"✅ Unlocked", "recipe.wrongPwd":"❌ Wrong password", "recipe.tier":"Tier {0} Recipes", "recipe.hoverHint":"Find the author on Xiaohongshu for the password",
     "btn.export":"📤 Export Save", "btn.import":"📥 Import Save", "btn.resetSave":"🗑️ Reset Save",
     "btn.bgUpload":"📷 Upload Background", "btn.bgReset":"↩️ Remove Background",
     "btn.packUpload":"📂 Upload theme.json", "btn.packReset":"↩️ Reset to Default",
