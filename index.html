@@ -550,6 +550,16 @@
   #badgeDetailOverlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
   #badgeDetailOverlay.show{display:flex;}
   #badgeDetailBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;display:flex;flex-direction:column;align-items:center;max-width:400px;width:100%;}
+  /* 建筑详情弹窗 */
+  #buildingDetailOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  #buildingDetailOverlay.show{display:flex;}
+  #buildingDetailBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;max-width:420px;width:100%;}
+  .bldDetailHeader{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+  .bldDetailIcon{font-size:48px;flex-shrink:0;}
+  .bldDetailName{font-size:20px;font-weight:700;}
+  .bldDetailType{font-size:12px;color:var(--dim);margin-top:2px;}
+  .bldDetailRow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .bldDetailRow:last-child{border-bottom:none;}
 
 </style>
 </head>
@@ -731,6 +741,21 @@
     <div id="petDetailContent"></div>
     <div style="text-align:right;margin-top:12px;">
       <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" onclick="closePetDetail()" data-i18n="btn.close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 建筑详情弹窗 -->
+<div id="buildingDetailOverlay">
+  <div id="buildingDetailBox">
+    <div id="buildingDetailContent"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+      <button id="bldRenameBtn" style="flex:1;min-width:100px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">✏️ 改名</button>
+      <button id="bldMoveBtn" style="flex:1;min-width:100px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">📦 移动</button>
+      <button id="bldDemolishBtn" style="flex:1;min-width:100px;background:#e74c3c;border:none;color:#fff;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">🗑️ 拆除</button>
+    </div>
+    <div style="text-align:right;margin-top:12px;">
+      <button onclick="closeBuildingDetail()" style="background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:6px 16px;font-size:12px;cursor:pointer;">关闭</button>
     </div>
   </div>
 </div>
@@ -1924,6 +1949,46 @@ function showBadgeUnlock(b){
 // 粒子动画CSS（动态注入）
 (function(){const s=document.createElement("style");s.textContent="@keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate("+(Math.random()*200-100)+"px,"+(-100-Math.random()*100)+"px) scale(0);opacity:0;}}";document.head.appendChild(s);})();
 
+/* ============ 建筑详情弹窗 ============ */
+let _bldDetailRegion=null,_bldDetailIndex=null;
+function openBuildingDetail(region,index){
+  _bldDetailRegion=region; _bldDetailIndex=index;
+  renderBuildingDetail();
+  $("#buildingDetailOverlay").classList.add("show");
+}
+function closeBuildingDetail(){ $("#buildingDetailOverlay").classList.remove("show"); _bldDetailRegion=null; _bldDetailIndex=null; }
+function renderBuildingDetail(){
+  const box=$("#buildingDetailContent"); if(!box) return;
+  const region=_bldDetailRegion,index=_bldDetailIndex;
+  const bid=S.plots[region]?.[index]; if(!bid){ closeBuildingDetail(); return; }
+  const b=BUILDINGS.find(x=>x.id===bid); if(!b){ closeBuildingDetail(); return; }
+  const r=regionOf(region);
+  const key=region+"_"+index;
+  const customName=(S.buildingNames&&S.buildingNames[key])||bldName(b);
+  const income=buildingIncome(b);
+  const hallBonusVal=bid==="hall"?10:0;
+  box.innerHTML=`
+    <div class="bldDetailHeader">
+      <div class="bldDetailIcon">${b.i}</div>
+      <div>
+        <div class="bldDetailName">${customName}</div>
+        <div class="bldDetailType">${bldName(b)} ${b.passive?`· ${LANG==="en"?b.passiveEn:b.passive}`:`· 💰+${Math.round(income)}/${INCOME_INTERVAL}s`}</div>
+      </div>
+    </div>
+    <div class="bldDetailRow"><span>${LANG==="en"?"Location":"所在区域"}</span><span>${r.i} ${regName(r)}</span></div>
+    <div class="bldDetailRow"><span>${LANG==="en"?"Region Bonus":"区域系数"}</span><span>${LANG==="en"?"Cost×":"成本×"}${r.cm} ${LANG==="en"?"Output×":"产出×"}${r.im}</span></div>
+    ${b.passive?`<div class="bldDetailRow"><span>${LANG==="en"?"Passive":"被动效果"}</span><span style="color:var(--gold)">${LANG==="en"?b.passiveEn:b.passive}</span></div>`:`<div class="bldDetailRow"><span>${LANG==="en"?"Income":"产出"}</span><span>💰+${Math.round(income*r.im)}/${INCOME_INTERVAL}s</span></div>`}
+    <div class="bldDetailRow"><span>${LANG==="en"?"Custom Name":"自定义名"}</span><span style="color:var(--gold)">${customName===bldName(b)?(LANG==="en"?"(default)":"(默认)"):customName}</span></div>
+  `;
+  // 按钮事件
+  $("#bldRenameBtn").onclick=()=>{
+    const nm=prompt(LANG==="en"?"Rename building (max 20 chars):":"给建筑起名（最多20字符）：",customName);
+    if(nm&&nm.trim()){ if(!S.buildingNames)S.buildingNames={}; S.buildingNames[key]=nm.trim().slice(0,20); toast(LANG==="en"?"✅ Renamed!":"✅ 已改名！"); renderBuildingDetail(); renderAll(); save(); }
+  };
+  $("#bldMoveBtn").onclick=()=>{ closeBuildingDetail(); startMove(region,index); toast(LANG==="en"?"📦 Select an empty plot to move":"📦 选择一块空地移动建筑"); };
+  $("#bldDemolishBtn").onclick=()=>{ closeBuildingDetail(); demolishPlot(region,index); };
+}
+
 /* ============ 动物乐园 ============ */
 // 10个窝位位置（百分比，左列x=20% 右列x=75%，y分5档）
 const PARK_SLOTS = [
@@ -2840,12 +2905,7 @@ function renderMap(){
         if(moveMode){if(p===null)completeMove(rid,idx);else toast(t("town.onlyEmpty"));return;}
         if(p===false)buyPlot(rid,idx);
         else if(p===null)selectPlot(rid,idx);
-        else{const b=BUILDINGS.find(x=>x.id===p);const key=rid+"_"+idx;const curName=(S.buildingNames&&S.buildingNames[key])||bldName(b);
-          if(confirm(LANG==="en"?`${b?b.i:"🏗️"} ${curName}\n\nOK = Rename, Cancel = Move/Demolish`:`${b?b.i:"🏗️"} ${curName}\n\n确定=改名，取消=移动/拆除`)){
-            const nm=prompt(LANG==="en"?"Rename building (max 20 chars):":"给建筑起名（最多20字符）：",curName);
-            if(nm&&nm.trim()){ if(!S.buildingNames)S.buildingNames={}; S.buildingNames[key]=nm.trim().slice(0,20); toast(LANG==="en"?"✅ Renamed to: ":"✅ 已改名为："+S.buildingNames[key]); renderAll(); save(); }
-          }else if(confirm(t("town.moveOrDemolish",b?b.i+curName:(LANG==="en"?"Building":"建筑"))))startMove(rid,idx);else demolishPlot(rid,idx);
-        }
+        else{openBuildingDetail(rid,idx);}
       });
     });
     grid.appendChild(tile);
