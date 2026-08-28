@@ -2120,7 +2120,7 @@ function renderTradePanel(){
     S.unlocked[id]=Math.max(0,(S.unlocked[id]||0)-n);
     S.coin+=earn; S.totalEarned+=earn;
     toast(LANG==="en"?`♻️ Sold ${n}× ${elName(id)} → +💰${earn}`:`♻️ 卖出 ${n}× ${elName(id)} → +💰${earn}`);
-    renderAll(); save();
+    renderAll(); renderTradePanel(); save();
   }));
   // 宠物置换
   box.querySelectorAll("[data-tradepet]").forEach(btn=>btn.addEventListener("click",()=>{
@@ -2132,7 +2132,7 @@ function renderTradePanel(){
     S._pandaSlotWarned=false; // 送走宠物后重置熊猫保底警告，允许再次检查
     toast(LANG==="en"?`♻️ ${p.name} left for 💰${refund}`:`♻️ ${p.name} 离开了，获得 💰${refund}`);
     checkPandaReward(); // 送走后立即检查是否满足熊猫保底条件
-    renderAll(); save();
+    renderAll(); renderTradePanel(); save();
   }));
 }
 
