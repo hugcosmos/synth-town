@@ -56,7 +56,7 @@
     background:linear-gradient(180deg,rgba(12,8,26,.20),rgba(12,8,26,.50));
   }
   header{
-    padding:8px 18px 6px; background:transparent; border-bottom:none;
+    padding:18px 18px 10px; background:transparent; border-bottom:none;
     max-width:1200px; margin:0 auto; width:100%;
     position:sticky; top:0; z-index:10; backdrop-filter:blur(10px);
   }
@@ -609,7 +609,7 @@
   <button class="tabBtn" data-tab="shop" data-i18n="tab.shop">🛒 商店</button>
   <button class="tabBtn" data-tab="pet" data-i18n="tab.pet">🐾 宠物</button>
   <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()">🌳 <span data-i18n="tab.park">乐园</span></button>
-  <button class="tabBtn" id="badgeTabBtn" data-tab="badges">🏆 <span data-i18n="tab.badges">成就</span></button>
+  <button class="tabBtn" id="badgeTabBtn" data-tab="badges" onclick="tryOpenBadges()">🏆 <span data-i18n="tab.badges">成就</span></button>
 </nav>
 
 <main>
@@ -676,7 +676,7 @@
     <section class="panel" style="padding:0;overflow:hidden;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);">
         <h2 style="margin:0;font-size:15px;" data-i18n="panel.park">🌳 动物乐园</h2>
-        <button onclick="saveElementAsImage(document.getElementById('parkContainer'),'animal-park.png')" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:700;">📷 保存</button>
+        <button onclick="saveElementAsImage(document.getElementById('parkContainer'),'animal-park.png')" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:700;" data-i18n="btn.save">📷 保存</button>
       </div>
       <div id="parkContainer" style="position:relative;width:100%;aspect-ratio:3/4;background:url('assets/park/park-bg.png') center/cover no-repeat;border-radius:0 0 12px 12px;overflow:hidden;">
         <div id="parkSlots"></div>
@@ -756,7 +756,11 @@
 
     <h3 data-i18n="settings.pack">🖼️ 自定义素材包（高级）</h3>
     <div data-i18n="settings.pack.desc" style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">上传 theme.json：{ "pets":{…}, "elements":{…}, "regions":{…} }，值为 data:image/png;base64 图片。<br>规格：宠物/元素 128×128、地块 512×256、单张 ≤200KB（自动压缩到规格内）。图片存 IndexedDB，不占存档空间；未替换的回落 emoji。</div>
-    <button class="setBtn" id="packBtn" data-i18n="btn.packUpload">📂 上传素材包 theme.json</button>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      <button class="setBtn" id="packBtn" data-i18n="btn.packUpload">📂 上传素材包 theme.json</button>
+      <button class="setBtn" id="packExampleBtn" style="width:auto;padding:6px 12px;font-size:11px;" onclick="showPackExample()">📋 格式示例</button>
+      <button class="setBtn" id="packResetBtn" data-i18n="btn.packReset" style="width:auto;padding:6px 12px;font-size:11px;" onclick="resetPack()">↩️ 恢复默认</button>
+    </div>
     <button class="setBtn" id="packResetBtn" data-i18n="btn.packReset">↩️ 恢复默认外观</button>
     <input type="file" id="packFile" accept="application/json" style="display:none">
 
@@ -1029,9 +1033,10 @@ const SAVE_VERSION = 3; // v1=初始, v2=地块系统, v3=宠物增强(起名/�
 const I18N = {
   zh: {
     "app.title":"⚗️ 元素合成小镇",
-    "tab.craft":"⚗️ 合成", "tab.town":"🗺️ 小镇", "tab.shop":"🛒 商店", "tab.pet":"🐾 宠物",
+    "tab.craft":"⚗️ 合成", "tab.town":"🗺️ 小镇", "tab.shop":"🛒 商店", "tab.pet":"🐾 宠物", "tab.park":"🌳 乐园", "tab.badges":"🏆 成就",
     "panel.elements":"元素库（点一下填入合成槽）",
-    "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园",
+    "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 动物乐园",
+    "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
     "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭", "btn.recipe":"🔮 配方",
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
     "recipe.title":"📖 炼金配方书", "recipe.basicTitle":"基础配方（1-3级）", "recipe.basicDesc":"输入密码解锁所有3级及以下配方", "recipe.advancedTitle":"高级配方（4级及以上）", "recipe.advancedDesc":"解锁基础配方后出现，输入密码解锁高级配方", "recipe.unlock":"解锁", "recipe.unlocked":"✅ 已解锁", "recipe.wrongPwd":"❌ 密码错误", "recipe.tier":"{0}级配方", "recipe.hoverHint":"去小红书找作者询问密码",
@@ -1172,9 +1177,10 @@ const I18N = {
   },
   en: {
     "app.title":"⚗️ Element Craft Town",
-    "tab.craft":"⚗️ Craft", "tab.town":"🗺️ Town", "tab.shop":"🛒 Shop", "tab.pet":"🐾 Pets",
+    "tab.craft":"⚗️ Craft", "tab.town":"🗺️ Town", "tab.shop":"🛒 Shop", "tab.pet":"🐾 Pets", "tab.park":"🌳 Park", "tab.badges":"🏆 Badges",
     "panel.elements":"Elements (tap to fill slot)",
-    "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden",
+    "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Animal Park",
+    "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
     "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close", "btn.recipe":"🔮 Recipe",
     "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
     "recipe.title":"📖 Alchemy Recipe Book", "recipe.basicTitle":"Basic Recipes (Tier 1-3)", "recipe.basicDesc":"Enter password to unlock all tier 3 and below recipes", "recipe.advancedTitle":"Advanced Recipes (Tier 4+)", "recipe.advancedDesc":"Appears after unlocking basic recipes, enter password to unlock advanced", "recipe.unlock":"Unlock", "recipe.unlocked":"✅ Unlocked", "recipe.wrongPwd":"❌ Wrong password", "recipe.tier":"Tier {0} Recipes", "recipe.hoverHint":"Find the author on Xiaohongshu for the password",
@@ -1977,6 +1983,14 @@ function checkBadges(){
     }
   });
 }
+function hasBadge(){ return S.badges&&Object.keys(S.badges).length>0; }
+function tryOpenBadges(){
+  if(!hasBadge()){
+    toast(LANG==="en"?"🏆 Unlock your first badge to open the Achievement Hall!":"🏆 解锁第一个徽章后即可打开成就殿堂！");
+    return;
+  }
+  switchTab("badges");
+}
 function showBadgeUnlock(b){
   const ov=$("#badgeUnlockOverlay"); if(!ov) return;
   $("#badgeUnlockImg").innerHTML=`<img src="${b.img}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'font-size:120px;text-align:center;line-height:200px;\\'>🏆</div>'">`;
@@ -2137,6 +2151,26 @@ const NPC_PARK_LINES={
   en:["Welcome to the Animal Park! Drag pets to swap nests!","Panda is the guardian of the park—everyone feels safe with it!","Each pet has its own nest. Click to view its profile!","Keep pets well-fed and high-intimacy for happier pets!","Max 10 pets in the park. Full? Time to say goodbye to some~"]
 };
 function npcParkLine(){ const arr=NPC_PARK_LINES[LANG]||NPC_PARK_LINES.zh; return arr[Math.floor(Math.random()*arr.length)]; }
+function npcBadgesLine(){
+  const unlocked=S.badges?Object.keys(S.badges).length:0;
+  const total=BADGES.length;
+  const lines=LANG==="en"?[
+    `You have ${unlocked}/${total} badges. Keep going!`,
+    "Element Master: discover all 29 elements!",
+    "Animal King: collect all 6 pet species (Cat/Rabbit/Dog/Cow/Horse/Panda)!",
+    "Real Estate Tycoon: build on all 42 plots!",
+    "Click a badge to view details and download the image!",
+    `Only ${total-unlocked} badge${total-unlocked>1?"s":""} left to unlock!`
+  ]:[
+    `你已解锁 ${unlocked}/${total} 枚徽章，继续加油！`,
+    "元素之王：发现全部29种元素！",
+    "动物大王：集齐6种动物（猫/兔/狗/牛/马/熊猫）！",
+    "地产大亨：42块地皮全部建成建筑！",
+    "点击徽章可以查看详情并下载图片哦！",
+    `还差 ${total-unlocked} 枚徽章就全部解锁啦！`
+  ];
+  return lines[Math.floor(Math.random()*lines.length)];
+}
 
 /* ============ 宠物系统 ============ */
 const hasB = id => (S.buildings[id]||0)>0;
@@ -2862,6 +2896,7 @@ $("#importFile").addEventListener("change", async e=>{
     if(!S.parkSlots) S.parkSlots=null;
     if(!S.buildingNames) S.buildingNames={};
     if(typeof S._pandaSlotWarned!=="boolean") S._pandaSlotWarned=false;
+    if(!S.shopCart) S.shopCart={};
     applyTheme(); clearSlots(); renderAll(); save();
     checkPandaReward(); // 老用户兼容：导入后检查是否满足熊猫保底
     $("#settingsOverlay").classList.remove("show");
@@ -2870,6 +2905,23 @@ $("#importFile").addEventListener("change", async e=>{
 });
 // 素材包
 $("#packBtn").addEventListener("click", ()=>$("#packFile").click());
+function showPackExample(){
+  const example=JSON.stringify({
+    pets:{cat:"data:image/png;base64,iVBORw0KGgo...（替换为你的base64图片）"},
+    elements:{fire:"data:image/png;base64,iVBORw0KGgo...", water:"data:image/png;base64,..."},
+    regions:{plain:"data:image/png;base64,...", hill:"data:image/png;base64,..."}
+  }, null, 2);
+  const tip=LANG==="en"
+    ?`theme.json format example:\n\n${example}\n\nSupported IDs:\n• pets: ${PETS.map(p=>p.id).join(", ")}\n• elements: ${Object.keys(ELEMENTS).slice(0,10).join(", ")}... (all element IDs)\n• regions: ${REGIONS.map(r=>r.id).join(", ")}\n\nHow to get base64:\n1. Resize image to spec (pets/elements 128×128, regions 512×256)\n2. Convert to base64 (use online tool or: base64 -i image.png)\n3. Paste as "data:image/png;base64,XXXX" value\n\nImages stored in IndexedDB, not in save file. Use "↩️ Reset" to restore defaults.`
+    :`theme.json 格式示例：\n\n${example}\n\n支持的 ID：\n• pets（宠物）：${PETS.map(p=>p.id).join("、")}\n• elements（元素）：${Object.keys(ELEMENTS).slice(0,10).join("、")}...（所有元素ID）\n• regions（地块）：${REGIONS.map(r=>r.id).join("、")}\n\n如何获取 base64：\n1. 把图片缩放到规格（宠物/元素128×128，地块512×256）\n2. 转成base64（在线工具或命令：base64 -i image.png）\n3. 粘贴为 "data:image/png;base64,XXXX" 格式的值\n\n图片存在 IndexedDB，不占存档空间。点"↩️恢复默认"可还原。`;
+  alert(tip);
+}
+function resetPack(){
+  if(!confirm(LANG==="en"?"Reset all custom assets to default?":"确认恢复所有自定义素材为默认？")) return;
+  const tx=idb.transaction(["assets"],"readwrite");
+  tx.objectStore("assets").clear();
+  tx.oncomplete=()=>{ assetCache.clear(); applyTheme(); renderAll(); toast(LANG==="en"?"↩️ Assets reset to default":"↩️ 已恢复默认素材"); };
+}
 $("#packFile").addEventListener("change", async e=>{
   const f=e.target.files[0]; e.target.value="";
   if(!f) return;
@@ -2946,7 +2998,7 @@ function renderMap(){
     html+=`<div class="mapLocked">${t("town.unlockMap")}</div>`;
     outer.innerHTML=html; return;
   }
-  html+=`<div class="mapHead"><span>${t("town.mapTitle")}</span><span style="display:flex;gap:8px;align-items:center;"><button onclick="saveElementAsImage(document.querySelector('.mapGrid'),'town-map.png')" style="background:var(--gold);border:none;color:#1a1530;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;">📷 保存</button><span class="compass">🧭 N</span></span></div><div class="mapGrid"></div>`;
+  html+=`<div class="mapHead"><span>${t("town.mapTitle")}</span><span style="display:flex;gap:8px;align-items:center;"><button onclick="saveElementAsImage(document.querySelector('.mapGrid'),'town-map.png')" style="background:var(--gold);border:none;color:#1a1530;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;">${t("btn.save")}</button><span class="compass">🧭 N</span></span></div><div class="mapGrid"></div>`;
   outer.innerHTML=html;
   const grid=outer.querySelector(".mapGrid");
   REGIONS.forEach(r=>{
@@ -3372,6 +3424,8 @@ function npcHint(){
     }
   }else if(tab==="park"){
     line=npcParkLine();
+  }else if(tab==="badges"){
+    line=npcBadgesLine();
   }else{
     const pool=NPC_LINES[tab]?NPC_LINES[tab][LANG]:NPC_LINES.craft[LANG];
     let idx=Math.floor(Math.random()*pool.length);
@@ -3384,7 +3438,7 @@ function npcHint(){
 $("#npcBtn").addEventListener("click", npcHint);
 // 切换Tab时自动提示一条
 const _origSwitch=switchTab;
-switchTab=function(tab){ _origSwitch(tab); setTimeout(npcHint,300); };
+switchTab=function(tab){ _origSwitch(tab); }; // 切换tab不再自动触发NPC提示，点击NPC按钮才触发
 
 /* ============ 开局幸运抽奖 ============ */
 let drawnCounts=null;
