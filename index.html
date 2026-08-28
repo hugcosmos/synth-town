@@ -381,6 +381,7 @@
   }
   .tabBtn:hover{color:var(--text);}
   .tabBtn.active{background:var(--panel2); color:var(--gold); border-color:var(--accent);}
+  .tabBtn.locked{opacity:.4;cursor:not-allowed;pointer-events:none;}
   .view{display:none !important;}
   .view.active{display:grid !important;}
   #view-craft.active{grid-template-columns:1fr 1fr; gap:14px; align-items:start;}
@@ -608,7 +609,7 @@
   <button class="tabBtn" data-tab="town" data-i18n="tab.town">🗺️ 小镇</button>
   <button class="tabBtn" data-tab="shop" data-i18n="tab.shop">🛒 商店</button>
   <button class="tabBtn" data-tab="pet" data-i18n="tab.pet">🐾 宠物</button>
-  <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()">🌳 <span data-i18n="tab.park">乐园</span></button>
+  <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()">🌳 <span data-i18n="tab.park">游乐园</span></button>
   <button class="tabBtn" id="badgeTabBtn" data-tab="badges" onclick="tryOpenBadges()">🏆 <span data-i18n="tab.badges">成就</span></button>
 </nav>
 
@@ -1033,9 +1034,9 @@ const SAVE_VERSION = 3; // v1=初始, v2=地块系统, v3=宠物增强(起名/�
 const I18N = {
   zh: {
     "app.title":"⚗️ 元素合成小镇",
-    "tab.craft":"⚗️ 合成", "tab.town":"🗺️ 小镇", "tab.shop":"🛒 商店", "tab.pet":"🐾 宠物", "tab.park":"🌳 乐园", "tab.badges":"🏆 成就",
+    "tab.craft":"⚗️ 合成", "tab.town":"🗺️ 小镇", "tab.shop":"🛒 商店", "tab.pet":"🐾 宠物", "tab.park":"游乐园", "tab.badges":"成就",
     "panel.elements":"元素库（点一下填入合成槽）",
-    "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 动物乐园",
+    "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 游乐园",
     "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
     "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭", "btn.recipe":"🔮 配方",
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
@@ -1177,9 +1178,9 @@ const I18N = {
   },
   en: {
     "app.title":"⚗️ Element Craft Town",
-    "tab.craft":"⚗️ Craft", "tab.town":"🗺️ Town", "tab.shop":"🛒 Shop", "tab.pet":"🐾 Pets", "tab.park":"🌳 Park", "tab.badges":"🏆 Badges",
+    "tab.craft":"⚗️ Craft", "tab.town":"🗺️ Town", "tab.shop":"🛒 Shop", "tab.pet":"🐾 Pets", "tab.park":"Playpark", "tab.badges":"Achievements",
     "panel.elements":"Elements (tap to fill slot)",
-    "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Animal Park",
+    "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Playpark",
     "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
     "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close", "btn.recipe":"🔮 Recipe",
     "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
@@ -1990,6 +1991,11 @@ function tryOpenBadges(){
     return;
   }
   switchTab("badges");
+}
+function updateTabLockState(){
+  const parkBtn=$("#parkTabBtn"), badgeBtn=$("#badgeTabBtn");
+  if(parkBtn) parkBtn.classList.toggle("locked",!hasPanda());
+  if(badgeBtn) badgeBtn.classList.toggle("locked",!hasBadge());
 }
 function showBadgeUnlock(b){
   const ov=$("#badgeUnlockOverlay"); if(!ov) return;
@@ -3487,7 +3493,7 @@ $("#drawBtn").addEventListener("click", ()=>{
 });
 
 /* ============ 总渲染 ============ */
-function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); renderPark(); renderBadges(); updateBatchInput(); checkBadges(); }
+function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); renderPark(); renderBadges(); updateTabLockState(); updateBatchInput(); checkBadges(); }
 renderAll();
 applyLang();
 updateIntroLang();
