@@ -2192,12 +2192,14 @@ function downloadBadge(){
 }
 function checkBadges(){
   if(!S.badges) S.badges={};
+  let unlockedAny=false;
   BADGES.forEach(b=>{
     if(!S.badges[b.id]&&b.check()){
-      S.badges[b.id]=true;
+      S.badges[b.id]=true; unlockedAny=true;
       showBadgeUnlock(b);
     }
   });
+  if(unlockedAny){ renderBadges(); updateTabLockState(); save(); }
 }
 function hasBadge(){ return S.badges&&Object.keys(S.badges).length>0; }
 function tryOpenBadges(){
