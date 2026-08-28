@@ -387,6 +387,7 @@
   #view-town.active{grid-template-columns:1fr; gap:14px;}
   #view-shop.active{grid-template-columns:1fr; gap:14px; max-width:520px;}
   #view-pet.active{grid-template-columns:1fr; gap:14px;}
+  #view-badges.active{grid-template-columns:1fr; gap:14px; max-width:600px; margin:0 auto;}
 
   /* 底图模式 */
   .mapStats{
@@ -545,6 +546,10 @@
   @keyframes badgePop{0%{transform:scale(0) rotate(-180deg);opacity:0;}60%{transform:scale(1.2) rotate(10deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
   @keyframes badgeFade{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
   .badgeParticle{position:absolute;width:6px;height:6px;background:#ffd700;border-radius:50%;pointer-events:none;}
+  /* 勋章详情大图 */
+  #badgeDetailOverlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  #badgeDetailOverlay.show{display:flex;}
+  #badgeDetailBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;display:flex;flex-direction:column;align-items:center;max-width:400px;width:100%;}
 
 </style>
 </head>
@@ -568,7 +573,7 @@
   <button class="tabBtn" data-tab="shop" data-i18n="tab.shop">🛒 商店</button>
   <button class="tabBtn" data-tab="pet" data-i18n="tab.pet">🐾 宠物</button>
   <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()">🌳 <span data-i18n="tab.park">乐园</span></button>
-  <button class="tabBtn" id="badgeTabBtn" onclick="openBadges()">🏆 <span data-i18n="tab.badges">成就</span></button>
+  <button class="tabBtn" id="badgeTabBtn" data-tab="badges">🏆 <span data-i18n="tab.badges">成就</span></button>
 </nav>
 
 <main>
@@ -637,6 +642,14 @@
         <div id="parkSlots"></div>
       </div>
       <div id="parkHint" style="padding:8px 12px;font-size:12px;color:var(--dim);text-align:center;"></div>
+    </section>
+  </section>
+
+  <!-- 成就页 -->
+  <section id="view-badges" class="view">
+    <section class="panel">
+      <h2 data-i18n="badges.title">🏆 成就殿堂</h2>
+      <div id="badgesContent"></div>
     </section>
   </section>
 </main>
@@ -722,13 +735,15 @@
   </div>
 </div>
 
-<!-- 成就页 -->
-<div id="badgesOverlay">
-  <div id="badgesBox">
-    <h2 style="text-align:center;margin-bottom:16px;" data-i18n="badges.title">🏆 成就殿堂</h2>
-    <div id="badgesContent"></div>
-    <div style="text-align:right;margin-top:16px;">
-      <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" onclick="closeBadges()" data-i18n="btn.close">关闭</button>
+<!-- 勋章详情大图 -->
+<div id="badgeDetailOverlay">
+  <div id="badgeDetailBox">
+    <img id="badgeDetailImg" src="" style="width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);box-shadow:0 0 30px rgba(255,215,0,.4);">
+    <div id="badgeDetailName" style="font-size:20px;font-weight:700;margin-top:16px;text-align:center;"></div>
+    <div id="badgeDetailDesc" style="font-size:13px;color:var(--dim);margin-top:8px;text-align:center;max-width:320px;"></div>
+    <div style="display:flex;gap:10px;margin-top:20px;justify-content:center;">
+      <button id="badgeDownloadBtn" onclick="downloadBadge()" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:700;">📥 下载</button>
+      <button onclick="closeBadgeDetail()" style="background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:700;">关闭</button>
     </div>
   </div>
 </div>
@@ -1837,8 +1852,7 @@ const BADGES = [
    check:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return total>=42&&built>=42;},
    progress:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return [built,42];}}
 ];
-function openBadges(){ renderBadges(); $("#badgesOverlay").classList.add("show"); }
-function closeBadges(){ $("#badgesOverlay").classList.remove("show"); }
+// 成就页改为独立tab，openBadges/closeBadges已移除
 function renderBadges(){
   const box=$("#badgesContent"); if(!box) return;
   if(!S.badges) S.badges={};
@@ -1847,10 +1861,11 @@ function renderBadges(){
     const unlocked=!!S.badges[b.id];
     const [cur,total]=b.progress();
     const pct=Math.min(100,Math.round(cur/total*100));
-    html+=`<div class="badgeCard ${unlocked?"":"locked"}">
+    const clickable=unlocked?`onclick="openBadgeDetail('${b.id}')" style="cursor:pointer;"`:'';
+    html+=`<div class="badgeCard ${unlocked?"":"locked"}" ${clickable}>
       <img class="badgeIcon" src="${b.img}" alt="${b.name}" onerror="this.style.background='var(--panel)';this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>'">
       <div class="badgeInfo">
-        <div class="badgeName">${unlocked?"✅ ":"🔒 "}${LANG==="en"?b.en:b.name}</div>
+        <div class="badgeName">${unlocked?"✅ ":"🔒 "}${LANG==="en"?b.en:b.name}${unlocked?` <span style="font-size:11px;color:var(--gold)">🔍</span>`:""}</div>
         <div class="badgeDesc">${LANG==="en"?b.descEn:b.descZh}</div>
         <div class="badgeProgress"><div class="badgeProgressBar" style="width:${pct}%"></div></div>
         <div style="font-size:11px;color:var(--dim);margin-top:3px;">${cur}/${total} (${pct}%)</div>
@@ -1858,6 +1873,23 @@ function renderBadges(){
     </div>`;
   });
   box.innerHTML=html;
+}
+let _currentBadgeId=null;
+function openBadgeDetail(id){
+  const b=BADGES.find(x=>x.id===id); if(!b) return;
+  _currentBadgeId=id;
+  $("#badgeDetailImg").src=b.img;
+  $("#badgeDetailName").textContent=LANG==="en"?b.en:b.name;
+  $("#badgeDetailDesc").textContent=LANG==="en"?b.descEn:b.descZh;
+  $("#badgeDetailOverlay").classList.add("show");
+}
+function closeBadgeDetail(){ $("#badgeDetailOverlay").classList.remove("show"); _currentBadgeId=null; }
+function downloadBadge(){
+  const b=BADGES.find(x=>x.id===_currentBadgeId); if(!b) return;
+  const a=document.createElement("a");
+  a.href=b.img; a.download=(LANG==="en"?b.en:b.name)+".png";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast(LANG==="en"?"📥 Badge downloaded!":"📥 勋章已下载！");
 }
 function checkBadges(){
   if(!S.badges) S.badges={};
