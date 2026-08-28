@@ -1813,6 +1813,110 @@ function craftParticleBurst(cx, cy, emoji){
   animate();
 }
 
+/* ============ 宠物喂食/互动粒子爆发（纯Canvas，300ms内合并） ============ */
+let _petBurstCanvas=null, _petBurstCtx=null, _petBurstParts=[], _petBurstRunning=false, _petBurstLast=0;
+function petParticleBurst(cx, cy, emoji, mode){
+  const now=Date.now();
+  // 300ms内已有活跃动画 → 合并：直接加粒子到现有数组
+  if(_petBurstCanvas && now-_petBurstLast<300 && _petBurstRunning){
+    _addPetParts(cx,cy,emoji,mode);
+    _petBurstLast=now;
+    return;
+  }
+  // 新建canvas
+  if(_petBurstCanvas){ _petBurstCanvas.remove(); }
+  const canvas=document.createElement("canvas");
+  canvas.style.cssText="position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9998;";
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  document.body.appendChild(canvas);
+  _petBurstCanvas=canvas; _petBurstCtx=canvas.getContext("2d");
+  _petBurstParts=[]; _petBurstLast=now;
+  _addPetParts(cx,cy,emoji,mode);
+  if(!_petBurstRunning){ _petBurstRunning=true; _animPetBurst(); }
+}
+function _addPetParts(cx,cy,emoji,mode){
+  const isPlay=mode==="play";
+  const colors=isPlay
+    ? ["#c77dff","#7dd3fc","#ffd700","#ff7eb3","#fff"]
+    : ["#ff7eb3","#ff758c","#ffd700","#fff","#ffb3c6"];
+  const count=isPlay?40:35;
+  const gravity=isPlay?0.10:0.07;
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=2.5+Math.random()*7;
+    let type, partEmoji="";
+    const r=Math.random();
+    if(isPlay){
+      if(r<0.55){type="heart";}
+      else if(r<0.75){type="emoji";partEmoji="🎵";}
+      else if(r<0.90){type="star";}
+      else{type="emoji";partEmoji="😊";}
+    }else{
+      if(r<0.60){type="heart";}
+      else if(r<0.85){type="emoji";partEmoji=emoji;}
+      else{type="star";}
+    }
+    _petBurstParts.push({
+      x:cx,y:cy,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed-2.5,
+      size:3+Math.random()*5,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      life:0,maxLife:isPlay?75+Math.random()*25:65+Math.random()*20,
+      rotation:Math.random()*Math.PI*2,
+      rotSpeed:(Math.random()-0.5)*0.25,
+      type:type,emoji:partEmoji,
+      gravity:gravity
+    });
+  }
+}
+function _animPetBurst(){
+  if(!_petBurstCtx||!_petBurstCanvas){_petBurstRunning=false;return;}
+  const ctx=_petBurstCtx;
+  ctx.clearRect(0,0,_petBurstCanvas.width,_petBurstCanvas.height);
+  let alive=false;
+  _petBurstParts.forEach(p=>{
+    p.life++;
+    if(p.life>=p.maxLife)return;
+    alive=true;
+    p.vy+=p.gravity;
+    p.x+=p.vx; p.y+=p.vy;
+    p.rotation+=p.rotSpeed;
+    const alpha=1-p.life/p.maxLife;
+    const scale=1-p.life/p.maxLife*0.4;
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(p.rotation);
+    ctx.globalAlpha=alpha;
+    if(p.type==="emoji"){
+      ctx.font=(p.size*2.8*scale)+"px serif";
+      ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText(p.emoji,0,0);
+    }else if(p.type==="heart"){
+      ctx.fillStyle=p.color;
+      const s=p.size*scale;
+      ctx.beginPath();
+      ctx.moveTo(0,s*0.3);
+      ctx.bezierCurveTo(-s,-s*0.5,-s*1.2,s*0.3,0,s);
+      ctx.bezierCurveTo(s*1.2,s*0.3,s,-s*0.5,0,s*0.3);
+      ctx.fill();
+    }else if(p.type==="star"){
+      ctx.fillStyle=p.color;
+      const s=p.size*scale;
+      ctx.beginPath();
+      for(let i=0;i<5;i++){
+        const a=(i*4*Math.PI/5)-Math.PI/2;
+        const r=i%2===0?s:s*0.4;
+        ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+      }
+      ctx.closePath();ctx.fill();
+    }
+    ctx.restore();
+  });
+  if(alive){requestAnimationFrame(_animPetBurst);}
+  else{_petBurstCanvas.remove();_petBurstCanvas=null;_petBurstCtx=null;_petBurstParts=[];_petBurstRunning=false;}
+}
+
 /* ============ 合成 ============ */
 $("#craftBtn").addEventListener("click", ()=>{
   if(!selA||!selB) return;
@@ -2500,6 +2604,10 @@ function feedPet(idx){
   const lvl=intimacyLevel(p.intimacy);
   toast(t("pet.ate",p.name,FOODS[d.food].i,p.sat,lvl));
   if(lvl>oldLvl) petLevelUpToast(p);
+  // 喂食粒子爆发
+  const _feedAvatars=document.querySelectorAll(".petCardAvatar");
+  const _feedAvatar=_feedAvatars[idx];
+  if(_feedAvatar){ const _fr=_feedAvatar.getBoundingClientRect(); petParticleBurst(_fr.left+_fr.width/2,_fr.top+_fr.height/2,FOODS[d.food].i,"feed"); }
   checkPandaReward();
   renderAll(); save();
 }
@@ -2514,6 +2622,10 @@ function interactPet(idx){
   const lvl=intimacyLevel(p.intimacy);
   toast(t("pet.interacted",p.name,lvl,p.interactCount));
   if(lvl>oldLvl) petLevelUpToast(p);
+  // 互动粒子爆发
+  const _playAvatars=document.querySelectorAll(".petCardAvatar");
+  const _playAvatar=_playAvatars[idx];
+  if(_playAvatar){ const _pr=_playAvatar.getBoundingClientRect(); petParticleBurst(_pr.left+_pr.width/2,_pr.top+_pr.height/2,d.i,"play"); }
   checkPandaReward();
   renderAll(); save();
 }
