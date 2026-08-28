@@ -2613,6 +2613,7 @@ function feedPet(idx){
 }
 function interactPet(idx){
   const p=S.petList[idx]; if(!p||p.sick) return;
+  const d=PETS.find(x=>x.id===p.id);
   const today=new Date().toDateString();
   if(p.interactDate!==today){ p.interactDate=today; p.interactCount=0; }
   if((p.interactCount||0)>=3){ toast(t("pet.interactMax",p.name)); return; }
