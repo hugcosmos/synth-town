@@ -376,9 +376,10 @@
   }
   .tabBtn{
     background:var(--panel); border:1px solid var(--line); border-bottom:none; color:var(--dim);
-    border-radius:12px 12px 0 0; padding:9px 22px; font-size:14px; cursor:pointer; font-weight:600;
-    transition:background .15s,color .15s;
+    border-radius:12px 12px 0 0; padding:8px 18px; font-size:13px; cursor:pointer; font-weight:600;
+    transition:background .15s,color .15s; display:flex; flex-direction:column; align-items:center; gap:2px; line-height:1.1;
   }
+  .tabBtn .tabEmoji{font-size:18px;}
   .tabBtn:hover{color:var(--text);}
   .tabBtn.active{background:var(--panel2); color:var(--gold); border-color:var(--accent);}
   .tabBtn.locked{opacity:.4;cursor:not-allowed;pointer-events:none;}
@@ -464,15 +465,16 @@
   .tile.locked{filter:grayscale(.9) brightness(.6); cursor:not-allowed;}
 
   @media (max-width:860px){
-    html,body{height:auto;min-height:100dvh;overflow:visible;}
+    html,body{height:100dvh;min-height:100dvh;overflow:hidden;}
     body{min-height:0;}
-    main{flex:1;overflow:visible;padding:8px 10px;}
+    main{flex:1;overflow:hidden;padding:6px 10px;}
     #view-craft.active{
-      height:auto;
+      height:100%;
       display:flex !important;
       flex-direction:column;
       align-items:stretch;
-      gap:8px;
+      gap:6px;
+      overflow:hidden;
     }
     #craftPanel{
       order:1; flex-shrink:0;
@@ -489,20 +491,22 @@
     #batchWrap{margin-top:0;font-size:11px;}
     #batchInput{width:44px;padding:2px 4px;font-size:11px;}
     #view-craft .panel:first-child{
-      order:2; flex-shrink:0;
+      order:2; flex:1; min-height:0;
       display:flex; flex-direction:column;
-      padding:8px;
+      padding:6px 8px;
+      overflow:hidden;
     }
     #view-craft .panel:first-child h2{margin-bottom:4px;font-size:12px;}
     #elementGrid{
       flex-shrink:0; max-height:none;
-      grid-template-columns:repeat(5,1fr);
+      grid-template-columns:repeat(6,1fr);
       overflow:visible;
-      gap:4px;
+      gap:3px;
     }
-    .el{padding:4px 1px;}
-    .el .ico{font-size:20px;}
-    .el .name{font-size:9px;}
+    .el{padding:3px 1px; border-radius:6px;}
+    .el .ico{font-size:18px;}
+    .el .name{font-size:8px; margin-top:1px;}
+    .el .cnt{font-size:8px;}
     .el .name small{display:none;}
     #discovered{font-size:10px;margin-top:2px;}
     #view-shop.active{grid-template-columns:1fr;}
@@ -532,9 +536,11 @@
     .stat b{font-weight:700; font-variant-numeric:tabular-nums;}
     #tabs{padding:6px 10px 0; gap:6px;}
     .tabBtn{
-      padding:7px 8px; font-size:12px; font-weight:500;
+      padding:6px 4px; font-size:10px; font-weight:500;
       flex:1; text-align:center; border-radius:10px; letter-spacing:0.3px;
+      display:flex; flex-direction:column; align-items:center; gap:1px; line-height:1.1;
     }
+    .tabBtn .tabEmoji{font-size:16px;}
     #toast{top:80px; font-size:13px; padding:9px 18px; max-width:90vw; font-weight:500;}
     /* 配方书移动端 */
     .recipeBook{max-width:100%; max-height:92vh;}
@@ -605,12 +611,12 @@
 </header>
 
 <nav id="tabs">
-  <button class="tabBtn active" data-tab="craft" data-i18n="tab.craft">⚗️ 合成</button>
-  <button class="tabBtn" data-tab="town" data-i18n="tab.town">🗺️ 小镇</button>
-  <button class="tabBtn" data-tab="shop" data-i18n="tab.shop">🛒 商店</button>
-  <button class="tabBtn" data-tab="pet" data-i18n="tab.pet">🐾 宠物</button>
-  <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()">🌳 <span data-i18n="tab.park">游乐园</span></button>
-  <button class="tabBtn" id="badgeTabBtn" data-tab="badges" onclick="tryOpenBadges()">🏆 <span data-i18n="tab.badges">成就</span></button>
+  <button class="tabBtn active" data-tab="craft"><span class="tabEmoji">⚗️</span><span data-i18n="tab.craft">合成</span></button>
+  <button class="tabBtn" data-tab="town"><span class="tabEmoji">🗺️</span><span data-i18n="tab.town">小镇</span></button>
+  <button class="tabBtn" data-tab="shop"><span class="tabEmoji">🛒</span><span data-i18n="tab.shop">商店</span></button>
+  <button class="tabBtn" data-tab="pet"><span class="tabEmoji">🐾</span><span data-i18n="tab.pet">宠物</span></button>
+  <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()"><span class="tabEmoji">🌳</span><span data-i18n="tab.park">游乐园</span></button>
+  <button class="tabBtn" id="badgeTabBtn" data-tab="badges" onclick="tryOpenBadges()"><span class="tabEmoji">🏆</span><span data-i18n="tab.badges">成就</span></button>
 </nav>
 
 <main>
@@ -1034,7 +1040,7 @@ const SAVE_VERSION = 3; // v1=初始, v2=地块系统, v3=宠物增强(起名/�
 const I18N = {
   zh: {
     "app.title":"⚗️ 我的小镇",
-    "tab.craft":"⚗️ 合成", "tab.town":"🗺️ 小镇", "tab.shop":"🛒 商店", "tab.pet":"🐾 宠物", "tab.park":"游乐园", "tab.badges":"成就",
+    "tab.craft":"合成", "tab.town":"小镇", "tab.shop":"商店", "tab.pet":"宠物", "tab.park":"游乐园", "tab.badges":"成就",
     "panel.elements":"元素库（点一下填入合成槽）",
     "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 游乐园",
     "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
@@ -1178,7 +1184,7 @@ const I18N = {
   },
   en: {
     "app.title":"⚗️ My Town",
-    "tab.craft":"⚗️ Craft", "tab.town":"🗺️ Town", "tab.shop":"🛒 Shop", "tab.pet":"🐾 Pets", "tab.park":"Playpark", "tab.badges":"Achievements",
+    "tab.craft":"Craft", "tab.town":"Town", "tab.shop":"Shop", "tab.pet":"Pets", "tab.park":"Playpark", "tab.badges":"Badges",
     "panel.elements":"Elements (tap to fill slot)",
     "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Playpark",
     "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
