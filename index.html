@@ -3747,7 +3747,7 @@ function doReset(){
     // 关闭所有overlay（同时用class和style两种方式，确保都能关闭）
     ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
       const el=document.getElementById(id);
-      if(el){ el.classList.remove("show"); el.style.display="none"; el.style.removeProperty("display"); }
+      if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
     // 强制关闭所有内联style显示的overlay
     document.querySelectorAll('[style*="display:flex"][style*="position:fixed"], [style*="display:block"][style*="position:fixed"]').forEach(el=>{
@@ -3995,6 +3995,11 @@ switchTab=function(tab){ _origSwitch(tab); }; // 切换tab不再自动触发NPC�
 /* ============ 开局幸运抽奖 ============ */
 let drawnCounts=null;
 function showDraw(){
+  // 强制关闭所有其他overlay，确保抽奖页面显示时没有其他弹窗覆盖
+  ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.classList.remove("show"); el.style.display="none"; }
+  });
   const ov=$("#drawOverlay"), cards=$("#drawCards");
   cards.innerHTML="";
   drawnCounts={};
