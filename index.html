@@ -627,8 +627,8 @@
   <button class="tabBtn" data-tab="town"><span class="tabEmoji">🗺️</span><span data-i18n="tab.town">小镇</span></button>
   <button class="tabBtn" data-tab="shop"><span class="tabEmoji">🛒</span><span data-i18n="tab.shop">商店</span></button>
   <button class="tabBtn" data-tab="pet"><span class="tabEmoji">🐾</span><span data-i18n="tab.pet">宠物</span></button>
-  <button class="tabBtn" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()"><span class="tabEmoji">🌳</span><span data-i18n="tab.park">游乐园</span></button>
-  <button class="tabBtn" id="badgeTabBtn" data-tab="badges" onclick="tryOpenBadges()"><span class="tabEmoji">🏆</span><span data-i18n="tab.badges">成就</span></button>
+  <button class="tabBtn locked" id="parkTabBtn" data-tab="park" onclick="tryOpenPark()"><span class="tabEmoji">🌳</span><span data-i18n="tab.park">游乐园</span></button>
+  <button class="tabBtn locked" id="badgeTabBtn" data-tab="badges" onclick="tryOpenBadges()"><span class="tabEmoji">🏆</span><span data-i18n="tab.badges">成就</span></button>
 </nav>
 
 <main>
@@ -1020,6 +1020,20 @@ function buildingIncome(b){
     plots.forEach(p=>{ if(p===b.id) inc+=b.income*regionOf(rid).im; });
   });
   return inc;
+}
+// 全镇总产出（含区域系数 + 市政厅全局加成）
+function totalIncome(){
+  let total=0;
+  Object.entries(S.plots||{}).forEach(([rid,plots])=>{
+    plots.forEach(p=>{
+      if(p&&p!==null){
+        const b=BUILDINGS.find(x=>x.id===p);
+        if(b&&!b.passive) total+=b.income*regionOf(rid).im;
+      }
+    });
+  });
+  total *= (1 + hallBonus()/100); // hallBonus返回10/20（百分比），除以100转成0.1/0.2倍数
+  return total;
 }
 // 从 plots 重建 buildings 计数（导入/迁移后调用，确保两数据源一致）
 function rebuildBuildings(){
@@ -2976,7 +2990,7 @@ function applyTheme(){
   r.setProperty("--panel2",theme.panel2); r.setProperty("--line",theme.line);
   document.body.dataset.theme=S.theme||"night";
   if(S.theme==="custom"){ applyCustomBg(); }
-  else { document.body.style.background=""; }
+  else { document.body.style.removeProperty("background"); document.body.style.background=""; }
 }
 function renderThemeChips(){
   const box=$("#themeChips"); if(!box) return;
@@ -3723,10 +3737,14 @@ function tick(){
 function doReset(){
   if(confirm(t("reset.confirm"))){
     localStorage.removeItem(SAVE_KEY);
-    S=fresh(); clearSlots(); renderAll();
-    updateIntroLang(); updateDrawLang();
+    S=fresh(); clearSlots();
+    // 先显示欢迎界面，再渲染（防止renderAll抛异常导致欢迎页不显示）
     $("#settingsOverlay").classList.remove("show");
+    $("#drawOverlay").classList.remove("show");
     $("#introOverlay").classList.add("show");
+    updateIntroLang(); updateDrawLang();
+    try{ renderAll(); }catch(e){ console.error("renderAll error:",e); }
+    save();
   }
 }
 $("#resetBtn").addEventListener("click", doReset);
@@ -4013,7 +4031,9 @@ applyLang();
 updateIntroLang();
 updateDrawLang();
 buildPwdBoxes(); // 配方密码格子
-assetsLoad().then(renderAll); // 自定义素材加载完成后重绘一次
+assetsLoad().then(renderAll).catch(()=>renderAll()); // 自定义素材加载完成后重绘一次（失败也重绘）
+// 保底：立即调用一次updateTabLockState，确保乐园/成就tab初始锁定
+try{ updateTabLockState(); }catch(e){}
 if(!S.drawn){
   // 流程：NPC 引导 → 幸运抽取 → 游戏
   $("#introOverlay").classList.add("show");
