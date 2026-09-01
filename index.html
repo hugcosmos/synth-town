@@ -58,7 +58,7 @@
   header{
     padding:18px 18px 10px; background:transparent; border-bottom:none;
     max-width:1200px; margin:0 auto; width:100%;
-    position:sticky; top:0; z-index:10; backdrop-filter:blur(10px);
+    position:sticky; top:0; z-index:100; backdrop-filter:blur(10px);
   }
   .hdr-top{display:flex; justify-content:center; align-items:center;}
   .hdr-top h1{font-size:17px; font-weight:700; letter-spacing:1.5px; margin:0;}
@@ -615,7 +615,7 @@
     <div class="hdr-actions">
       <button id="recipeBtn" title="配方书" data-i18n="btn.recipe">🔮 配方</button>
       <button id="resetBtn" data-i18n="btn.reset">重置</button>
-      <button id="langBtn" onclick="toggleLang()" title="切换语言" data-i18n="lang.toggle">🌐 EN</button>
+      <button id="langBtn" title="切换语言" data-i18n="lang.toggle">🌐 EN</button>
       <button id="settingsBtn" data-i18n="btn.settings">⚙️ 设置</button>
     </div>
   </div>
@@ -828,10 +828,11 @@
 </div>
 
 <!-- 勋章解锁动画 -->
-<div id="badgeUnlockOverlay">
+<div id="badgeUnlockOverlay" style="cursor:pointer;">
   <div id="badgeUnlockContent">
     <div id="badgeUnlockImg"></div>
     <div id="badgeUnlockText"></div>
+    <div style="margin-top:16px;font-size:12px;color:var(--dim);">点击任意位置关闭</div>
   </div>
 </div>
 
@@ -2288,6 +2289,9 @@ function showBadgeUnlock(b){
   $("#badgeUnlockImg").innerHTML=`<img src="${b.img}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'font-size:120px;text-align:center;line-height:200px;\\'>🏆</div>'">`;
   $("#badgeUnlockText").textContent=(LANG==="en"?"🏆 Unlocked: ":"🏆 解锁成就：")+(LANG==="en"?b.en:b.name);
   ov.classList.add("show");
+  // 点击关闭
+  const closeHandler=()=>{ ov.classList.remove("show"); updateTabLockState(); ov.removeEventListener("click",closeHandler); };
+  ov.addEventListener("click", closeHandler);
   // 金光粒子
   for(let i=0;i<20;i++){
     const p=document.createElement("div");
@@ -2299,7 +2303,8 @@ function showBadgeUnlock(b){
     ov.appendChild(p);
     setTimeout(()=>p.remove(),2000);
   }
-  setTimeout(()=>{ ov.classList.remove("show"); updateTabLockState(); },2600);
+  // 5秒后自动关闭
+  setTimeout(()=>{ if(ov.classList.contains("show")){ ov.classList.remove("show"); updateTabLockState(); } },5000);
 }
 // 粒子动画CSS（动态注入）
 (function(){const s=document.createElement("style");s.textContent="@keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate("+(Math.random()*200-100)+"px,"+(-100-Math.random()*100)+"px) scale(0);opacity:0;}}";document.head.appendChild(s);})();
@@ -2995,7 +3000,16 @@ function applyTheme(){
   r.setProperty("--panel2",theme.panel2); r.setProperty("--line",theme.line);
   document.body.dataset.theme=S.theme||"night";
   if(S.theme==="custom"){ applyCustomBg(); }
-  else { document.body.style.background=""; document.body.style.removeProperty("background"); document.body.style.removeProperty("background-image"); }
+  else {
+    // 彻底清除所有background相关内联样式，让CSS的data-theme背景生效
+    document.body.style.removeProperty("background");
+    document.body.style.removeProperty("background-image");
+    document.body.style.removeProperty("background-color");
+    document.body.style.removeProperty("background-size");
+    document.body.style.removeProperty("background-position");
+    document.body.style.removeProperty("background-repeat");
+    document.body.style.removeProperty("background-attachment");
+  }
 }
 function renderThemeChips(){
   const box=$("#themeChips"); if(!box) return;
@@ -3282,6 +3296,7 @@ $("#advancedUnlockBtn").addEventListener("click", ()=>{
 $("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") tooltipTopRight($("#basicUnlockBtn"), t("recipe.hoverHint")); });
 $("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") tooltipTopRight($("#advancedUnlockBtn"), t("recipe.hoverHint")); });
 /* ============ 设置面板 ============ */
+$("#langBtn").addEventListener("click", function(){ toggleLang(); });
 $("#settingsBtn").addEventListener("click", ()=>{
   renderThemeChips();
   $("#settingsOverlay").classList.add("show");
@@ -3999,6 +4014,8 @@ function showDraw(){
   // 先显示抽奖页面，确保用户能看到
   ov.classList.add("show");
   ov.style.display="flex";
+  ov.style.visibility="visible";
+  ov.style.opacity="1";
   // 强制关闭所有其他overlay，确保抽奖页面显示时没有其他弹窗覆盖
   try{
     ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
@@ -4055,8 +4072,12 @@ $("#drawBtn").addEventListener("click", ()=>{
     S.coin=drawnCounts.coin;
     S.drawn=true;
     S.lastTick=Date.now();
-    $("#drawOverlay").classList.remove("show");
-    $("#drawOverlay").style.display="none";
+    // 完全关闭drawOverlay，确保不覆盖页面
+    const drawOv=$("#drawOverlay");
+    drawOv.classList.remove("show");
+    drawOv.style.display="none";
+    drawOv.style.visibility="hidden";
+    drawOv.style.opacity="0";
     $("#drawBtn").classList.remove("on");
     renderAll(); save();
     toast(LANG==="en"?`🎰 Initial elements + 💰${S.coin} starting coins credited!`:`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
