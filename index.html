@@ -202,7 +202,6 @@
     opacity:0; transition:opacity .4s;
   }
   #drawBtn.on{opacity:1;}
-  #drawBtn:not(.on){pointer-events:none;}
   #drawBtn:active{transform:scale(.96);}
 
   /* 开场引导 */
@@ -4043,14 +4042,28 @@ function showDraw(){
   ov.classList.add("show");
 }
 $("#drawBtn").addEventListener("click", ()=>{
-  if(!drawnCounts) return;
-  BASE.forEach(id=>{ S.unlocked[id]=drawnCounts[id]; });
-  S.coin=drawnCounts.coin;
-  S.drawn=true;
-  S.lastTick=Date.now();
-  $("#drawOverlay").classList.remove("show");
-  renderAll(); save();
-  toast(LANG==="en"?`🎰 Initial elements + 💰${S.coin} starting coins credited!`:`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
+  console.log("drawBtn clicked, drawnCounts=", drawnCounts);
+  if(!drawnCounts){
+    console.error("drawnCounts is null, re-initializing...");
+    // 如果drawnCounts为null，重新初始化
+    drawnCounts={};
+    BASE.forEach(id=>{ drawnCounts[id]=10+Math.floor(Math.random()*90); });
+    drawnCounts.coin=10+Math.floor(Math.random()*40);
+  }
+  try{
+    BASE.forEach(id=>{ S.unlocked[id]=drawnCounts[id]; });
+    S.coin=drawnCounts.coin;
+    S.drawn=true;
+    S.lastTick=Date.now();
+    $("#drawOverlay").classList.remove("show");
+    $("#drawOverlay").style.display="none";
+    $("#drawBtn").classList.remove("on");
+    renderAll(); save();
+    toast(LANG==="en"?`🎰 Initial elements + 💰${S.coin} starting coins credited!`:`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
+  }catch(e){
+    console.error("drawBtn error:", e);
+    toast("Error: " + e.message);
+  }
 });
 
 /* ============ 总渲染（每个函数独立try-catch，单个报错不影响其他） ============ */
