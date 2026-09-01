@@ -4040,10 +4040,16 @@ function renderAll(){
   fns.forEach(fn=>{ try{ fn(); }catch(e){ console.error("renderAll error in",fn.name,":",e); } });
 }
 try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
-applyLang();
-updateIntroLang();
-updateDrawLang();
-buildPwdBoxes(); // 配方密码格子
+// 事件绑定必须放在最前面，确保即使后续初始化代码抛异常，按钮也能点击
+$("#introLangBtn").addEventListener("click", function(e){ e.stopPropagation(); toggleLang(); updateIntroLang(); });
+$("#introBtn").addEventListener("click", ()=>{
+  $("#introOverlay").classList.remove("show");
+  showDraw();
+});
+try{ applyLang(); }catch(e){ console.error("applyLang error:",e); }
+try{ updateIntroLang(); }catch(e){ console.error("updateIntroLang error:",e); }
+try{ updateDrawLang(); }catch(e){ console.error("updateDrawLang error:",e); }
+try{ buildPwdBoxes(); }catch(e){ console.error("buildPwdBoxes error:",e); } // 配方密码格子
 assetsLoad().then(renderAll).catch(()=>renderAll()); // 自定义素材加载完成后重绘一次（失败也重绘）
 // 保底：立即调用一次updateTabLockState，确保乐园/成就tab初始锁定
 try{ updateTabLockState(); }catch(e){}
@@ -4051,11 +4057,6 @@ if(!S.drawn){
   // 流程：NPC 引导 → 幸运抽取 → 游戏
   $("#introOverlay").classList.add("show");
 }
-$("#introLangBtn").addEventListener("click", function(e){ e.stopPropagation(); toggleLang(); updateIntroLang(); });
-$("#introBtn").addEventListener("click", ()=>{
-  $("#introOverlay").classList.remove("show");
-  showDraw();
-});
 setInterval(tick, 2000);
 </script>
 </body>
