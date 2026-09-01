@@ -3506,6 +3506,30 @@ function renderMap(){
     });
     grid.appendChild(tile);
   });
+  // 命名按钮事件绑定
+  const townNameBtn=outer.querySelector("#townNameBtn");
+  if(townNameBtn) townNameBtn.addEventListener("click",()=>{
+    const nm=prompt(t("town.nameTownPrompt"), S.townName||"");
+    if(nm!==null&&nm.trim()){ S.townName=nm.trim().slice(0,12); toast(LANG==="en"?"✅ Town renamed!":"✅ 小镇已命名！"); renderMap(); save(); }
+  });
+  const townNameDisplay=outer.querySelector("#townNameDisplay");
+  if(townNameDisplay) townNameDisplay.addEventListener("click",()=>townNameBtn&&townNameBtn.click());
+  const townSaveBtn=outer.querySelector("#townSaveBtn");
+  if(townSaveBtn) townSaveBtn.addEventListener("click",()=>saveElementAsImage(document.querySelector('.mapGrid'),'town-map.png'));
+  const townShareBtn=outer.querySelector("#townShareBtn");
+  if(townShareBtn) townShareBtn.addEventListener("click",()=>shareTownMap());
+  // 区域命名点击
+  outer.querySelectorAll(".regionNameLabel").forEach(label=>{
+    label.addEventListener("click",e=>{
+      e.stopPropagation();
+      const rid=label.dataset.region;
+      const r=regionOf(rid);
+      const plots=S.plots[rid]||[];
+      if(!plots.every(p=>p!==false)){ toast(t("town.regionLocked")); return; }
+      const nm=prompt(t("town.nameRegionPrompt",regName(r)), (S.regionNames&&S.regionNames[rid])||"");
+      if(nm!==null&&nm.trim()){ if(!S.regionNames)S.regionNames={}; S.regionNames[rid]=nm.trim().slice(0,10); toast(LANG==="en"?"✅ Region renamed!":"✅ 区域已命名！"); renderMap(); save(); }
+    });
+  });
 }
 
 /* ============ 商店 & 小镇 ============ */
@@ -3555,30 +3579,6 @@ function renderShop(){
     div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
-  });
-  // 命名按钮事件绑定
-  const townNameBtn=outer.querySelector("#townNameBtn");
-  if(townNameBtn) townNameBtn.addEventListener("click",()=>{
-    const nm=prompt(t("town.nameTownPrompt"), S.townName||"");
-    if(nm!==null&&nm.trim()){ S.townName=nm.trim().slice(0,12); toast(LANG==="en"?"✅ Town renamed!":"✅ 小镇已命名！"); renderMap(); save(); }
-  });
-  const townNameDisplay=outer.querySelector("#townNameDisplay");
-  if(townNameDisplay) townNameDisplay.addEventListener("click",()=>townNameBtn&&townNameBtn.click());
-  const townSaveBtn=outer.querySelector("#townSaveBtn");
-  if(townSaveBtn) townSaveBtn.addEventListener("click",()=>saveElementAsImage(document.querySelector('.mapGrid'),'town-map.png'));
-  const townShareBtn=outer.querySelector("#townShareBtn");
-  if(townShareBtn) townShareBtn.addEventListener("click",()=>shareTownMap());
-  // 区域命名点击
-  outer.querySelectorAll(".regionNameLabel").forEach(label=>{
-    label.addEventListener("click",e=>{
-      e.stopPropagation();
-      const rid=label.dataset.region;
-      const r=regionOf(rid);
-      const plots=S.plots[rid]||[];
-      if(!plots.every(p=>p!==false)){ toast(t("town.regionLocked")); return; }
-      const nm=prompt(t("town.nameRegionPrompt",regName(r)), (S.regionNames&&S.regionNames[rid])||"");
-      if(nm!==null&&nm.trim()){ if(!S.regionNames)S.regionNames={}; S.regionNames[rid]=nm.trim().slice(0,10); toast(LANG==="en"?"✅ Region renamed!":"✅ 区域已命名！"); renderMap(); save(); }
-    });
   });
 }
 
