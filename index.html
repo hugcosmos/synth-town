@@ -2612,7 +2612,7 @@ function renderBuildingDetail(){
   const hallBonusVal=bid==="hall"?10:0;
   box.innerHTML=`
     <div class="bldDetailHeader">
-      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
+      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260902`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
       <div>
         <div class="bldDetailName">${customName}</div>
         <div class="bldDetailType">${bldName(b)} ${b.passive?`· ${LANG==="en"?b.passiveEn:b.passive}`:`· 💰+${Math.round(income)}/${INCOME_INTERVAL}s`}</div>
@@ -3659,7 +3659,7 @@ function renderMap(){
     tile.className="tile";
     tile.style.cssText=`grid-area:${r.area};`;
     const ti=assetCache.get("regions:"+r.id);
-    const defaultBg=`assets/regions/${r.id}.png`;
+    const defaultBg=`assets/regions/${r.id}.png?v=20260902`;
     const plots=S.plots[r.id]||[];
     const bldSize=r.plots<=6?42:r.plots<=8?38:32;
     const emojiPx=Math.round(bldSize*0.7);
@@ -3682,7 +3682,7 @@ function renderMap(){
         const b=BUILDINGS.find(x=>x.id===p);
         const key=r.id+"_"+i;
         tip=b?((S.buildingNames&&S.buildingNames[key])||bldName(b)):"";
-        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png`;
+        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260902`;
         const em=b?b.i:"❓";
         inner=`<img src="${bldUrl}" width="${bldSize}" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));transform:rotate(${rot}deg)" onerror="bldImgError(this,'${em}',${emojiPx})" alt="${b?b.n:''}">`;
       }
@@ -3796,7 +3796,7 @@ function renderShop(){
     const lockNote=!unlocked?`<div class="buildLockNote">🔒 ${buildingLockHint(b)}</div>`:"";
     const placeLockNote=!placeOk?`<div class="buildLockNote">${placeNote}</div>`:"";
     const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
-    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png`;
+    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260902`;
     div.innerHTML=`<div class="top"><span class="ico"><img src="${bldImg}" width="32" height="32" style="object-fit:contain;vertical-align:middle" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}${placeLockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
