@@ -495,7 +495,25 @@
     pointer-events:none;
   }
   .emptySlot{
-    width:20px;height:20px;border:1px dashed rgba(255,255,255,.25);border-radius:50%;
+    width:30px;height:30px;border:2px dashed rgba(255,215,94,.7);border-radius:50%;
+    background:rgba(255,215,94,.08);
+    display:flex;align-items:center;justify-content:center;
+    animation:emptyPulse 2s ease-in-out infinite;
+    box-shadow:0 0 8px rgba(255,215,94,.3);
+  }
+  .emptySlot::after{
+    content:"+";font-size:18px;font-weight:700;color:rgba(255,215,94,.8);
+    text-shadow:0 1px 3px rgba(0,0,0,.5);
+  }
+  @keyframes emptyPulse{
+    0%,100%{box-shadow:0 0 6px rgba(255,215,94,.25);transform:scale(1);}
+    50%{box-shadow:0 0 14px rgba(255,215,94,.5);transform:scale(1.08);}
+  }
+  .lockedSlot{
+    width:28px;height:28px;border-radius:50%;
+    background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;opacity:.85;
   }
   /* 动态装饰层 */
   .mapDeco{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
@@ -1062,6 +1080,7 @@ const BUILDINGS = [
   {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:20, jade:4, flower:10, chest:2}, income:10},
   {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:10, flower:4},          income:0},
   {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:4, coin:20},              income:0},
+  {id:"factory",n:"工厂",en:"Factory",i:"🏭", cost:{coin:100, chest:5, brick:10},      income:10, regions:["factory"]},
   {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:4}, income:0, passive:"全镇产出+10%", passiveEn:"Town Output +10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
@@ -1069,13 +1088,14 @@ const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
 const OFFLINE_CAP = 3600;     // 秒：离线结算封顶 1 小时（收入与衰减共用）
 
 // 底图区域：成本/产出双系数，建造时选区域
-// 地图布局（3列×2行网格）：第1行山脚/林间/市中心，第2行郊外/河岸(跨2列)
+// 地图布局（3列×2行网格）：第1行山脚/林间/市中心，第2行郊外/河岸/工厂区
 const REGIONS = [
   {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:1.0, im:1.5, area:"1/1/2/2",      bg:"#5f6b52", desc:"山地便宜", descEn:"Cheap, low output", plots:6,  land:50},
   {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.5, im:2.0, area:"1/2/2/3",      bg:"#3e5c3a", desc:"产出略高", descEn:"Slightly higher output", plots:8,  land:80},
   {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.5, im:3.0, area:"1/3/2/4",      bg:"#6e5a7e", desc:"最贵最高产", descEn:"Most expensive, highest output", plots:12, land:300},
   {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.5, im:1.0, area:"2/1/3/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:20},
-  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:2.0, im:2.5, area:"2/2/3/4",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:150},
+  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:2.0, im:2.5, area:"2/2/3/3",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:150},
+  {id:"factory",n:"工厂区",  en:"Factory",    i:"👷", cm:1.0, im:3.5, area:"2/3/3/4",      bg:"#7a6a5a", desc:"高产出", descEn:"High output", plots:5, land:100, only:"factory"},
 ];
 // 可建造点坐标 [left%, top%, rotation°]，每个区域错落分布
 const BUILDABLE_POINTS = {
@@ -1084,6 +1104,7 @@ const BUILDABLE_POINTS = {
   forest: [[15,40,-3],[30,60,2],[46,35,-5],[60,58,4],[74,42,-2],[86,58,3],[22,72,-4],[68,75,5]],
   center: [[10,28,-3],[26,30,2],[42,26,-5],[58,30,4],[74,28,-2],[88,32,3],[14,52,-4],[30,56,5],[48,50,-3],[64,54,2],[80,52,-5],[46,74,4]],
   river:  [[15,22,-3],[35,20,2],[55,18,-5],[75,22,4],[88,28,-2],[60,40,3],[78,48,-4],[85,58,5]],
+  factory:[[18,48,-3],[38,58,2],[55,45,-5],[72,60,4],[88,50,-2]],
 };
 let signAnimated=false; // 路牌首次立起动画标记
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
@@ -1151,6 +1172,8 @@ function countBoughtPlots(){
   Object.values(S.plots||{}).flat().forEach(p=>{ if(p!==false) bought++; });
   return bought;
 }
+// 总地皮数量
+function totalPlots(){ return REGIONS.reduce((s,r)=>s+r.plots,0); }
 // 从 plots 重建 buildings 计数（导入/迁移后调用，确保两数据源一致）
 function rebuildBuildings(){
   S.buildings={};
@@ -2327,9 +2350,9 @@ const BADGES = [
    check:()=>{const t=new Set(S.petList.map(p=>p.id));return ["cat","rabbit","dog","cow","horse","panda"].every(x=>t.has(x));},
    progress:()=>{const t=new Set(S.petList.map(p=>p.id));const n=["cat","rabbit","dog","cow","horse","panda"].filter(x=>t.has(x)).length;return [n,6];}},
   {id:"realEstateTycoon", name:"地产大亨", en:"Real Estate Tycoon", img:"assets/badges/real-estate-tycoon.png",
-   descZh:"解锁全部42块地皮且每块都有建筑", descEn:"Unlock all 42 plots with buildings on each",
-   check:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return total>=42&&built>=42;},
-   progress:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return [built,42];}}
+   descZh:"解锁全部地皮且每块都有建筑", descEn:"Unlock all plots with buildings on each",
+   check:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));const tp=totalPlots();return total>=tp&&built>=tp;},
+   progress:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return [built,totalPlots()];}}
 ];
 // 成就页改为独立tab，openBadges/closeBadges已移除
 function renderBadges(){
@@ -2447,10 +2470,11 @@ function shareTownMap(){
     const bought=countBoughtPlots();
     const pets=S.petList?S.petList.length:0;
     const found=foundElementKinds(), total=totalElementKinds();
+    const tp=totalPlots();
     const title=LANG==="en"?`${townName} - Element Craft Town!`:`${townName}太治愈了！`;
     const content=LANG==="en"
-      ? `I built ${townName} in Element Craft Town!\n🏘️ ${totalBld} buildings · 💰 +${out}/10s\n🗺️ ${bought}/42 plots · 🐾 ${pets} pets\n🔬 ${found}/${total} elements discovered\nCome play with me!`
-      : `我在元素合成小镇建了「${townName}」！\n🏘️ ${totalBld}栋建筑 · 💰 +${out}/10s产出\n🗺️ ${bought}/42块地皮 · 🐾 ${pets}只宠物\n🔬 发现${found}/${total}种元素\n快来和我一起玩吧～`;
+      ? `I built ${townName} in Element Craft Town!\n🏘️ ${totalBld} buildings · 💰 +${out}/10s\n🗺️ ${bought}/${tp} plots · 🐾 ${pets} pets\n🔬 ${found}/${total} elements discovered\nCome play with me!`
+      : `我在元素合成小镇建了「${townName}」！\n🏘️ ${totalBld}栋建筑 · 💰 +${out}/10s产出\n🗺️ ${bought}/${tp}块地皮 · 🐾 ${pets}只宠物\n🔬 发现${found}/${total}种元素\n快来和我一起玩吧～`;
     openSharePreview(_shareDataUrl, title, content);
   }).catch(err=>{ toast(LANG==="en"?"❌ Share failed":"❌ 分享失败"); console.error(err); });
 }
@@ -2492,8 +2516,8 @@ function buildShareCard(sourceCanvas){
   const pets=S.petList?S.petList.length:0;
   ctx.fillStyle="#1a1530"; ctx.font="bold 26px sans-serif"; ctx.textAlign="center";
   const dataText=LANG==="en"
-    ? `🏘️ ${totalBld}  💰 +${out}/10s  🗺️ ${bought}/42  🐾 ${pets}`
-    : `🏘️ ${totalBld}栋  💰 +${out}/10s  🗺️ ${bought}/42  🐾 ${pets}只`;
+    ? `🏘️ ${totalBld}  💰 +${out}/10s  🗺️ ${bought}/${totalPlots()}  🐾 ${pets}`
+    : `🏘️ ${totalBld}栋  💰 +${out}/10s  🗺️ ${bought}/${totalPlots()}  🐾 ${pets}只`;
   ctx.fillText(dataText, W/2, dataY+62);
   // 文案栏
   const capY=1010;
@@ -2587,7 +2611,7 @@ function renderBuildingDetail(){
   const hallBonusVal=bid==="hall"?10:0;
   box.innerHTML=`
     <div class="bldDetailHeader">
-      <div class="bldDetailIcon">${b.i}</div>
+      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
       <div>
         <div class="bldDetailName">${customName}</div>
         <div class="bldDetailType">${bldName(b)} ${b.passive?`· ${LANG==="en"?b.passiveEn:b.passive}`:`· 💰+${Math.round(income)}/${INCOME_INTERVAL}s`}</div>
@@ -2766,23 +2790,33 @@ function petBonus(){
   return 0;
 }
 function hallBonus(){ return Math.min(2, S.buildings.hall||0)*10; } // 每个市政厅+10%，最多2个叠加+20%
+/* 建筑是否可建在指定区域：工厂只能在工厂区，工厂区只能建工厂 */
+function canBuildIn(b, regionId){
+  const r=regionOf(regionId);
+  if(r.only && r.only!==b.id) return false;
+  if(b.regions && !b.regions.includes(regionId)) return false;
+  return true;
+}
 /* 建筑解锁链：检查前置条件是否满足 */
 function buildingUnlocked(b){
   const has=id=>(S.buildings[id]||0)>0;
   if(b.id==="garden"||b.id==="manor") return has("hut")&&has("shop");
   if(b.id==="station"||b.id==="hospital") return has("hut")||has("shop");
-  if(b.id==="hall") return has("hut")&&has("shop")&&has("garden")&&has("manor")&&has("station")&&has("hospital");
+  if(b.id==="factory") return has("hut")&&has("shop");
+  if(b.id==="hall") return has("hut")&&has("shop")&&has("garden")&&has("manor")&&has("station")&&has("hospital")&&has("factory");
   return true;
 }
 function buildingLockHint(b){
   const has=id=>(S.buildings[id]||0)>0;
   if(b.id==="garden"||b.id==="manor") return LANG==="en"?"Need 🏠Hut + 🛒Shop":"需要🏠小屋+🛒商店";
   if(b.id==="station"||b.id==="hospital") return LANG==="en"?"Need 🏠Hut or 🛒Shop":"需要🏠小屋或🛒商店";
+  if(b.id==="factory") return LANG==="en"?"Need 🏠Hut + 🛒Shop":"需要🏠小屋+🛒商店";
   if(b.id==="hall"){
     const need=[];
     if(!has("hut")) need.push("🏠"); if(!has("shop")) need.push("🛒");
     if(!has("garden")) need.push("🌺"); if(!has("manor")) need.push("🏰");
     if(!has("station")) need.push("🏕️"); if(!has("hospital")) need.push("🏥");
+    if(!has("factory")) need.push("🏭");
     return (LANG==="en"?"Need all: ":"需要全部建成：")+need.join(" ");
   }
   return "";
@@ -3590,7 +3624,7 @@ function renderMap(){
   if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.selectedPlot",regionOf(selectedPlot.region).i,regName(regionOf(selectedPlot.region)))} <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   let html=`<div class="mapTopRow">
-    <div class="mapStats"><span>${t("town.mapStats.buildings")} <b>${totalBld}</b></span><span>${t("town.mapStats.output")} <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>${t("town.mapStats.land")} <b>${bought}</b>/42</span></div>
+    <div class="mapStats"><span>${t("town.mapStats.buildings")} <b>${totalBld}</b></span><span>${t("town.mapStats.output")} <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>${t("town.mapStats.land")} <b>${bought}</b>/${totalPlots()}</span></div>
     <div class="mapActions">
       <button id="townNameBtn" title="${t("town.nameTown")}">✏️ ${LANG==="en"?"Rename":"改名"}</button>
       <button id="townShareBtn" style="background:#ff6b9d;border-color:#ff6b9d;color:#fff;">📤 ${LANG==="en"?"Share":"分享"}</button>
@@ -3639,7 +3673,7 @@ function renderMap(){
       const ms=moveMode&&moveMode.fromRegion===r.id&&moveMode.fromIndex===i;
       let inner="",tip="";
       if(p===false){
-        inner=`<span style="font-size:${emojiPx}px;opacity:.75;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">🔒</span>`;
+        inner=`<span class="lockedSlot">🔒</span>`;
         tip=t("town.buyLand",r.land);
       }else if(p===null){
         inner=`<span class="emptySlot"></span>`;
@@ -3755,10 +3789,17 @@ function renderShop(){
     const costHtml=Object.entries(cost).map(([k,v])=>{const have=k==="coin"?S.coin:k==="chest"?S.chest:count(k);return `<span class="${have<v?'lack':''}">${ELEMENTS[k]?ELEMENTS[k].i:"💰"}${ELEMENTS[k]?elName(k):"金币"}×${v}</span>`;}).join("");
     const hallFull=b.id==="hall"&&(S.buildings.hall||0)>=2;
     const unlocked=buildingUnlocked(b);
-    const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked())&&!hallFull&&unlocked;
+    // 放置区域限制
+    const placeOk=!selectedPlot||canBuildIn(b,region);
+    const placeNote=!placeOk?(r.only&&r.only!==b.id
+      ?(LANG==="en"?`🔒 ${regName(r)} only allows 🏭Factory`:`🔒 ${regName(r)}只能建造🏭工厂`)
+      :(LANG==="en"?`🔒 ${b.i}${bldName(b)} can only be built in 👷Factory District`:`🔒 ${b.i}${bldName(b)}只能建在👷工厂区`)):"";
+    const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked())&&!hallFull&&unlocked&&placeOk;
     const lockNote=!unlocked?`<div class="buildLockNote">🔒 ${buildingLockHint(b)}</div>`:"";
+    const placeLockNote=!placeOk?`<div class="buildLockNote">${placeNote}</div>`:"";
     const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
-    div.innerHTML=`<div class="top"><span class="ico">${b.i}</span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
+    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png`;
+    div.innerHTML=`<div class="top"><span class="ico"><img src="${bldImg}" width="32" height="32" style="object-fit:contain;vertical-align:middle" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}${placeLockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
   });
@@ -3800,6 +3841,16 @@ function build(b,cost){
       selectedPlot={region:"plain",index:idx};
     }else{toast(t("town.selectLandFirst"));return;}
   }
+  // 放置区域限制验证
+  if(!canBuildIn(b,selectedPlot.region)){
+    const r=regionOf(selectedPlot.region);
+    if(r.only&&r.only!==b.id){
+      toast(LANG==="en"?`👷 ${regName(r)} only allows 🏭Factory!`:`👷 ${regName(r)}只能建造🏭工厂！`);
+    }else{
+      toast(LANG==="en"?`🏭 Factory can only be built in Factory District!`:`🏭 工厂只能建在工厂区！`);
+    }
+    return;
+  }
   if(!canAfford(cost)) return;
   const {region,index}=selectedPlot;
   Object.entries(cost).forEach(([k,v])=>{
@@ -3834,6 +3885,17 @@ function completeMove(toRegion,toIndex){
   const plots=S.plots[toRegion];
   if(!plots||plots[toIndex]!==null){ toast(t("town.onlyEmpty")); moveMode=null; renderAll(); return; }
   const {fromRegion,fromIndex,bid}=moveMode;
+  // 放置区域限制验证
+  const b=BUILDINGS.find(x=>x.id===bid);
+  if(b&&!canBuildIn(b,toRegion)){
+    const r=regionOf(toRegion);
+    if(r.only&&r.only!==bid){
+      toast(LANG==="en"?`👷 ${regName(r)} only allows 🏭Factory!`:`👷 ${regName(r)}只能建造🏭工厂！`);
+    }else{
+      toast(LANG==="en"?`🏭 Factory can only be in Factory District!`:`🏭 工厂只能建在工厂区！`);
+    }
+    moveMode=null; renderAll(); return;
+  }
   S.plots[fromRegion][fromIndex]=null;
   S.plots[toRegion][toIndex]=bid;
   toast(t("town.moveSuccess",(ELEMENTS[bid]?ELEMENTS[bid].i:"")+(ELEMENTS[bid]?elName(bid):bid),regionOf(toRegion).i,regName(regionOf(toRegion))));
@@ -3990,6 +4052,9 @@ const NPC_LINES = {
       "市中心有12块地，是地块最多的区域，攒够300金币去市中心发展",
       "地块买了就是永久的，不会过期，慢慢扩张",
       "建成任意2个建筑后解锁小镇全景图，快去买地建造吧",
+      "👷工厂区产出系数×3.5，是全小镇最高产的区域，但只能建🏭工厂",
+      "🏭工厂建造成本：100金币+5宝箱+10砖，需要先有小屋和商店才能解锁",
+      "🏛️市政厅现在需要先建工厂才能建造，集齐所有建筑类型才能建市政厅",
     ],
     en: [
       "🏪Shop produces coins every 10s, the most basic income—build early to earn more",
@@ -4003,6 +4068,9 @@ const NPC_LINES = {
       "Downtown has 12 plots, the most of any region—save 300 coins to develop there",
       "Purchased land is permanent, never expires—expand at your own pace",
       "Build any 2 buildings to unlock the town panorama map—go buy land and build!",
+      "👷Factory District has ×3.5 output multiplier, highest in town, but only 🏭Factory can be built there",
+      "🏭Factory costs 100 coins + 5 chests + 10 bricks, requires Hut and Shop to unlock",
+      "🏛️City Hall now requires Factory first—build all building types to unlock City Hall",
     ]
   },
   shop: {
