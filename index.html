@@ -208,7 +208,7 @@
   /* 开场引导 */
   #introOverlay{
     position:fixed; inset:0; background:radial-gradient(900px 500px at 50% 20%, #3a2a63, #14102a 70%);
-    z-index:1001; display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;
+    z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;
   }
   #introOverlay.show{display:flex;}
   #introOverlay .npc{
@@ -3745,9 +3745,13 @@ function doReset(){
     localStorage.removeItem(SAVE_KEY);
     S=fresh(); clearSlots();
     // 关闭所有overlay（同时用class和style两种方式，确保都能关闭）
-    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgeDetailOverlay"].forEach(id=>{
+    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
       const el=document.getElementById(id);
-      if(el){ el.classList.remove("show"); el.style.display="none"; }
+      if(el){ el.classList.remove("show"); el.style.display="none"; el.style.removeProperty("display"); }
+    });
+    // 强制关闭所有内联style显示的overlay
+    document.querySelectorAll('[style*="display:flex"][style*="position:fixed"], [style*="display:block"][style*="position:fixed"]').forEach(el=>{
+      if(el.id!=="introOverlay"){ el.style.display="none"; }
     });
     // 先显示欢迎界面，再渲染（防止renderAll抛异常导致欢迎页不显示）
     $("#introOverlay").classList.add("show");
@@ -4039,11 +4043,12 @@ function renderAll(){
   const fns=[applyTheme,renderStats,renderElements,renderElShop,renderShop,renderPets,renderMap,renderPark,renderBadges,updateTabLockState,updateBatchInput,checkBadges];
   fns.forEach(fn=>{ try{ fn(); }catch(e){ console.error("renderAll error in",fn.name,":",e); } });
 }
-// 事件绑定必须放在最前面，确保即使后续任何代码抛异常，按钮也能点击
-$("#introLangBtn").addEventListener("click", function(e){ e.stopPropagation(); toggleLang(); updateIntroLang(); });
-$("#introBtn").addEventListener("click", ()=>{
-  $("#introOverlay").classList.remove("show");
-  showDraw();
+// 事件委托：绑定在document上，确保即使元素被替换也能触发
+document.addEventListener("click", function(e){
+  const introLangBtn=e.target.closest("#introLangBtn");
+  if(introLangBtn){ e.stopPropagation(); toggleLang(); updateIntroLang(); return; }
+  const introBtn=e.target.closest("#introBtn");
+  if(introBtn){ $("#introOverlay").classList.remove("show"); $("#introOverlay").style.display="none"; showDraw(); return; }
 });
 try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
 try{ applyLang(); }catch(e){ console.error("applyLang error:",e); }
