@@ -2996,7 +2996,7 @@ function applyTheme(){
   r.setProperty("--panel2",theme.panel2); r.setProperty("--line",theme.line);
   document.body.dataset.theme=S.theme||"night";
   if(S.theme==="custom"){ applyCustomBg(); }
-  else { document.body.style.removeProperty("background"); document.body.style.background=""; }
+  else { document.body.style.background=""; document.body.style.removeProperty("background"); document.body.style.removeProperty("background-image"); }
 }
 function renderThemeChips(){
   const box=$("#themeChips"); if(!box) return;
@@ -4039,13 +4039,13 @@ function renderAll(){
   const fns=[applyTheme,renderStats,renderElements,renderElShop,renderShop,renderPets,renderMap,renderPark,renderBadges,updateTabLockState,updateBatchInput,checkBadges];
   fns.forEach(fn=>{ try{ fn(); }catch(e){ console.error("renderAll error in",fn.name,":",e); } });
 }
-try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
-// 事件绑定必须放在最前面，确保即使后续初始化代码抛异常，按钮也能点击
+// 事件绑定必须放在最前面，确保即使后续任何代码抛异常，按钮也能点击
 $("#introLangBtn").addEventListener("click", function(e){ e.stopPropagation(); toggleLang(); updateIntroLang(); });
 $("#introBtn").addEventListener("click", ()=>{
   $("#introOverlay").classList.remove("show");
   showDraw();
 });
+try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
 try{ applyLang(); }catch(e){ console.error("applyLang error:",e); }
 try{ updateIntroLang(); }catch(e){ console.error("updateIntroLang error:",e); }
 try{ updateDrawLang(); }catch(e){ console.error("updateDrawLang error:",e); }
