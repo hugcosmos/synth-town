@@ -3002,13 +3002,15 @@ function applyTheme(){
   if(S.theme==="custom"){ applyCustomBg(); }
   else {
     // 彻底清除所有background相关内联样式，让CSS的data-theme背景生效
-    document.body.style.removeProperty("background");
-    document.body.style.removeProperty("background-image");
-    document.body.style.removeProperty("background-color");
-    document.body.style.removeProperty("background-size");
-    document.body.style.removeProperty("background-position");
-    document.body.style.removeProperty("background-repeat");
-    document.body.style.removeProperty("background-attachment");
+    document.body.style.background="unset";
+    document.body.style.backgroundImage="unset";
+    document.body.style.backgroundColor="unset";
+    document.body.style.backgroundSize="unset";
+    document.body.style.backgroundPosition="unset";
+    document.body.style.backgroundRepeat="unset";
+    document.body.style.backgroundAttachment="unset";
+    // 强制触发重绘，确保CSS背景立即生效
+    void document.body.offsetWidth;
   }
 }
 function renderThemeChips(){
@@ -3441,7 +3443,6 @@ $("#bgResetBtn").addEventListener("click",async ()=>{
   if(!confirm(t("settings.bgResetConfirm"))) return;
   await assetDelete("bg:custom");
   if(S.theme==="custom"){ S.theme="night"; }
-  document.body.style.background="";
   applyTheme(); renderThemeChips(); renderAll(); save();
   toast("↩️ 已移除自定义背景");
 });
