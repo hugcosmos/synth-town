@@ -409,6 +409,9 @@
   .shopCartItem .ico{font-size:16px;flex-shrink:0;}
   .shopCartItem .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .shopCartItem .qty{font-weight:700;color:var(--gold);}
+  .shopCartItem .qtyStepper{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+  .shopCartItem .qtyStepper .rmBtn{font-size:13px;font-weight:700;color:var(--gold);padding:0 3px;line-height:1.2;}
+  .shopCartItem .qtyStepper .qty{min-width:18px;text-align:center;font-size:12px;}
   .shopCartItem .rmBtn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:0 2px;}
   .shopCartTotal{font-size:14px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);display:flex;justify-content:space-between;}
   .shopCartActions{display:flex;gap:6px;margin-top:8px;}
@@ -1999,6 +2002,17 @@ function removeFromCart(id){
   delete S.shopCart[id];
   renderElShop();
 }
+function decCart(id){
+  if(!S.shopCart||!S.shopCart[id]) return;
+  S.shopCart[id]--;
+  if(S.shopCart[id]<=0) delete S.shopCart[id];
+  renderElShop();
+}
+function incCart(id){
+  if(!S.shopCart) S.shopCart={};
+  S.shopCart[id]=(S.shopCart[id]||0)+1;
+  renderElShop();
+}
 function clearCart(){ S.shopCart={}; renderElShop(); }
 function cartTotal(){
   if(!S.shopCart) return 0;
@@ -2042,7 +2056,7 @@ function renderElShop(){
   }else{
     Object.entries(S.shopCart).forEach(([id,n])=>{
       const e=ELEMENTS[id];
-      cartHtml+=`<div class="shopCartItem"><span class="ico">${e.i}</span><span class="nm">${elName(id)}</span><span class="qty">×${n}</span><button class="rmBtn" onclick="removeFromCart('${id}')">×</button></div>`;
+      cartHtml+=`<div class="shopCartItem"><span class="ico">${e.i}</span><span class="nm">${elName(id)}</span><span class="qtyStepper"><button class="rmBtn" onclick="decCart('${id}')">−</button><span class="qty">${n}</span><button class="rmBtn" onclick="incCart('${id}')">＋</button></span><button class="rmBtn" onclick="removeFromCart('${id}')" title="${LANG==="en"?"Remove":"移除"}">🗑</button></div>`;
     });
     cartHtml+=`<div class="shopCartTotal"><span>${LANG==="en"?"Total":"合计"}</span><span style="color:var(--gold)">💰${cartTotal()}</span></div>`;
   }
@@ -2347,10 +2361,39 @@ function renderPark(){
           <span style="font-size:clamp(8px,2.2vw,12px);font-weight:700;color:#fff;background:linear-gradient(135deg,#8B4513,#A0522D);padding:1px 8px;border-radius:8px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);">${nameLabel}</span>
         </div>`;
       div.title=pet.name;
-      div.addEventListener("click",()=>openPetDetail(petIdx));
-      // 拖拽
+      // 拖拽（支持鼠标+触摸：HTML5 drag 在移动端不可用）
       div.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",slotIdx); div.style.opacity=".5"; });
       div.addEventListener("dragend",()=>{ div.style.opacity="1"; });
+      // 触摸拖拽：pointer 事件
+      let _dragSlot=null, _dragging=false, _moved=false, _sx=0, _sy=0;
+      div.addEventListener("pointerdown",e=>{
+        _dragging=true; _dragSlot=slotIdx; _moved=false;
+        _sx=e.clientX; _sy=e.clientY;
+        div.style.opacity=".5";
+        div.setPointerCapture && div.setPointerCapture(e.pointerId);
+      });
+      div.addEventListener("pointermove",e=>{
+        if(!_dragging) return;
+        if(Math.abs(e.clientX-_sx)>10||Math.abs(e.clientY-_sy)>10) _moved=true;
+      });
+      div.addEventListener("pointerup",e=>{
+        if(!_dragging) return;
+        _dragging=false; div.style.opacity="1";
+        if(!_moved) return; // 轻点不交换，交给 click 打开资料
+        // 用 elementFromPoint 找释放位置下的真实元素（pointer capture 会让 target 恒为自身）
+        let targetEl=null;
+        try{ targetEl=document.elementFromPoint(e.clientX,e.clientY); }catch(_){}
+        const target=targetEl?targetEl.closest("[data-slot]"):null;
+        if(target){
+          const to=+target.dataset.slot;
+          if(!isNaN(to)&&to!==_dragSlot){
+            const tmp=S.parkSlots[_dragSlot]; S.parkSlots[_dragSlot]=S.parkSlots[to]; S.parkSlots[to]=tmp;
+            renderPark(); save();
+          }
+        }
+      });
+      div.addEventListener("pointercancel",()=>{ _dragging=false; div.style.opacity="1"; });
+      div.addEventListener("click",e=>{ if(_moved){ e.preventDefault(); e.stopPropagation(); _moved=false; return; } openPetDetail(petIdx); });
     }else{
       div.style.aspectRatio="1";
       div.innerHTML=`<span style="font-size:clamp(16px,4vw,28px);opacity:.3;">🏠</span>`;
