@@ -1035,6 +1035,12 @@ function totalIncome(){
   total *= (1 + hallBonus()/100); // hallBonus返回10/20（百分比），除以100转成0.1/0.2倍数
   return total;
 }
+// 统计已购买的地皮数量
+function countBoughtPlots(){
+  let bought=0;
+  Object.values(S.plots||{}).flat().forEach(p=>{ if(p!==false) bought++; });
+  return bought;
+}
 // 从 plots 重建 buildings 计数（导入/迁移后调用，确保两数据源一致）
 function rebuildBuildings(){
   S.buildings={};
@@ -3738,9 +3744,11 @@ function doReset(){
   if(confirm(t("reset.confirm"))){
     localStorage.removeItem(SAVE_KEY);
     S=fresh(); clearSlots();
+    // 关闭所有overlay（防止配方书/设置/详情等覆盖在欢迎页上面导致按钮点不动）
+    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay"].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.classList.remove("show");
+    });
     // 先显示欢迎界面，再渲染（防止renderAll抛异常导致欢迎页不显示）
-    $("#settingsOverlay").classList.remove("show");
-    $("#drawOverlay").classList.remove("show");
     $("#introOverlay").classList.add("show");
     updateIntroLang(); updateDrawLang();
     try{ renderAll(); }catch(e){ console.error("renderAll error:",e); }
