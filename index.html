@@ -432,7 +432,7 @@
     font-size:12px; color:var(--dim);
   }
   .mapStats b{color:var(--gold);}
-  .mapBadges{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0;}
+  .mapBadges{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0 12px;}
   .mapBadge{
     background:var(--panel2); border:1px solid var(--line); border-radius:6px;
     padding:2px 6px; font-size:14px; display:inline-flex; align-items:center; gap:3px;
@@ -1080,7 +1080,7 @@ const BUILDINGS = [
   {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:20, jade:4, flower:10, chest:2}, income:10},
   {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:10, flower:4},          income:0},
   {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:4, coin:20},              income:0},
-  {id:"factory",n:"工厂",en:"Factory",i:"🏭", cost:{coin:100, chest:5, brick:10},      income:10, regions:["factory"]},
+  {id:"factory",n:"工厂",en:"Factory",i:"🏭", cost:{brick:10, coin:100, chest:5},      income:10, regions:["factory"]},
   {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:4}, income:0, passive:"全镇产出+10%", passiveEn:"Town Output +10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
@@ -1099,12 +1099,12 @@ const REGIONS = [
 ];
 // 可建造点坐标 [left%, top%, rotation°]，每个区域错落分布
 const BUILDABLE_POINTS = {
-  plain:  [[12,38,-3],[28,58,2],[44,35,-5],[58,60,4],[74,40,-2],[88,55,3],[20,72,-4],[66,75,5]],
-  hill:   [[18,58,-3],[36,68,2],[52,55,-5],[68,65,4],[82,58,-2],[46,78,3]],
-  forest: [[15,40,-3],[30,60,2],[46,35,-5],[60,58,4],[74,42,-2],[86,58,3],[22,72,-4],[68,75,5]],
-  center: [[10,28,-3],[26,30,2],[42,26,-5],[58,30,4],[74,28,-2],[88,32,3],[14,52,-4],[30,56,5],[48,50,-3],[64,54,2],[80,52,-5],[46,74,4]],
-  river:  [[15,22,-3],[35,20,2],[55,18,-5],[75,22,4],[88,28,-2],[60,40,3],[78,48,-4],[85,58,5]],
-  factory:[[18,48,-3],[38,58,2],[55,45,-5],[72,60,4],[88,50,-2]],
+  plain:  [[74,54,5],[40,19,-5],[29,72,-2],[13,15,-3],[53,77,-5],[91,20,3],[9,69,-5],[61,15,2]],
+  hill:   [[76,65,5],[36,48,4],[9,60,2],[63,17,5],[87,19,-5],[55,75,-5]],
+  forest: [[70,58,5],[30,34,-4],[92,79,5],[8,21,5],[51,80,-5],[88,18,4],[52,20,-5],[10,80,-4]],
+  center: [[9,6,-3],[32,5,-3],[57,5,4],[81,5,-2],[22,50,5],[46,49,-3],[69,51,5],[91,50,5],[8,93,4],[33,94,3],[56,93,-5],[81,94,3]],
+  river:  [[23,63,-5],[44,63,2],[66,68,4],[32,17,5],[81,20,-5],[10,19,4],[58,20,-4],[89,68,-3]],
+  factory:[[70,19,3],[19,46,3],[43,77,-2],[91,39,5],[73,76,-2]],
 };
 let signAnimated=false; // 路牌首次立起动画标记
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
@@ -3627,7 +3627,6 @@ function renderMap(){
     <div class="mapStats"><span>${t("town.mapStats.buildings")} <b>${totalBld}</b></span><span>${t("town.mapStats.output")} <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>${t("town.mapStats.land")} <b>${bought}</b>/${totalPlots()}</span></div>
     <div class="mapActions">
       <button id="townNameBtn" title="${t("town.nameTown")}">✏️ ${LANG==="en"?"Rename":"改名"}</button>
-      <button id="townShareBtn" style="background:#ff6b9d;border-color:#ff6b9d;color:#fff;">📤 ${LANG==="en"?"Share":"分享"}</button>
       <button id="townSaveBtn" style="background:var(--gold);border-color:var(--gold);color:#1a1530;">💾 ${t("btn.save")}</button>
       <span class="compass">🧭 N</span>
     </div>
@@ -3732,8 +3731,6 @@ function renderMap(){
   });
   const townSaveBtn=outer.querySelector("#townSaveBtn");
   if(townSaveBtn) townSaveBtn.addEventListener("click",()=>saveElementAsImage(document.querySelector('.mapGrid'),'town-map.png'));
-  const townShareBtn=outer.querySelector("#townShareBtn");
-  if(townShareBtn) townShareBtn.addEventListener("click",()=>shareTownMap());
   // 区域命名点击
   outer.querySelectorAll(".regionNameLabel").forEach(label=>{
     label.addEventListener("click",e=>{
