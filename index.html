@@ -208,7 +208,7 @@
   /* 开场引导 */
   #introOverlay{
     position:fixed; inset:0; background:radial-gradient(900px 500px at 50% 20%, #3a2a63, #14102a 70%);
-    z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;
+    z-index:2500; display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;
   }
   #introOverlay.show{display:flex;}
   #introOverlay .npc{
@@ -3995,16 +3995,26 @@ switchTab=function(tab){ _origSwitch(tab); }; // 切换tab不再自动触发NPC�
 /* ============ 开局幸运抽奖 ============ */
 let drawnCounts=null;
 function showDraw(){
+  const ov=$("#drawOverlay");
+  if(!ov){ console.error("drawOverlay not found!"); return; }
+  // 先显示抽奖页面，确保用户能看到
+  ov.classList.add("show");
+  ov.style.display="flex";
   // 强制关闭所有其他overlay，确保抽奖页面显示时没有其他弹窗覆盖
-  ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ el.classList.remove("show"); el.style.display="none"; }
-  });
-  const ov=$("#drawOverlay"), cards=$("#drawCards");
+  try{
+    ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.classList.remove("show"); el.style.display="none"; }
+    });
+  }catch(e){ console.error("close overlays error:",e); }
+  const cards=$("#drawCards");
+  if(!cards){ console.error("drawCards not found!"); return; }
   cards.innerHTML="";
   drawnCounts={};
-  BASE.forEach(id=>{ drawnCounts[id]=10+Math.floor(Math.random()*90); }); // 10~99
-  drawnCounts.coin=10+Math.floor(Math.random()*40); // 少量启动金币 10~50
+  try{
+    BASE.forEach(id=>{ drawnCounts[id]=10+Math.floor(Math.random()*90); }); // 10~99
+    drawnCounts.coin=10+Math.floor(Math.random()*40); // 少量启动金币 10~50
+  }catch(e){ console.error("draw random error:",e); return; }
   const DRAW_ITEMS=BASE.concat("coin");
   const CARD_META={coin:{n:"金币",en:"Coin",i:"🪙"}};
 
@@ -4048,12 +4058,12 @@ function renderAll(){
   const fns=[applyTheme,renderStats,renderElements,renderElShop,renderShop,renderPets,renderMap,renderPark,renderBadges,updateTabLockState,updateBatchInput,checkBadges];
   fns.forEach(fn=>{ try{ fn(); }catch(e){ console.error("renderAll error in",fn.name,":",e); } });
 }
-// 事件委托：绑定在document上，确保即使元素被替换也能触发
-document.addEventListener("click", function(e){
-  const introLangBtn=e.target.closest("#introLangBtn");
-  if(introLangBtn){ e.stopPropagation(); toggleLang(); updateIntroLang(); return; }
-  const introBtn=e.target.closest("#introBtn");
-  if(introBtn){ $("#introOverlay").classList.remove("show"); $("#introOverlay").style.display="none"; showDraw(); return; }
+// 事件直接绑定在元素上（更可靠），放在最前面确保一定执行
+$("#introLangBtn").addEventListener("click", function(e){ e.stopPropagation(); toggleLang(); updateIntroLang(); });
+$("#introBtn").addEventListener("click", function(){
+  $("#introOverlay").classList.remove("show");
+  $("#introOverlay").style.display="none";
+  showDraw();
 });
 try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
 try{ applyLang(); }catch(e){ console.error("applyLang error:",e); }
