@@ -423,18 +423,21 @@
   #view-badges.active{grid-template-columns:1fr; gap:14px; max-width:600px; margin:0 auto;}
 
   /* 底图模式 */
+  .mapTopRow{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:12px; margin-bottom:8px; flex-wrap:wrap;
+  }
   .mapStats{
-    display:flex; gap:16px; flex-wrap:wrap;
-    font-size:13px; color:var(--dim); margin-bottom:10px;
-    padding-bottom:8px; border-bottom:1px solid var(--line);
+    display:flex; gap:12px; flex-wrap:wrap;
+    font-size:12px; color:var(--dim);
   }
   .mapStats b{color:var(--gold);}
-  .mapBadges{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .mapBadges{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0;}
   .mapBadge{
-    background:var(--panel2); border:1px solid var(--line); border-radius:8px;
-    padding:3px 8px; font-size:16px; display:inline-flex; align-items:center; gap:4px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:6px;
+    padding:2px 6px; font-size:14px; display:inline-flex; align-items:center; gap:3px;
   }
-  .mapBadge b{font-size:11px; color:var(--gold);}
+  .mapBadge b{font-size:10px; color:var(--gold);}
   .mapLocked{
     font-size:12px; color:var(--dim); padding:10px;
     border:1px dashed var(--line); border-radius:8px;
@@ -444,12 +447,12 @@
     font-size:13px; font-weight:600; color:var(--dim); margin-bottom:8px;
   }
   .compass{font-size:12px; color:var(--gold); letter-spacing:1px;}
-  .mapActions{display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:8px;flex-wrap:wrap;}
+  .mapActions{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;}
   .mapActions button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;}
   .mapActions button:hover{filter:brightness(1.2);}
   .mapGrid{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
-    border-radius:14px; padding:10px; background:rgba(0,0,0,.2);
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+    border-radius:12px; padding:8px; background:rgba(0,0,0,.2);
   }
   .tile{
     position:relative; border-radius:10px; padding:8px 6px 6px;
@@ -468,7 +471,7 @@
   .tileFt .rm{font-size:9px; opacity:.95; background:rgba(0,0,0,.4); padding:2px 8px; border-radius:10px; white-space:nowrap;}
   .tileFt .bcnt{font-size:10px;color:var(--dim);font-weight:600;}
   .mapCanvas{
-    position:relative; aspect-ratio:2/1; border-radius:8px; overflow:hidden;
+    position:relative; aspect-ratio:2.5/1; border-radius:8px; overflow:hidden;
     background-size:cover; background-position:center;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
   }
@@ -601,18 +604,21 @@
     .el .name small{display:none;}
     #discovered{font-size:10px;margin-top:2px;}
     #view-shop.active{grid-template-columns:1fr;}
+    .mapTopRow{flex-direction:column; align-items:stretch; gap:6px;}
+    .mapStats{font-size:11px; gap:8px; justify-content:center;}
+    .mapActions{justify-content:center;}
     .mapGrid{grid-template-columns:repeat(2,1fr); gap:6px; padding:6px;}
     .mapGrid .tile{grid-area:auto !important; padding:5px 4px 4px;}
+    .mapCanvas{aspect-ratio:3/1;}
     .tile .rn{font-size:11px;}
     .tileFt .rm{font-size:8px; padding:1px 6px;}
     .tileFt .bcnt{font-size:9px;}
-    .townSign{max-width:220px; margin-bottom:6px;}
-    .signBoard{font-size:12px; padding:6px 18px; max-width:180px;}
-    .signPost{width:6px; height:14px;}
-    .signDeco{font-size:13px;}
-    .signDeco-tl{left:calc(50% - 95px);}
-    .signDeco-tr{right:calc(50% - 95px);}
-    .mapActions{margin-bottom:6px;}
+    .townSign{max-width:200px; margin-bottom:4px;}
+    .signBoard{font-size:11px; padding:5px 16px; max-width:160px;}
+    .signPost{width:5px; height:12px;}
+    .signDeco{font-size:12px;}
+    .signDeco-tl{left:calc(50% - 85px);}
+    .signDeco-tr{right:calc(50% - 85px);}
     .mapActions button{padding:2px 8px; font-size:10px;}
     .tabBtn{padding:8px 12px;font-size:12px;}
     /* 移动端header：两行布局 */
@@ -3583,7 +3589,15 @@ function renderMap(){
   let hint="";
   if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.selectedPlot",regionOf(selectedPlot.region).i,regName(regionOf(selectedPlot.region)))} <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
-  let html=`<div class="mapStats"><span>${t("town.mapStats.buildings")} <b>${totalBld}</b></span><span>${t("town.mapStats.output")} <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>${t("town.mapStats.land")} <b>${bought}</b>/42</span></div><div class="mapBadges">${badges}</div>${hint}`;
+  let html=`<div class="mapTopRow">
+    <div class="mapStats"><span>${t("town.mapStats.buildings")} <b>${totalBld}</b></span><span>${t("town.mapStats.output")} <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>${t("town.mapStats.land")} <b>${bought}</b>/42</span></div>
+    <div class="mapActions">
+      <button id="townNameBtn" title="${t("town.nameTown")}">✏️ ${LANG==="en"?"Rename":"改名"}</button>
+      <button id="townShareBtn" style="background:#ff6b9d;border-color:#ff6b9d;color:#fff;">📤 ${LANG==="en"?"Share":"分享"}</button>
+      <button id="townSaveBtn" style="background:var(--gold);border-color:var(--gold);color:#1a1530;">💾 ${t("btn.save")}</button>
+      <span class="compass">🧭 N</span>
+    </div>
+  </div><div class="mapBadges">${badges}</div>${hint}`;
   if(!mapUnlocked()){
     html+=`<div class="mapLocked">${t("town.unlockMap")}</div>`;
     outer.innerHTML=html; return;
@@ -3594,18 +3608,14 @@ function renderMap(){
   const firstRise=!signAnimated;
   if(firstRise) signAnimated=true;
   const signCls=firstRise?"townSign sign-rise":"townSign";
-  html+=`<div class="${signCls}" id="townSign" title="${t("town.nameTown")}">
-    <span class="signDeco signDeco-tl">🌻</span>
-    <span class="signDeco signDeco-tr">🐦</span>
-    <span class="signDeco signDeco-top">🪁</span>
-    <div class="signBoard">${welcomePrefix}${townDisplayName}</div>
-    <div class="signPost"></div>
-  </div>
-  <div class="mapActions">
-    <button id="townNameBtn" title="${t("town.nameTown")}">✏️ ${LANG==="en"?"Rename":"改名"}</button>
-    <button id="townShareBtn" style="background:#ff6b9d;border-color:#ff6b9d;color:#fff;">📤 ${LANG==="en"?"Share":"分享"}</button>
-    <button id="townSaveBtn" style="background:var(--gold);border-color:var(--gold);color:#1a1530;">💾 ${t("btn.save")}</button>
-    <span class="compass">🧭 N</span>
+  html+=`<div style="display:flex;justify-content:center;margin:4px 0 8px;">
+    <div class="${signCls}" id="townSign" title="${t("town.nameTown")}">
+      <span class="signDeco signDeco-tl">🌻</span>
+      <span class="signDeco signDeco-tr">🐦</span>
+      <span class="signDeco signDeco-top">🪁</span>
+      <div class="signBoard">${welcomePrefix}${townDisplayName}</div>
+      <div class="signPost"></div>
+    </div>
   </div>
   <div class="mapGrid"></div>`;
   outer.innerHTML=html;
