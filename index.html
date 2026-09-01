@@ -3744,12 +3744,14 @@ function doReset(){
   if(confirm(t("reset.confirm"))){
     localStorage.removeItem(SAVE_KEY);
     S=fresh(); clearSlots();
-    // 关闭所有overlay（防止配方书/设置/详情等覆盖在欢迎页上面导致按钮点不动）
-    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay"].forEach(id=>{
-      const el=document.getElementById(id); if(el) el.classList.remove("show");
+    // 关闭所有overlay（同时用class和style两种方式，确保都能关闭）
+    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgeDetailOverlay"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
     // 先显示欢迎界面，再渲染（防止renderAll抛异常导致欢迎页不显示）
     $("#introOverlay").classList.add("show");
+    $("#introOverlay").style.display="flex";
     updateIntroLang(); updateDrawLang();
     try{ renderAll(); }catch(e){ console.error("renderAll error:",e); }
     save();
@@ -4032,9 +4034,12 @@ $("#drawBtn").addEventListener("click", ()=>{
   toast(LANG==="en"?`🎰 Initial elements + 💰${S.coin} starting coins credited!`:`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
 });
 
-/* ============ 总渲染 ============ */
-function renderAll(){ applyTheme(); renderStats(); renderElements(); renderElShop(); renderShop(); renderPets(); renderMap(); renderPark(); renderBadges(); updateTabLockState(); updateBatchInput(); checkBadges(); }
-renderAll();
+/* ============ 总渲染（每个函数独立try-catch，单个报错不影响其他） ============ */
+function renderAll(){
+  const fns=[applyTheme,renderStats,renderElements,renderElShop,renderShop,renderPets,renderMap,renderPark,renderBadges,updateTabLockState,updateBatchInput,checkBadges];
+  fns.forEach(fn=>{ try{ fn(); }catch(e){ console.error("renderAll error in",fn.name,":",e); } });
+}
+try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
 applyLang();
 updateIntroLang();
 updateDrawLang();
