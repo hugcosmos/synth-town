@@ -519,15 +519,13 @@
     display:flex;align-items:center;justify-content:center;
     font-size:14px;opacity:.85;
   }
-  /* 动态装饰层 */
+  /* 动态装饰层（已移除小路纹理） */
   .mapDeco{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
-  .mapPaths{
-    position:absolute;inset:0;
-    background:
-      linear-gradient(45deg,transparent 48%,rgba(210,190,150,.18) 49%,rgba(210,190,150,.18) 51%,transparent 52%),
-      linear-gradient(-30deg,transparent 48%,rgba(210,190,150,.12) 49%,rgba(210,190,150,.12) 51%,transparent 52%);
-    background-size:70px 70px, 90px 90px;
-  }
+  /* 勋章解锁描述 */
+  #badgeUnlockDesc{margin-top:12px;font-size:14px;color:rgba(255,255,255,.85);text-align:center;max-width:320px;animation:badgeFade .8s .6s both;line-height:1.5;}
+  /* 动物乐园窝位选中状态 */
+  .parkSlotSel{outline:3px solid #ffd700;outline-offset:2px;border-radius:12px;box-shadow:0 0 20px rgba(255,215,0,.6);animation:selPulse 1s ease-in-out infinite;}
+  @keyframes selPulse{0%,100%{box-shadow:0 0 15px rgba(255,215,0,.5);}50%{box-shadow:0 0 28px rgba(255,215,0,.85);}}
   .mapGridRoads{
     position:absolute;inset:0;
     background:
@@ -958,7 +956,8 @@
   <div id="badgeUnlockContent">
     <div id="badgeUnlockImg"></div>
     <div id="badgeUnlockText"></div>
-    <div style="margin-top:16px;font-size:12px;color:var(--dim);">点击任意位置关闭</div>
+    <div id="badgeUnlockDesc"></div>
+    <div style="margin-top:16px;font-size:12px;color:var(--dim);" id="badgeUnlockHint">点击任意位置关闭</div>
   </div>
 </div>
 
@@ -2442,27 +2441,53 @@ function updateTabLockState(){
   if(parkBtn) parkBtn.classList.toggle("locked",!hasPanda());
   if(badgeBtn) badgeBtn.classList.toggle("locked",!hasBadge());
 }
+let _badgeQueue=[],_badgeShowing=false,_badgeAutoTimer=null;
 function showBadgeUnlock(b){
-  const ov=$("#badgeUnlockOverlay"); if(!ov) return;
+  _badgeQueue.push(b);
+  if(!_badgeShowing) _showNextBadge();
+}
+function _showNextBadge(){
+  if(_badgeQueue.length===0){ _badgeShowing=false; return; }
+  _badgeShowing=true;
+  const b=_badgeQueue.shift();
+  const ov=$("#badgeUnlockOverlay"); if(!ov){ _badgeShowing=false; _showNextBadge(); return; }
+  // 重置动画
+  const imgEl=$("#badgeUnlockImg");
+  imgEl.style.animation="none"; void imgEl.offsetWidth; imgEl.style.animation="";
   $("#badgeUnlockImg").innerHTML=`<img src="${b.img}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'font-size:120px;text-align:center;line-height:200px;\\'>🏆</div>'">`;
   $("#badgeUnlockText").textContent=(LANG==="en"?"🏆 Unlocked: ":"🏆 解锁成就：")+(LANG==="en"?b.en:b.name);
+  $("#badgeUnlockDesc").textContent=LANG==="en"?b.descEn:b.descZh;
+  $("#badgeUnlockHint").textContent=LANG==="en"?"Tap anywhere to continue":"点击任意位置继续";
   ov.classList.add("show");
-  // 点击关闭
-  const closeHandler=()=>{ ov.classList.remove("show"); updateTabLockState(); ov.removeEventListener("click",closeHandler); };
-  ov.addEventListener("click", closeHandler);
+  // 清理旧粒子
+  ov.querySelectorAll(".badgeParticle").forEach(p=>p.remove());
   // 金光粒子
-  for(let i=0;i<20;i++){
+  for(let i=0;i<24;i++){
     const p=document.createElement("div");
     p.className="badgeParticle";
-    p.style.left=(40+Math.random()*20)+"%";
-    p.style.top=(35+Math.random()*20)+"%";
-    p.style.animation=`particleFly ${1+Math.random()}s ease-out forwards`;
-    p.style.animationDelay=(Math.random()*0.5)+"s";
+    p.style.left=(35+Math.random()*30)+"%";
+    p.style.top=(30+Math.random()*25)+"%";
+    p.style.animation=`particleFly ${1+Math.random()*0.8}s ease-out forwards`;
+    p.style.animationDelay=(Math.random()*0.4)+"s";
     ov.appendChild(p);
-    setTimeout(()=>p.remove(),2000);
+    setTimeout(()=>p.remove(),2200);
   }
-  // 5秒后自动关闭
-  setTimeout(()=>{ if(ov.classList.contains("show")){ ov.classList.remove("show"); updateTabLockState(); } },5000);
+  // 自动关闭后显示下一个
+  if(_badgeAutoTimer) clearTimeout(_badgeAutoTimer);
+  _badgeAutoTimer=setTimeout(()=>{
+    ov.classList.remove("show");
+    updateTabLockState();
+    setTimeout(_showNextBadge,350);
+  },4200);
+  // 点击关闭（跳过当前，显示下一个）
+  const closeHandler=()=>{
+    ov.removeEventListener("click",closeHandler);
+    if(_badgeAutoTimer){ clearTimeout(_badgeAutoTimer); _badgeAutoTimer=null; }
+    ov.classList.remove("show");
+    updateTabLockState();
+    setTimeout(_showNextBadge,200);
+  };
+  ov.addEventListener("click",closeHandler);
 }
 // 粒子动画CSS（动态注入）
 (function(){const s=document.createElement("style");s.textContent="@keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate("+(Math.random()*200-100)+"px,"+(-100-Math.random()*100)+"px) scale(0);opacity:0;}}";document.head.appendChild(s);})();
@@ -2714,11 +2739,16 @@ function ensureParkSlots(){
     }
   });
 }
+let selectedParkSlot=null;
+function isTouchDevice(){ return 'ontouchstart' in window || navigator.maxTouchPoints>0; }
 function renderPark(){
   const box=$("#parkSlots"); if(!box) return;
   if(!hasPanda()){ box.innerHTML=""; $("#parkHint").textContent=LANG==="en"?"🔒 Breed a 🐼Panda to unlock the Animal Park!":"🔒 孕育一只🐼熊猫即可解锁动物乐园！"; return; }
   ensureParkSlots();
-  $("#parkHint").textContent=LANG==="en"?"Drag pets to swap nests · Click to view profile":"拖拽宠物交换窝位 · 点击查看资料";
+  const mobile=window.innerWidth<=860||isTouchDevice();
+  $("#parkHint").textContent=mobile
+    ?(LANG==="en"?"👆 Tap a nest to select, tap another to swap · Long-press for profile":"👆 点击一个窝选中，再点击另一个窝交换位置 · 长按查看资料")
+    :(LANG==="en"?"Drag pets to swap nests · Click to view profile":"拖拽宠物交换窝位 · 点击查看资料");
   box.innerHTML="";
   PARK_SLOTS.forEach((pos,slotIdx)=>{
     const petIdx=S.parkSlots[slotIdx];
@@ -2726,74 +2756,82 @@ function renderPark(){
     const d=pet?PETS.find(x=>x.id===pet.id):null;
     const div=document.createElement("div");
     div.style.cssText=`position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);width:22%;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:visible;`;
-    div.draggable=!!pet;
     div.dataset.slot=slotIdx;
+    if(selectedParkSlot===slotIdx) div.classList.add("parkSlotSel");
     if(pet){
       const defaultImg=`assets/pets/${pet.id}.png`;
-      const avatarHtml=pet.avatar
-        ?`<img src="${pet.avatar}" style="width:70%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.3);">`
-        :`<img src="${defaultImg}" style="width:70%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.3);animation:petBounce 2.2s ease-in-out infinite;" onerror="this.outerHTML='<span style=\\'font-size:clamp(20px,5vw,40px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:petBounce 2.2s ease-in-out infinite;\\'>${d?d.i:'🐾'}</span>'">`;
+      const homeImg=`assets/pet-homes/${pet.id}.png`;
+      // 宠物头像（放在窝前面）
+      const petAvatar=pet.avatar
+        ?`<img src="${pet.avatar}" style="width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35);">`
+        :`<img src="${defaultImg}" style="width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35);animation:petBounce 2.2s ease-in-out infinite;" onerror="this.outerHTML='<span style=\\'font-size:clamp(20px,5vw,40px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:petBounce 2.2s ease-in-out infinite;\\'>${d?d.i:'🐾'}</span>'">`;
       const nameLabel=LANG==="en"?`${pet.name}'s Home`:`${pet.name}之家`;
       div.innerHTML=`
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;">
-          ${avatarHtml}
+          <div style="position:relative;width:100%;aspect-ratio:1;display:flex;align-items:flex-end;justify-content:center;">
+            <img src="${homeImg}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));" onerror="this.style.display='none'">
+            <div style="position:relative;z-index:2;width:56%;margin-bottom:4%;">${petAvatar}</div>
+          </div>
           <span style="font-size:clamp(8px,2.2vw,12px);font-weight:700;color:#fff;background:linear-gradient(135deg,#8B4513,#A0522D);padding:1px 8px;border-radius:8px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);">${nameLabel}</span>
         </div>`;
       div.title=pet.name;
-      // 拖拽（支持鼠标+触摸：HTML5 drag 在移动端不可用）
-      div.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",slotIdx); div.style.opacity=".5"; });
-      div.addEventListener("dragend",()=>{ div.style.opacity="1"; });
-      // 触摸拖拽：pointer 事件
-      let _dragSlot=null, _dragging=false, _moved=false, _sx=0, _sy=0;
-      div.addEventListener("pointerdown",e=>{
-        _dragging=true; _dragSlot=slotIdx; _moved=false;
-        _sx=e.clientX; _sy=e.clientY;
-        div.style.opacity=".5";
-        div.setPointerCapture && div.setPointerCapture(e.pointerId);
-      });
-      div.addEventListener("pointermove",e=>{
-        if(!_dragging) return;
-        if(Math.abs(e.clientX-_sx)>10||Math.abs(e.clientY-_sy)>10) _moved=true;
-      });
-      div.addEventListener("pointerup",e=>{
-        if(!_dragging) return;
-        _dragging=false; div.style.opacity="1";
-        if(!_moved) return; // 轻点不交换，交给 click 打开资料
-        // 用 elementFromPoint 找释放位置下的真实元素（pointer capture 会让 target 恒为自身）
-        let targetEl=null;
-        try{ targetEl=document.elementFromPoint(e.clientX,e.clientY); }catch(_){}
-        const target=targetEl?targetEl.closest("[data-slot]"):null;
-        if(target){
-          const to=+target.dataset.slot;
-          if(!isNaN(to)&&to!==_dragSlot){
-            const tmp=S.parkSlots[_dragSlot]; S.parkSlots[_dragSlot]=S.parkSlots[to]; S.parkSlots[to]=tmp;
-            renderPark(); save();
-          }
-        }
-      });
-      div.addEventListener("pointercancel",()=>{ _dragging=false; div.style.opacity="1"; });
-      div.addEventListener("click",e=>{ if(_moved){ e.preventDefault(); e.stopPropagation(); _moved=false; return; } openPetDetail(petIdx); });
+      if(mobile){
+        // 移动端：点击选中/交换，长按查看资料
+        let _lpTimer=null;
+        div.addEventListener("pointerdown",e=>{
+          _lpTimer=setTimeout(()=>{ _lpTimer=null; openPetDetail(petIdx); },500);
+        });
+        div.addEventListener("pointermove",()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} });
+        div.addEventListener("pointerup",e=>{
+          if(_lpTimer){ clearTimeout(_lpTimer); _lpTimer=null; handleParkSlotClick(slotIdx); }
+        });
+        div.addEventListener("pointercancel",()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} });
+      }else{
+        // 桌面端：拖拽交换 + 点击查看资料
+        div.draggable=true;
+        div.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",slotIdx); div.style.opacity=".5"; });
+        div.addEventListener("dragend",()=>{ div.style.opacity="1"; });
+        div.addEventListener("click",()=>openPetDetail(petIdx));
+      }
     }else{
       div.style.aspectRatio="1";
       div.innerHTML=`<span style="font-size:clamp(16px,4vw,28px);opacity:.3;">🏠</span>`;
+      if(mobile){
+        div.addEventListener("click",()=>handleParkSlotClick(slotIdx));
+      }
     }
-    div.addEventListener("dragover",e=>{ e.preventDefault(); div.style.background="rgba(255,255,255,.2)"; });
-    div.addEventListener("dragleave",()=>{ div.style.background=""; });
-    div.addEventListener("drop",e=>{
-      e.preventDefault(); div.style.background="";
-      const from=+e.dataTransfer.getData("text/plain");
-      if(isNaN(from)||from===slotIdx) return;
-      // 交换窝位
-      const tmp=S.parkSlots[from]; S.parkSlots[from]=S.parkSlots[slotIdx]; S.parkSlots[slotIdx]=tmp;
-      renderPark(); save();
-    });
+    // 桌面端拖拽放置
+    if(!mobile){
+      div.addEventListener("dragover",e=>{ e.preventDefault(); div.style.background="rgba(255,255,255,.2)"; });
+      div.addEventListener("dragleave",()=>{ div.style.background=""; });
+      div.addEventListener("drop",e=>{
+        e.preventDefault(); div.style.background="";
+        const from=+e.dataTransfer.getData("text/plain");
+        if(isNaN(from)||from===slotIdx) return;
+        const tmp=S.parkSlots[from]; S.parkSlots[from]=S.parkSlots[slotIdx]; S.parkSlots[slotIdx]=tmp;
+        renderPark(); save();
+      });
+    }
     box.appendChild(div);
   });
 }
+function handleParkSlotClick(slotIdx){
+  if(selectedParkSlot===null){
+    if(S.parkSlots[slotIdx]!==null){ selectedParkSlot=slotIdx; renderPark(); }
+  }else if(selectedParkSlot===slotIdx){
+    selectedParkSlot=null; renderPark();
+  }else{
+    const tmp=S.parkSlots[selectedParkSlot];
+    S.parkSlots[selectedParkSlot]=S.parkSlots[slotIdx];
+    S.parkSlots[slotIdx]=tmp;
+    selectedParkSlot=null;
+    renderPark(); save();
+  }
+}
 // 乐园NPC提示
 const NPC_PARK_LINES={
-  zh:["欢迎来到动物乐园！拖拽宠物可以交换窝位哦～","熊猫是乐园的守护者，有它在大家都很安心！","每只宠物都有自己的小窝，点击可以查看资料～","把宠物养得饱饱的、亲密度高高的，它们会更开心！","乐园里最多住10只宠物，满了就要送走一些啦～"],
-  en:["Welcome to the Animal Park! Drag pets to swap nests!","Panda is the guardian of the park—everyone feels safe with it!","Each pet has its own nest. Click to view its profile!","Keep pets well-fed and high-intimacy for happier pets!","Max 10 pets in the park. Full? Time to say goodbye to some~"]
+  zh:["欢迎来到动物乐园！点击两个窝可以交换位置哦～（桌面端也可拖拽）","熊猫是乐园的守护者，有它在大家都很安心！","每只宠物都有自己的小窝，长按可以查看资料～","把宠物养得饱饱的、亲密度高高的，它们会更开心！","乐园里最多住10只宠物，满了就要送走一些啦～"],
+  en:["Welcome to the Animal Park! Tap two nests to swap positions~ (drag also works on desktop)","Panda is the guardian of the park—everyone feels safe with it!","Each pet has its own nest. Long-press to view its profile!","Keep pets well-fed and high-intimacy for happier pets!","Max 10 pets in the park. Full? Time to say goodbye to some~"]
 };
 function npcParkLine(){ const arr=NPC_PARK_LINES[LANG]||NPC_PARK_LINES.zh; return arr[Math.floor(Math.random()*arr.length)]; }
 function npcBadgesLine(){
@@ -3768,11 +3806,9 @@ function renderMap(){
       const slotCls="bldSlot"+(sel?" selSlot":"")+(ms?" moveSlot":"");
       slotsHtml+=`<div class="${slotCls}" data-r="${r.id}" data-i="${i}" title="${tip}" style="left:${left}%;top:${top}%;">${inner}</div>`;
     });
-    // 动态装饰层：路径(3+建筑)
+    // 装饰层（已移除小路纹理）
     const bc2=plots.filter(p=>p&&p!==null).length;
-    let decoHtml='<div class="mapDeco">';
-    if(bc2>=3) decoHtml+='<div class="mapPaths"></div>';
-    decoHtml+='</div>';
+    let decoHtml='';
     const regionDisplayName=(S.regionNames&&S.regionNames[r.id])||regName(r);
     const allBought=plots.every(p=>p!==false);
     const costLabel=LANG==="en"?`Cost×${r.cm} Out×${r.im} 💰${r.land}`:`成本×${r.cm} 产出×${r.im} 地价💰${r.land}`;
