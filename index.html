@@ -111,8 +111,7 @@
   }
   .slot .lbl{font-size:11px; color:var(--dim); margin-top:4px; text-align:center; width:100%;}
   .slot.hover{border-color:var(--gold); background:var(--panel2);}
-  #plus{font-size:30px; color:var(--dim);}
-  #plus2{font-size:30px; color:var(--dim);}
+  .plus-sign{font-size:30px; color:var(--dim);}
   .elementTabs{display:flex; overflow-x:auto; white-space:nowrap; gap:4px; margin-bottom:8px; padding-bottom:4px;}
   .elementTab{padding:4px 10px; font-size:12px; border-radius:6px; cursor:pointer; border:1px solid var(--line); background:transparent; color:var(--dim); white-space:nowrap; flex-shrink:0;}
   .elementTab.active{background:var(--gold); color:#1a1530; border-color:var(--gold); font-weight:700;}
@@ -607,7 +606,7 @@
     #slots{gap:6px;}
     #slots .slot{width:48px;height:48px;font-size:18px;}
     #slots .slot .lbl{font-size:8px;}
-    #plus{font-size:16px;}
+    .plus-sign{font-size:16px;}
     #craftBtn{padding:6px 16px;font-size:12px;}
     #result{height:20px;font-size:12px;}
     #batchWrap{margin-top:0;font-size:11px;}
@@ -775,9 +774,9 @@
       <h2 style="align-self:stretch" data-i18n="panel.craft">🧪 合成台</h2>
       <div id="slots">
         <div class="slot" id="slotA"><span class="lbl" data-i18n="slot.hint">点击元素</span></div>
-        <div id="plus">+</div>
+        <div class="plus-sign">+</div>
         <div class="slot" id="slotB"><span class="lbl" data-i18n="slot.hint">点击元素</span></div>
-        <div id="plus2">+</div>
+        <div class="plus-sign">+</div>
         <div class="slot" id="slotC"><span class="lbl" data-i18n="slot.hint">点击元素</span></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
@@ -1055,6 +1054,7 @@ const ELEMENTS = {
 // 基础元素（开局解锁）
 const BASE = ["earth","water","fire","air"];
 const LEGENDARY_IDS = new Set(["bunch","garden_flowers","chest","coin","magicCrystal","elixir","rainbow"]);
+const NEW_LEGEND_OUTS = new Set(["magicCrystal","elixir","rainbow"]);
 const LEGEND_BUY = {magicCrystal:50, rainbow:15};
 const LEGEND_SELL = {magicCrystal:40, rainbow:12};
 const ELIXIR_BUY = {10:50, 11:55, 14:70, 15:75, 16:80};
@@ -1092,6 +1092,12 @@ const RECIPES = [
   ["jade","life","air","magicCrystal"],
   ["life","jade","fire","elixir"],
   ["water","fire","air","rainbow"],
+  // 三元素合成（非传说）：多步合成合并为一步，提升效率
+  ["earth","water","fire","brick"],   // 土+水+火 → 砖（泥土烧制）
+  ["air","water","earth","seed"],     // 气+水+土 → 种子（雨水落地）
+  ["water","fire","air","cloud"],     // 水+火+气 → 云（蒸汽升腾）
+  ["seed","earth","water","flower"],  // 种子+土+水 → 花（种子发芽开花）
+  ["fire","wood","stone","metal"],    // 火+木材+石 → 金属（木材燃料冶炼）
 ];
 // 清理无效占位配方
 for(let i=RECIPES.length-1;i>=0;i--){
@@ -1760,9 +1766,9 @@ function renderStats(){
    元素库可展示的元素种类：
    基础 4 + 普通可合成 19（非金币/宝箱/生命）+ 生命按 HP 5 种 + 宝箱 1 = 29
    金币(coin)、废弃占位元素(charocal/tower) 不纳入统计与展示 */
-const LIFE_HPS=[...new Set(R.filter(r=>r[2]==="life").map(r=>craftCost(r[0],r[1])))].sort((a,b)=>a-b);
+const LIFE_HPS=[...new Set(R.filter(r=>{const out=r.length===4?r[3]:r[2];return out==="life";}).map(r=>craftCost(...r.slice(0,r.length-1))))].sort((a,b)=>a-b);
 function normalElementSet(){
-  return new Set(R.map(r=>r[2]).filter(x=>x!=="coin"&&x!=="chest"&&x!=="life"));
+  return new Set(R.map(r=>r.length===4?r[3]:r[2]).filter(x=>x!=="coin"&&x!=="chest"&&x!=="life"&&!NEW_LEGEND_OUTS.has(x)));
 }
 function elementShowSet(){
   return new Set(BASE.concat([...normalElementSet()]));
@@ -3876,7 +3882,7 @@ const ADVANCED_PWD = "cosmos";
 const NEWLEGEND_PWD = "0902";
 function getRecipeUnlock(){ try{ const s=JSON.parse(localStorage.getItem(RECIPE_KEY))||{}; return {basic:!!s.basic,advanced:!!s.advanced,newLegend:!!s.newLegend}; }catch(e){ return {basic:false,advanced:false,newLegend:false}; } }
 function setRecipeUnlock(s){ try{ localStorage.setItem(RECIPE_KEY, JSON.stringify(s)); }catch(e){} }
-function recipeKey(a,b){ return [a,b].sort().join("+"); }
+function recipeKey(...ids){ return ids.sort().join("+"); }
 function renderRecipeBook(){
   const u=getRecipeUnlock();
   const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard"), nlCard=$("#newLegendLockCard");
@@ -3887,12 +3893,15 @@ function renderRecipeBook(){
   const crafted=new Set(S.craftedRecipes||[]);
   // 按层级统计：总数、已合成数、密码解锁数（生命按实际等级=材料之和，宝箱纳入）
   const tierStats={};
-  R.forEach(([a,b,out])=>{
-    if(out==="coin") return;
-    const t=out==="life"?craftCost(a,b):tierOf(out);
+  R.forEach(r=>{
+    const isThree=r.length===4;
+    const out=isThree?r[3]:r[2];
+    if(out==="coin"||NEW_LEGEND_OUTS.has(out)) return;
+    const inputs=isThree?[r[0],r[1],r[2]]:[r[0],r[1]];
+    const t=out==="life"?craftCost(...inputs):tierOf(out);
     if(!tierStats[t]) tierStats[t]={total:0,crafted:0};
     tierStats[t].total++;
-    if(crafted.has(recipeKey(a,b))) tierStats[t].crafted++;
+    if(crafted.has(recipeKey(...inputs))) tierStats[t].crafted++;
   });
   const basicTiers=Object.keys(tierStats).filter(t=>Number(t)<=3);
   const advTiers=Object.keys(tierStats).filter(t=>Number(t)>3);
@@ -3941,10 +3950,13 @@ function renderRecipeBook(){
     nlSec.style.display="none";
   }
   // 配方内容：只要有已合成或已解锁的配方就显示
-  const hasAnyVisible=R.some(([a,b,out])=>{
-    if(out==="coin") return false;
-    const t=out==="life"?craftCost(a,b):tierOf(out);
-    return crafted.has(recipeKey(a,b))||(t<=3&&u.basic)||(t>3&&u.advanced);
+  const hasAnyVisible=R.some(r=>{
+    const isThree=r.length===4;
+    const out=isThree?r[3]:r[2];
+    if(out==="coin"||NEW_LEGEND_OUTS.has(out)) return false;
+    const inputs=isThree?[r[0],r[1],r[2]]:[r[0],r[1]];
+    const t=out==="life"?craftCost(...inputs):tierOf(out);
+    return crafted.has(recipeKey(...inputs))||(t<=3&&u.basic)||(t>3&&u.advanced);
   });
   if(hasAnyVisible){
     content.style.display="block";
@@ -3956,26 +3968,32 @@ function renderRecipeBook(){
 function renderRecipes(u,crafted){
   const basicSec=$("#recipeBasicSection"), advSec=$("#recipeAdvancedSection");
   const byTier={};
-  R.forEach(([a,b,out])=>{
-    if(out==="coin") return;
-    const t=out==="life"?craftCost(a,b):tierOf(out);
+  R.forEach(r=>{
+    const isThree=r.length===4;
+    const out=isThree?r[3]:r[2];
+    if(out==="coin"||NEW_LEGEND_OUTS.has(out)) return;
+    const inputs=isThree?[r[0],r[1],r[2]]:[r[0],r[1]];
+    const t=out==="life"?craftCost(...inputs):tierOf(out);
     if(!byTier[t]) byTier[t]=[];
-    byTier[t].push([a,b,out]);
+    byTier[t].push({inputs,out,isThree});
   });
   const tiers=Object.keys(byTier).sort((a,b)=>a-b);
   let basicHtml="", advHtml="";
   tiers.forEach(tier=>{
     const isBasic=Number(tier)<=3;
-    const recipes=byTier[tier].filter(([a,b,out])=>{
-      return crafted.has(recipeKey(a,b))||(isBasic&&u.basic)||(!isBasic&&u.advanced);
+    const recipes=byTier[tier].filter(item=>{
+      return crafted.has(recipeKey(...item.inputs))||(isBasic&&u.basic)||(!isBasic&&u.advanced);
     });
     if(recipes.length===0) return;
     let html=`<div class="recipeTierGroup"><div class="recipeTierTitle">${t("recipe.tier",tier)}</div><div class="recipeList">`;
-    recipes.forEach(([a,b,out])=>{
-      const ea=ELEMENTS[a], eb=ELEMENTS[b], eo=ELEMENTS[out];
+    recipes.forEach(item=>{
+      const {inputs,out,isThree}=item;
+      const eo=ELEMENTS[out];
       let resultLabel=eo.i+elName(out);
-      if(out==="life") resultLabel+=`<small style="color:var(--ok)">(HP ${craftCost(a,b)})</small>`;
-      html+=`<div class="recipeItem"><span>${ea.i}</span><span class="plus">+</span><span>${eb.i}</span><span class="arrow">→</span><span class="result">${resultLabel}</span></div>`;
+      if(out==="life") resultLabel+=`<small style="color:var(--ok)">(HP ${craftCost(...inputs)})</small>`;
+      let parts=`<span>${ELEMENTS[inputs[0]].i}</span><span class="plus">+</span><span>${ELEMENTS[inputs[1]].i}</span>`;
+      if(isThree) parts+=`<span class="plus">+</span><span>${ELEMENTS[inputs[2]].i}</span>`;
+      html+=`<div class="recipeItem">${parts}<span class="arrow">→</span><span class="result">${resultLabel}</span></div>`;
     });
     html+=`</div></div>`;
     if(isBasic) basicHtml+=html; else advHtml+=html;
@@ -4761,15 +4779,27 @@ const NPC_LINES = {
   },
 };
 function npcCraftSmart(){
-  const candidates=R.filter(([a,b,out])=>{
-    if(out==="coin"||out==="chest") return false;
+  const candidates=R.filter(r=>{
+    const isThree=r.length===4;
+    const out=isThree?r[3]:r[2];
+    if(out==="coin"||out==="chest"||NEW_LEGEND_OUTS.has(out)) return false;
     if(count(out)>0||(out in S.unlocked)) return false;
-    return count(a)>0&&count(b)>0&&(a!==b||count(a)>=2);
+    const inputs=isThree?[r[0],r[1],r[2]]:[r[0],r[1]];
+    const idCounts={};
+    inputs.forEach(id=>{idCounts[id]=(idCounts[id]||0)+1;});
+    for(const [id,cnt] of Object.entries(idCounts)){
+      if(count(id)<cnt) return false;
+    }
+    return true;
   });
   if(candidates.length){
-    const [a,b,out]=candidates[Math.floor(Math.random()*candidates.length)];
-    if(LANG==="en") return `You have ${ELEMENTS[a].i}${elName(a)} and ${ELEMENTS[b].i}${elName(b)}, try crafting ${ELEMENTS[out].i}${elName(out)}!`;
-    return `你有${ELEMENTS[a].i}${elName(a)}和${ELEMENTS[b].i}${elName(b)}，试试合成${ELEMENTS[out].i}${elName(out)}！`;
+    const r=candidates[Math.floor(Math.random()*candidates.length)];
+    const isThree=r.length===4;
+    const out=isThree?r[3]:r[2];
+    const inputs=isThree?[r[0],r[1],r[2]]:[r[0],r[1]];
+    const inputStr=inputs.map(id=>ELEMENTS[id].i+elName(id)).join(LANG==="en"?" and ":"和");
+    if(LANG==="en") return `You have ${inputStr}, try crafting ${ELEMENTS[out].i}${elName(out)}!`;
+    return `你有${inputStr}，试试合成${ELEMENTS[out].i}${elName(out)}！`;
   }
   return null;
 }
