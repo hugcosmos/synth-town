@@ -1887,7 +1887,7 @@ function updateBatchInput(){
     if(+input.value<1) input.value=1;
   } else { wrap.style.display="none"; }
 }
-/* 批量上限：金币>100→5, >1000→20, >10000→100, 否则0(未解锁) */
+/* 批量上限：净资产≥100→5, ≥1000→10, ≥10000→20, ≥20000→100, 否则0(未解锁) */
 function batchMax(){
   const nw=netWorth();
   if(nw>=20000) return 100;
@@ -1910,10 +1910,9 @@ function netWorth(){
   Object.entries(S.plots||{}).forEach(([rid,plots])=>{
     const r=regionOf(rid);
     plots.forEach((p,i)=>{
-      if(!p) return;
-      const isFree=rid==="plain"&&(i===0||i===1)&&p===null;
-      if(isFree) return;
-      v+=r.land; // 地皮（空地或建筑地块都算地价）
+      if(p===false) return; // 未购买的地：不算
+      const isFree=rid==="plain"&&(i===0||i===1); // 郊外前两块免费地（不管有没有建建筑都不算地价）
+      if(!isFree) v+=r.land; // 地皮（空地或建筑地块都算地价，免费地除外）
       if(p===null) return; // 空置已购地：只算地价
       const b=BUILDINGS.find(x=>x.id===p);
       if(!b) return;
