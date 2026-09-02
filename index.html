@@ -2216,7 +2216,10 @@ function decCart(id){
 }
 function incCart(id){
   if(!S.shopCart) S.shopCart={};
-  S.shopCart[id]=(S.shopCart[id]||0)+1;
+  const max=batchMax()||5;
+  const cur=S.shopCart[id]||0;
+  if(cur>=max){ toast(LANG==="en"?`Max ${max} items (increase net worth to unlock more)`:`最多${max}个（提升净资产解锁更多）`); return; }
+  S.shopCart[id]=cur+1;
   renderElShop();
 }
 function setCartQty(id,val){
