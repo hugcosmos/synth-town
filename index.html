@@ -3992,7 +3992,7 @@ function renderNewLegendRecipes(){
     {a:"life",b:"jade",c:"fire",out:"elixir",note:LANG==="en"?"(HP from input Life)":"(HP由输入生命决定)"},
     {a:"water",b:"fire",c:"air",out:"rainbow",note:""},
   ];
-  let html=`<div class="recipeTierGroup"><div class="recipeTierTitle" style="color:var(--gold);">🔮 ${t("recipe.newLegendTitle")}</div><div class="recipeList">`;
+  let html=`<div class="recipeTierGroup"><div class="recipeTierTitle">${t("recipe.newLegendTitle")}</div><div class="recipeList">`;
   recipes.forEach(r=>{
     const ea=ELEMENTS[r.a], eb=ELEMENTS[r.b], ec=ELEMENTS[r.c], eo=ELEMENTS[r.out];
     let resultLabel=eo.i+elName(r.out);
