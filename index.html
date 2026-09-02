@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1b1430">
 <style>
   :root{
-    --bg:#1b1430; --panel:#2a2044; --panel2:#352a55; --line:#4a3d73;
+    --bg:#1b1430; --panel:rgba(42,32,68,.62); --panel2:rgba(53,42,85,.52); --line:rgba(74,61,115,.45);
     --text:#f0eaff; --dim:#a99cc9; --gold:#ffd75e; --accent:#7c5cff; --ok:#4cd97b;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
@@ -67,7 +67,7 @@
   .stat{
     background:var(--panel); border:1px solid var(--line); border-radius:14px;
     padding:4px 12px; font-size:12px; font-weight:500; white-space:nowrap;
-    display:flex; align-items:center; gap:3px;
+    display:flex; align-items:center; gap:3px; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   }
   .stat b{color:var(--gold); font-weight:700; font-variant-numeric:tabular-nums;}
   .hdr-actions{display:flex; gap:6px; flex-shrink:0;}
@@ -81,7 +81,7 @@
   main{
     flex:1; padding:14px 18px; width:100%; max-width:1200px; margin:0 auto;
   }
-  .panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
   .panel h2{font-size:14px; color:var(--dim); margin-bottom:10px; font-weight:600;}
 
   /* 元素库 */
@@ -2365,23 +2365,36 @@ function _animPetBurst(){
 }
 
 /* ============ 合成 ============ */
+// 两元素合成查找（无序 A+B=B+A），返回结果元素id或null
+function findTwoRecipe(a,b){
+  const r=R.find(r=>r.length===3&&((r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a)));
+  return r?r[2]:null;
+}
 $("#craftBtn").addEventListener("click", ()=>{
   if(!selA||!selB) return;
   const res=$("#result");
   const isThree = !!(selA&&selB&&selC);
   let recipe, out, cost;
   if(isThree){
-    // 三元素合成有序：A+B+C = (A+B)+C，前两个先合成，结果再和第三个合成
-    // 不同顺序结果不同，按用户放入顺序匹配
+    // 1. 先匹配传说固定三元素配方（有序匹配）
     recipe = R.find(r=>r.length===4 && r[0]===selA && r[1]===selB && r[2]===selC);
-    if(!recipe){
+    if(recipe){
+      out=recipe[3];
+    } else {
+      // 2. 普通三元素两步合成：(A+B)+C，前两个先合成，结果再和第三个合成
+      //    只要两步都能走得通且结果唯一就支持；顺序不同结果可能不同
+      const mid = findTwoRecipe(selA, selB);
+      if(mid){
+        out = findTwoRecipe(mid, selC);
+      }
+    }
+    if(!out){
       res.innerHTML=t("craft.invalid");
       $("#slots").classList.add("shake");
       setTimeout(()=>$("#slots").classList.remove("shake"),400);
       clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2000);
       return;
     }
-    out=recipe[3];
     cost=craftCost(selA,selB,selC);
   } else {
     cost=craftCost(selA,selB);
@@ -3704,11 +3717,11 @@ function feedRainbowToPet(idx){
 
 /* ============ 主题与素材系统 ============ */
 const THEMES = {
-  night:  {n:"紫夜", bg1:"#3a2a63", bg2:"#1b1430", panel:"#2a2044", panel2:"#352a55", line:"#4a3d73"},
-  forest: {n:"森绿", bg1:"#1e3a2a", bg2:"#0e1f16", panel:"#1c3326", panel2:"#254533", line:"#3a5c46"},
-  sand:   {n:"暖沙", bg1:"#5c4a2e", bg2:"#2e2416", panel:"#443621", panel2:"#584729", line:"#75603c"},
-  snow:   {n:"雪境", bg1:"#3d4a63", bg2:"#1a2230", panel:"#28324a", panel2:"#384663", line:"#52628a"},
-  custom: {n:"自定义", bg1:"#3a2a63", bg2:"#1b1430", panel:"#2a2044", panel2:"#352a55", line:"#4a3d73"},
+  night:  {n:"紫夜", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.62)", panel2:"rgba(53,42,85,.52)", line:"rgba(74,61,115,.45)"},
+  forest: {n:"森绿", bg1:"#1e3a2a", bg2:"#0e1f16", panel:"rgba(28,51,38,.62)", panel2:"rgba(37,69,51,.52)", line:"rgba(58,92,70,.45)"},
+  sand:   {n:"暖沙", bg1:"#5c4a2e", bg2:"#2e2416", panel:"rgba(68,54,33,.62)", panel2:"rgba(88,71,41,.52)", line:"rgba(117,96,60,.45)"},
+  snow:   {n:"雪境", bg1:"#3d4a63", bg2:"#1a2230", panel:"rgba(40,50,74,.62)", panel2:"rgba(56,70,99,.52)", line:"rgba(82,98,138,.45)"},
+  custom: {n:"自定义", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.62)", panel2:"rgba(53,42,85,.52)", line:"rgba(74,61,115,.45)"},
 };
 function applyTheme(){
   const theme=THEMES[S.theme]||THEMES.night;
