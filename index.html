@@ -1050,6 +1050,7 @@ const ELEMENTS = {
   chest:{n:"宝箱",en:"Treasure Chest",i:"🧰"}, jade:{n:"玉石",en:"Jade",i:"💎"}, ash:{n:"灰烬",en:"Ash",i:"🌋"}, fertilizer:{n:"肥料",en:"Fertilizer",i:"💩"},
   garden_flowers:{n:"花海",en:"Flower Sea",i:"🌺"}, glass:{n:"玻璃",en:"Glass",i:"🪟"}, sand:{n:"沙",en:"Sand",i:"🏖️"}, cloud:{n:"云",en:"Cloud",i:"☁️"},
   steam:{n:"蒸汽",en:"Steam",i:"♨️"}, life:{n:"生命",en:"Life",i:"🧬"}, charocal:{n:"木炭",en:"Charcoal",i:"🖤"}, tower:{n:"塔楼",en:"Tower",i:"🗼"},
+  magicCrystal:{n:"魔法水晶",en:"Magic Crystal",i:"🔮"}, elixir:{n:"万能药",en:"Elixir",i:"💊"}, rainbow:{n:"彩虹",en:"Rainbow",i:"🌈"},
 };
 // 基础元素（开局解锁）
 const BASE = ["earth","water","fire","air"];
@@ -1088,16 +1089,20 @@ const RECIPES = [
   ["energy","wood","life"],
   ["energy","bunch","life"],
   ["energy","garden_flowers","life"],
+  ["jade","life","air","magicCrystal"],
+  ["life","jade","fire","elixir"],
+  ["water","fire","air","rainbow"],
 ];
 // 清理无效占位配方
 for(let i=RECIPES.length-1;i>=0;i--){
-  if(!ELEMENTS[RECIPES[i][2]]) RECIPES.splice(i,1);
+  const outIdx = RECIPES[i].length===4 ? 3 : 2;
+  if(!ELEMENTS[RECIPES[i][outIdx]]) RECIPES.splice(i,1);
 }
 // 修正：树→木材 用 树+能量；石头→沙 用 石+石
 RECIPES.push(["tree","energy","wood"]);
 // 去重
 const seen=new Set();
-const R = RECIPES.filter(r=>{const k=r[0]+'|'+r[1]+'|'+r[2]; if(seen.has(k))return false; seen.add(k); return true;});
+const R = RECIPES.filter(r=>{const k=r.length===4 ? r[0]+'|'+r[1]+'|'+r[2]+'|'+r[3] : r[0]+'|'+r[1]+'|'+r[2]; if(seen.has(k))return false; seen.add(k); return true;});
 
 // 元素层级：基础=1级，合成结果的层级 = 两材料层级之和（即合成费用）
 // 用松弛法从配方树推导，天然满足"以此类推"
@@ -1106,15 +1111,24 @@ BASE.forEach(id=>TIER[id]=1);
 let changed=true;
 while(changed){
   changed=false;
-  R.forEach(([a,b,out])=>{
-    if(TIER[a]&&TIER[b]){
-      const t=TIER[a]+TIER[b];
-      if(!TIER[out]||t<TIER[out]){ TIER[out]=t; changed=true; }
+  R.forEach(r=>{
+    if(r.length===4){
+      const [a,b,c,out]=r;
+      if(TIER[a]&&TIER[b]&&TIER[c]){
+        const t=TIER[a]+TIER[b]+TIER[c];
+        if(!TIER[out]||t<TIER[out]){ TIER[out]=t; changed=true; }
+      }
+    } else {
+      const [a,b,out]=r;
+      if(TIER[a]&&TIER[b]){
+        const t=TIER[a]+TIER[b];
+        if(!TIER[out]||t<TIER[out]){ TIER[out]=t; changed=true; }
+      }
     }
   });
 }
 const tierOf = id => TIER[id]||1;
-const craftCost = (a,b) => tierOf(a)+tierOf(b);
+const craftCost = (...args) => args.reduce((s,id)=>s+tierOf(id),0);
 window.tierOf=tierOf; // 供控制台调试
 const BUY_RATE = 5; // 商店购买价 = 层级 × 5 金币
 
