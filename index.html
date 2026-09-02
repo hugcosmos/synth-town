@@ -1119,10 +1119,10 @@ const REGIONS = [
 const BUILDABLE_POINTS = {
   plain:  [[74,54,5],[40,19,-5],[29,72,-2],[13,15,-3],[53,77,-5],[91,20,3],[9,69,-5],[61,15,2]],
   hill:   [[76,65,5],[36,48,4],[9,60,2],[63,17,5],[87,19,-5],[55,75,-5]],
-  forest: [[70,58,5],[30,34,-4],[92,79,5],[8,21,5],[51,80,-5],[88,18,4],[52,20,-5],[10,80,-4]],
-  center: [[16,18,-3],[39,16,-3],[61,18,4],[84,16,-2],[18,50,5],[40,48,-3],[60,52,5],[82,50,5],[16,82,4],[39,84,3],[61,82,-5],[84,84,3]],
+  forest: [[68,56,5],[32,36,-4],[85,76,5],[15,24,5],[50,78,-5],[82,22,4],[50,24,-5],[18,76,-4]],
+  center: [[22,20,-3],[42,18,-3],[58,20,4],[78,18,-2],[24,50,5],[42,48,-3],[58,52,5],[76,50,5],[22,80,4],[42,82,3],[58,80,-5],[78,82,3]],
   river:  [[23,63,-5],[44,63,2],[55,55,4],[32,17,5],[72,28,-5],[10,19,4],[58,20,-4],[75,45,-3]],
-  factory:[[15,72,3],[35,65,-2],[55,78,3],[75,68,-2],[90,75,3]],
+  factory:[[12,78,3],[32,72,-2],[52,82,3],[72,74,-2],[90,80,3]],
 };
 let signAnimated=false; // 路牌首次立起动画标记
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
@@ -3768,18 +3768,10 @@ function renderMap(){
       const slotCls="bldSlot"+(sel?" selSlot":"")+(ms?" moveSlot":"");
       slotsHtml+=`<div class="${slotCls}" data-r="${r.id}" data-i="${i}" title="${tip}" style="left:${left}%;top:${top}%;">${inner}</div>`;
     });
-    // 动态装饰层：路径(3+建筑)、市中心网格路(6+建筑)、街灯(5+建筑，8+加第三盏)
-    // 街灯放在底部角落，避免遮挡建筑；表示区域城镇化程度
+    // 动态装饰层：路径(3+建筑)
     const bc2=plots.filter(p=>p&&p!==null).length;
-    const _lampTip=LANG==="en"?"Street lamp: appears when 5+ buildings built":"街灯：建成5栋以上建筑后出现，代表区域繁荣";
     let decoHtml='<div class="mapDeco">';
     if(bc2>=3) decoHtml+='<div class="mapPaths"></div>';
-    if(r.id==="center"&&bc2>=6) decoHtml+='<div class="mapGridRoads"></div>';
-    if(bc2>=5){
-      decoHtml+=`<div class="mapLamp" style="left:4%;bottom:4%" title="${_lampTip}">🪔</div>`;
-      decoHtml+=`<div class="mapLamp" style="right:4%;bottom:4%" title="${_lampTip}">💡</div>`;
-      if(bc2>=8) decoHtml+=`<div class="mapLamp" style="left:48%;bottom:3%" title="${_lampTip}">🪔</div>`;
-    }
     decoHtml+='</div>';
     const regionDisplayName=(S.regionNames&&S.regionNames[r.id])||regName(r);
     const allBought=plots.every(p=>p!==false);
