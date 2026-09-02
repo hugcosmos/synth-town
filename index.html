@@ -2359,23 +2359,23 @@ function renderTradePanel(){
 
 /* ============ 勋章系统 ============ */
 const BADGES = [
-  {id:"elementMaster", name:"元素之王", en:"Element Master", img:"assets/badges/element-master.png",
+  {id:"elementMaster", name:"元素之王", en:"Element Master", img:"assets/badges/element-master.png?v=20260902",
    descZh:"发现全部29种元素", descEn:"Discover all 29 elements",
    check:()=>foundElementKinds()>=totalElementKinds(),
    progress:()=>[foundElementKinds(),totalElementKinds()]},
-  {id:"animalKing", name:"动物大王", en:"Animal King", img:"assets/badges/animal-king.png",
+  {id:"animalKing", name:"动物大王", en:"Animal King", img:"assets/badges/animal-king.png?v=20260902",
    descZh:"集齐6种动物（猫/兔/狗/牛/马/熊猫）", descEn:"Collect all 6 pet species (Cat/Rabbit/Dog/Cow/Horse/Panda)",
    check:()=>{const t=new Set(S.petList.map(p=>p.id));return ["cat","rabbit","dog","cow","horse","panda"].every(x=>t.has(x));},
    progress:()=>{const t=new Set(S.petList.map(p=>p.id));const n=["cat","rabbit","dog","cow","horse","panda"].filter(x=>t.has(x)).length;return [n,6];}},
-  {id:"realEstateTycoon", name:"地产大亨", en:"Real Estate Tycoon", img:"assets/badges/real-estate-tycoon.png",
+  {id:"realEstateTycoon", name:"地产大亨", en:"Real Estate Tycoon", img:"assets/badges/real-estate-tycoon.png?v=20260902",
    descZh:"解锁全部地皮且每块都有建筑", descEn:"Unlock all plots with buildings on each",
    check:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));const tp=totalPlots();return total>=tp&&built>=tp;},
    progress:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return [built,totalPlots()];}},
-  {id:"tenThousandaire", name:"万元户", en:"Ten-Thousandaire", img:"assets/badges/ten-thousandaire.png",
+  {id:"tenThousandaire", name:"万元户", en:"Ten-Thousandaire", img:"assets/badges/ten-thousandaire.png?v=20260902",
    descZh:"资产达到10000", descEn:"Net worth reaches 10,000",
    check:()=>netWorth()>=10000,
    progress:()=>[Math.min(netWorth(),10000),10000]},
-  {id:"millionaire", name:"百万富翁", en:"Millionaire", img:"assets/badges/millionaire.png",
+  {id:"millionaire", name:"百万富翁", en:"Millionaire", img:"assets/badges/millionaire.png?v=20260902",
    descZh:"资产达到1000000", descEn:"Net worth reaches 1,000,000",
    check:()=>netWorth()>=1000000,
    progress:()=>[Math.min(netWorth(),1000000),1000000]}
