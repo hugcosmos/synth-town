@@ -1089,10 +1089,10 @@ const RECIPES = [
   ["energy","wood","life"],
   ["energy","bunch","life"],
   ["energy","garden_flowers","life"],
-  // 传说三元素配方（低等级元素放前面，方便验证；任意顺序均可合成）
+  // 传说三元素配方（低等级元素放前面，方便验证；有序合成：A+B+C=(A+B)+C）
   ["air","jade","life","magicCrystal"],   // 气+玉石+生命 → 魔法水晶
   ["fire","jade","life","elixir"],         // 火+玉石+生命 → 万能药
-  ["water","fire","air","rainbow"],        // 水+火+气 → 彩虹
+  ["water","air","fire","rainbow"],        // 水+气+火 → 彩虹（火必须在最后，(水+气)=雨, 雨+火=彩虹）
 ];
 // 清理无效占位配方
 for(let i=RECIPES.length-1;i>=0;i--){
@@ -2371,8 +2371,9 @@ $("#craftBtn").addEventListener("click", ()=>{
   const isThree = !!(selA&&selB&&selC);
   let recipe, out, cost;
   if(isThree){
-    const inputs=[selA,selB,selC].sort();
-    recipe = R.find(r=>r.length===4 && [r[0],r[1],r[2]].sort().join("|")===inputs.join("|"));
+    // 三元素合成有序：A+B+C = (A+B)+C，前两个先合成，结果再和第三个合成
+    // 不同顺序结果不同，按用户放入顺序匹配
+    recipe = R.find(r=>r.length===4 && r[0]===selA && r[1]===selB && r[2]===selC);
     if(!recipe){
       res.innerHTML=t("craft.invalid");
       $("#slots").classList.add("shake");
@@ -3877,7 +3878,11 @@ const ADVANCED_PWD = "cosmos";
 const NEWLEGEND_PWD = "0902";
 function getRecipeUnlock(){ try{ const s=JSON.parse(localStorage.getItem(RECIPE_KEY))||{}; return {basic:!!s.basic,advanced:!!s.advanced,newLegend:!!s.newLegend}; }catch(e){ return {basic:false,advanced:false,newLegend:false}; } }
 function setRecipeUnlock(s){ try{ localStorage.setItem(RECIPE_KEY, JSON.stringify(s)); }catch(e){} }
-function recipeKey(...ids){ return ids.sort().join("+"); }
+function recipeKey(...ids){
+  // 两元素配方无序（A+B=B+A），三元素配方有序（A+B+C≠A+C+B）
+  if(ids.length===2) return ids.sort().join("+");
+  return ids.join("+");
+}
 function renderRecipeBook(){
   const u=getRecipeUnlock();
   const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard"), nlCard=$("#newLegendLockCard");
