@@ -167,7 +167,7 @@
   /* toast */
   #toast{
     position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px);
-    background:var(--panel); color:var(--text); padding:10px 22px; border-radius:14px; border:1px solid var(--line);
+    background:var(--solid-panel); color:var(--text); padding:10px 22px; border-radius:14px; border:1px solid var(--line);
     font-size:14px; opacity:0; pointer-events:none; transition:all .3s; z-index:99999; box-shadow:0 6px 24px rgba(0,0,0,.4);
   }
   #toast.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; cursor:pointer;}
@@ -223,7 +223,7 @@
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
   #introOverlay h2{font-size:24px; letter-spacing:2px;}
   #introOverlay .bubble{
-    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 18px;
+    background:var(--solid-panel); border:1px solid var(--line); border-radius:14px; padding:14px 18px;
     max-width:460px; font-size:14px; line-height:1.9; position:relative;
   }
   #introOverlay .bubble b{color:var(--gold);}
@@ -701,8 +701,8 @@
   /* 成就页 */
   #badgesOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
   #badgesOverlay.show{display:flex;}
-  #badgesBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;}
-  .badgeCard{display:flex;gap:14px;align-items:center;padding:14px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;}
+  #badgesBox{background:var(--solid-panel);border:1px solid var(--line);border-radius:16px;padding:24px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;}
+  .badgeCard{display:flex;gap:14px;align-items:center;padding:14px;background:var(--solid-panel2);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;}
   .badgeCard.locked{opacity:.5;filter:grayscale(.7);}
   .badgeIcon{width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--gold);}
   .badgeInfo{flex:1;min-width:0;}
@@ -723,7 +723,7 @@
   /* 勋章详情大图 */
   #badgeDetailOverlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
   #badgeDetailOverlay.show{display:flex;}
-  #badgeDetailBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;display:flex;flex-direction:column;align-items:center;max-width:400px;width:100%;}
+  #badgeDetailBox{background:var(--solid-panel);border:1px solid var(--line);border-radius:16px;padding:28px;display:flex;flex-direction:column;align-items:center;max-width:400px;width:100%;}
   /* 建筑详情弹窗 */
   #buildingDetailOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
   #buildingDetailOverlay.show{display:flex;}
@@ -3752,17 +3752,18 @@ function feedRainbowToPet(idx){
 
 /* ============ 主题与素材系统 ============ */
 const THEMES = {
-  night:  {n:"紫夜", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.75)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.6)"},
-  forest: {n:"森绿", bg1:"#1e3a2a", bg2:"#0e1f16", panel:"rgba(28,51,38,.75)", panel2:"rgba(37,69,51,.7)", line:"rgba(58,92,70,.6)"},
-  sand:   {n:"暖沙", bg1:"#5c4a2e", bg2:"#2e2416", panel:"rgba(68,54,33,.75)", panel2:"rgba(88,71,41,.7)", line:"rgba(117,96,60,.6)"},
-  snow:   {n:"雪境", bg1:"#3d4a63", bg2:"#1a2230", panel:"rgba(40,50,74,.75)", panel2:"rgba(56,70,99,.7)", line:"rgba(82,98,138,.6)"},
-  custom: {n:"自定义", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.75)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.6)"},
+  night:  {n:"紫夜", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.75)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.6)", solidPanel:"#2a2044", solidPanel2:"#352a55"},
+  forest: {n:"森绿", bg1:"#1e3a2a", bg2:"#0e1f16", panel:"rgba(28,51,38,.75)", panel2:"rgba(37,69,51,.7)", line:"rgba(58,92,70,.6)", solidPanel:"#1c3326", solidPanel2:"#254533"},
+  sand:   {n:"暖沙", bg1:"#5c4a2e", bg2:"#2e2416", panel:"rgba(68,54,33,.75)", panel2:"rgba(88,71,41,.7)", line:"rgba(117,96,60,.6)", solidPanel:"#443621", solidPanel2:"#584729"},
+  snow:   {n:"雪境", bg1:"#3d4a63", bg2:"#1a2230", panel:"rgba(40,50,74,.75)", panel2:"rgba(56,70,99,.7)", line:"rgba(82,98,138,.6)", solidPanel:"#28324a", solidPanel2:"#384663"},
+  custom: {n:"自定义", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.75)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.6)", solidPanel:"#2a2044", solidPanel2:"#352a55"},
 };
 function applyTheme(){
   const theme=THEMES[S.theme]||THEMES.night;
   const r=document.documentElement.style;
   r.setProperty("--bg",theme.bg2); r.setProperty("--panel",theme.panel);
   r.setProperty("--panel2",theme.panel2); r.setProperty("--line",theme.line);
+  r.setProperty("--solid-panel",theme.solidPanel); r.setProperty("--solid-panel2",theme.solidPanel2);
   document.body.dataset.theme=S.theme||"night";
   if(S.theme==="custom"){ applyCustomBg(); }
   else {
