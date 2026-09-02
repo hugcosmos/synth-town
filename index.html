@@ -81,20 +81,20 @@
   main{
     flex:1; padding:14px 18px; width:100%; max-width:1200px; margin:0 auto;
   }
-  .panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
+  .panel{background:transparent; border:none; border-radius:14px; padding:14px;}
   .panel h2{font-size:14px; color:var(--dim); margin-bottom:10px; font-weight:600;}
 
   /* 元素库 */
   #elementGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-height:65vh; overflow-y:auto;}
   .el{
-    background:transparent; border:1px solid rgba(255,255,255,.12); border-radius:10px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:10px;
     padding:8px 2px; text-align:center; cursor:grab; user-select:none;
     -webkit-user-select:none; -webkit-user-drag:none; -webkit-touch-callout:none;
     touch-action:none; /* 告诉浏览器：这个元素的手势归游戏管，别拿来滚动/刷新 */
-    transition:transform .12s, box-shadow .12s, background .12s;
+    transition:transform .12s, box-shadow .12s;
   }
   .el *{pointer-events:none;}
-  .el:hover{transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.35); border-color:var(--gold); background:var(--panel2);}
+  .el:hover{transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.35); border-color:var(--gold);}
   .el .ico{font-size:26px; display:block;}
   .el .name{font-size:11px; color:var(--dim); display:block; margin-top:2px;}
   .el .cnt{font-size:10px; color:var(--gold);}
@@ -400,8 +400,8 @@
   /* 商店双栏：元素网格 + 购物车 */
   .shopLayout{display:grid;grid-template-columns:1fr 200px;gap:12px;align-items:start;}
   .shopElementGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-  .shopElCard{background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 4px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
-  .shopElCard:hover{border-color:var(--gold);background:var(--panel2);}
+  .shopElCard{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 4px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;}
+  .shopElCard:hover{border-color:var(--gold);}
   .shopElCard .ico{font-size:22px;}
   .shopElCard .nm{font-size:10px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .shopElCard .pr{font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;}
