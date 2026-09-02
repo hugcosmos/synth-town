@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1b1430">
 <style>
   :root{
-    --bg:#1b1430; --panel:rgba(42,32,68,.45); --panel2:rgba(53,42,85,.7); --line:rgba(74,61,115,.3);
+    --bg:#1b1430; --panel:rgba(42,32,68,.75); --panel2:rgba(53,42,85,.7); --line:rgba(74,61,115,.6);
     --text:#f0eaff; --dim:#a99cc9; --gold:#ffd75e; --accent:#7c5cff; --ok:#4cd97b;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
@@ -3752,11 +3752,11 @@ function feedRainbowToPet(idx){
 
 /* ============ 主题与素材系统 ============ */
 const THEMES = {
-  night:  {n:"紫夜", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.45)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.3)"},
-  forest: {n:"森绿", bg1:"#1e3a2a", bg2:"#0e1f16", panel:"rgba(28,51,38,.45)", panel2:"rgba(37,69,51,.7)", line:"rgba(58,92,70,.3)"},
-  sand:   {n:"暖沙", bg1:"#5c4a2e", bg2:"#2e2416", panel:"rgba(68,54,33,.45)", panel2:"rgba(88,71,41,.7)", line:"rgba(117,96,60,.3)"},
-  snow:   {n:"雪境", bg1:"#3d4a63", bg2:"#1a2230", panel:"rgba(40,50,74,.45)", panel2:"rgba(56,70,99,.7)", line:"rgba(82,98,138,.3)"},
-  custom: {n:"自定义", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.45)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.3)"},
+  night:  {n:"紫夜", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.75)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.6)"},
+  forest: {n:"森绿", bg1:"#1e3a2a", bg2:"#0e1f16", panel:"rgba(28,51,38,.75)", panel2:"rgba(37,69,51,.7)", line:"rgba(58,92,70,.6)"},
+  sand:   {n:"暖沙", bg1:"#5c4a2e", bg2:"#2e2416", panel:"rgba(68,54,33,.75)", panel2:"rgba(88,71,41,.7)", line:"rgba(117,96,60,.6)"},
+  snow:   {n:"雪境", bg1:"#3d4a63", bg2:"#1a2230", panel:"rgba(40,50,74,.75)", panel2:"rgba(56,70,99,.7)", line:"rgba(82,98,138,.6)"},
+  custom: {n:"自定义", bg1:"#3a2a63", bg2:"#1b1430", panel:"rgba(42,32,68,.75)", panel2:"rgba(53,42,85,.7)", line:"rgba(74,61,115,.6)"},
 };
 function applyTheme(){
   const theme=THEMES[S.theme]||THEMES.night;
