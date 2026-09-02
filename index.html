@@ -1089,15 +1089,10 @@ const RECIPES = [
   ["energy","wood","life"],
   ["energy","bunch","life"],
   ["energy","garden_flowers","life"],
-  ["jade","life","air","magicCrystal"],
-  ["life","jade","fire","elixir"],
-  ["water","fire","air","rainbow"],
-  // 三元素合成（非传说）：多步合成合并为一步，提升效率
-  ["earth","water","fire","brick"],   // 土+水+火 → 砖（泥土烧制）
-  ["air","water","earth","seed"],     // 气+水+土 → 种子（雨水落地）
-  ["water","fire","air","cloud"],     // 水+火+气 → 云（蒸汽升腾）
-  ["seed","earth","water","flower"],  // 种子+土+水 → 花（种子发芽开花）
-  ["fire","wood","stone","metal"],    // 火+木材+石 → 金属（木材燃料冶炼）
+  // 传说三元素配方（低等级元素放前面，方便验证；任意顺序均可合成）
+  ["air","jade","life","magicCrystal"],   // 气+玉石+生命 → 魔法水晶
+  ["fire","jade","life","elixir"],         // 火+玉石+生命 → 万能药
+  ["water","fire","air","rainbow"],        // 水+火+气 → 彩虹
 ];
 // 清理无效占位配方
 for(let i=RECIPES.length-1;i>=0;i--){
