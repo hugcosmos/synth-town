@@ -112,6 +112,12 @@
   .slot .lbl{font-size:11px; color:var(--dim); margin-top:4px; text-align:center; width:100%;}
   .slot.hover{border-color:var(--gold); background:var(--panel2);}
   #plus{font-size:30px; color:var(--dim);}
+  #plus2{font-size:30px; color:var(--dim);}
+  .elementTabs{display:flex; overflow-x:auto; white-space:nowrap; gap:4px; margin-bottom:8px; padding-bottom:4px;}
+  .elementTab{padding:4px 10px; font-size:12px; border-radius:6px; cursor:pointer; border:1px solid var(--line); background:transparent; color:var(--dim); white-space:nowrap; flex-shrink:0;}
+  .elementTab.active{background:var(--gold); color:#1a1530; border-color:var(--gold); font-weight:700;}
+  .elementTab.locked{opacity:.6;}
+  .legendInfoCard{cursor:pointer;}
   #craftBtn{
     background:var(--panel2); border:1px solid var(--line); color:var(--text);
     border-radius:12px; padding:12px 36px; font-size:16px; cursor:pointer; font-weight:600;
@@ -761,6 +767,7 @@
   <section id="view-craft" class="view active">
     <section class="panel">
       <h2 data-i18n="panel.elements">元素库（点一下填入合成槽）</h2>
+      <div class="elementTabs" id="elementTabs"></div>
       <div id="elementGrid"></div>
       <div id="discovered"><span data-i18n="discovered">已发现</span> <span id="discCount">0</span> / <span id="totalRecipes">?</span></div>
     </section>
@@ -770,6 +777,8 @@
         <div class="slot" id="slotA"><span class="lbl" data-i18n="slot.hint">点击元素</span></div>
         <div id="plus">+</div>
         <div class="slot" id="slotB"><span class="lbl" data-i18n="slot.hint">点击元素</span></div>
+        <div id="plus2">+</div>
+        <div class="slot" id="slotC"><span class="lbl" data-i18n="slot.hint">点击元素</span></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
         <button id="craftBtn" disabled data-i18n="btn.craft">✨ 合成</button>
@@ -871,10 +880,22 @@
             <button id="advancedUnlockBtn" data-i18n="recipe.unlock" disabled>解锁</button>
           </div>
         </div>
+        <div class="lockCard" id="newLegendLockCard">
+          <div class="lockIcon">🔮</div>
+          <div class="lockInfo">
+            <div class="lockTitle" data-i18n="recipe.newLegendTitle">新添加传说元素</div>
+            <div class="lockDesc" data-i18n="recipe.newLegendDesc">输入密码解锁新传说元素配方</div>
+          </div>
+          <div class="lockInput">
+            <div class="pwdBox" id="newLegendPwdBox"></div>
+            <button id="newLegendUnlockBtn" data-i18n="recipe.unlock">解锁</button>
+          </div>
+        </div>
       </div>
       <div id="recipeContent" style="display:none">
         <div id="recipeBasicSection"></div>
         <div id="recipeAdvancedSection" style="display:none"></div>
+        <div id="recipeNewLegendSection" style="display:none"></div>
       </div>
       <div class="bookFooter">
         <button id="recipeCloseBtn" class="bookCloseBtn" data-i18n="recipe.close">关闭配方书</button>
@@ -1032,6 +1053,11 @@ const ELEMENTS = {
 };
 // 基础元素（开局解锁）
 const BASE = ["earth","water","fire","air"];
+const LEGENDARY_IDS = new Set(["bunch","garden_flowers","chest","coin","magicCrystal","elixir","rainbow"]);
+const LEGEND_BUY = {magicCrystal:50, rainbow:15};
+const LEGEND_SELL = {magicCrystal:40, rainbow:12};
+const ELIXIR_BUY = {10:50, 11:55, 14:70, 15:75, 16:80};
+const ELIXIR_SELL = {10:40, 11:44, 14:56, 15:60, 16:64};
 
 const RECIPES = [
   ["earth","water","mud"],
@@ -1750,59 +1776,193 @@ function foundElementKinds(){
 }
 
 /* ============ 元素库 ============ */
+let currentElementTab="basic";
+function isAdvancedTabUnlocked(){
+  return Object.keys(S.unlocked||{}).some(k=>{
+    if(LEGENDARY_IDS.has(k)||k==="life") return false;
+    const t=tierOf(k);
+    return t>=4&&t<=7;
+  });
+}
+function tabElementCounts(){
+  ensureLifePoolSync();
+  ensureElixirPoolSync();
+  const normalNonLegend = [...normalElementSet()].filter(x=>!LEGENDARY_IDS.has(x));
+  const basicIds = normalNonLegend.filter(x=>{const t=tierOf(x);return t>=1&&t<=3;});
+  const advIds = normalNonLegend.filter(x=>{const t=tierOf(x);return t>=4&&t<=7;});
+  const basicFound = BASE.length + basicIds.filter(id=>(S.unlocked[id]||0)>0||id in S.unlocked).length;
+  const basicTotal = BASE.length + basicIds.length;
+  const advFound = advIds.filter(id=>(S.unlocked[id]||0)>0||id in S.unlocked).length;
+  const advTotal = advIds.length;
+  const lifeFound = (S.discoveredLifeHps||[]).length;
+  const lifeTotal = LIFE_HPS.length;
+  const legendFound = ((S.chest||0)>0?1:0) + ((S.coin||0)>0?1:0)
+    + (("magicCrystal" in S.unlocked)?1:0)
+    + (("rainbow" in S.unlocked)?1:0)
+    + (S.discoveredElixirHps||[]).length;
+  const legendTotal = 2 + 2 + Object.keys(ELIXIR_BUY).length;
+  return {basic:[basicFound,basicTotal], advanced:[advFound,advTotal], life:[lifeFound,lifeTotal], legend:[legendFound,legendTotal]};
+}
+function renderElementTabs(){
+  const box=$("#elementTabs");
+  if(!box) return;
+  const counts=tabElementCounts();
+  const advUnlocked=isAdvancedTabUnlocked();
+  const tabs=[
+    {id:"basic", label:t("tab.basic"), count:counts.basic, locked:false},
+    {id:"advanced", label:t("tab.advanced"), count:counts.advanced, locked:!advUnlocked},
+    {id:"life", label:t("tab.life"), count:counts.life, locked:false},
+    {id:"legend", label:t("tab.legend"), count:counts.legend, locked:false},
+  ];
+  box.innerHTML="";
+  tabs.forEach(tab=>{
+    const btn=document.createElement("button");
+    btn.className="elementTab"+(currentElementTab===tab.id?" active":"")+(tab.locked?" locked":"");
+    btn.textContent=tab.locked?`🔒 ${tab.label}`:`${tab.label} ${tab.count[0]}/${tab.count[1]}`;
+    btn.addEventListener("click",()=>{
+      if(tab.locked){ toast(t("shop.lockedTab")); return; }
+      currentElementTab=tab.id;
+      renderElementTabs();
+      renderElements();
+    });
+    box.appendChild(btn);
+  });
+}
 function renderElements(){
+  renderElementTabs();
   const g=$("#elementGrid");
   g.innerHTML="";
-  // 宝箱固定卡片（始终展示，可合成但需囤积）- 特殊元素无等级，黄色显示
-  const boxCard=document.createElement("div");
-  boxCard.className="el"+(S.chest>0?"":" empty");
-  boxCard.dataset.id="chest";
-  boxCard.innerHTML=`<span class="ico">🧰</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("chest")}</span><span class="cnt">×${S.chest||0}</span>`;
-  boxCard.addEventListener("click",()=>toast(t("npc.chestHint")||(LANG==="en"?"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料")));
-  g.appendChild(boxCard);
-  const showSet=elementShowSet();
-  Object.keys(S.unlocked).forEach(id=>{
-    const e=ELEMENTS[id]; if(!e||!showSet.has(id)) return;
-    const d=document.createElement("div");
-    d.className="el"+(count(id)<=0?" empty":""); d.dataset.id=id;
-    const tierTag=`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
-    d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}${tierTag}</span><span class="cnt">×${count(id)}</span>`;
-    if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
-    else makeDraggable(d, id);
-    g.appendChild(d);
-  });
-  // 生命按 HP 分组展示（遍历已发现的HP，数量为0时显示0且变灰，与其他元素一致）
   ensureLifePoolSync();
+  ensureElixirPoolSync();
   if(!S.discoveredLifeHps) S.discoveredLifeHps=[];
+  if(!S.discoveredElixirHps) S.discoveredElixirHps=[];
   (S.lifePool||[]).forEach(h=>{ if(!S.discoveredLifeHps.includes(h)) S.discoveredLifeHps.push(h); });
-  const hpCount={};
-  (S.lifePool||[]).forEach(h=>{hpCount[h]=(hpCount[h]||0)+1;});
-  [...new Set(S.discoveredLifeHps)].sort((a,b)=>a-b).forEach(hp=>{
-    const cnt=hpCount[hp]||0;
-    const d=document.createElement("div");
-    d.className="el"+(cnt<=0?" empty":""); d.dataset.id="life";
-    d.innerHTML=`<span class="ico">${assetHtml("elements","life",ELEMENTS.life.i,"26px")}</span><span class="name">${elName("life")}</span><span class="cnt" style="color:${cnt>0?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
-    if(cnt>0){
-      if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace("life"));
-      else makeDraggable(d, "life");
-    }else{
-      d.addEventListener("click",()=>toast(LANG==="en"?`No HP${hp} life left, synthesize more!`:`HP${hp}的生命已用完，再合成一些吧！`));
+  (S.elixirPool||[]).forEach(h=>{ if(!S.discoveredElixirHps.includes(h)) S.discoveredElixirHps.push(h); });
+  const normalNonLegend = [...normalElementSet()].filter(x=>!LEGENDARY_IDS.has(x));
+
+  if(currentElementTab==="basic"){
+    BASE.forEach(id=>{
+      const e=ELEMENTS[id];
+      const d=document.createElement("div");
+      d.className="el"+(count(id)<=0?" empty":""); d.dataset.id=id;
+      const tierTag=`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
+      d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}${tierTag}</span><span class="cnt">×${count(id)}</span>`;
+      if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
+      else makeDraggable(d, id);
+      g.appendChild(d);
+    });
+    normalNonLegend.filter(x=>{const t=tierOf(x);return t>=1&&t<=3;}).forEach(id=>{
+      const e=ELEMENTS[id];
+      const discovered = id in S.unlocked;
+      const d=document.createElement("div");
+      d.className="el"+((!discovered||count(id)<=0)?" empty":""); d.dataset.id=id;
+      const tierTag=`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
+      d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}${tierTag}</span><span class="cnt">×${count(id)}</span>`;
+      if(discovered&&count(id)>0){
+        if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
+        else makeDraggable(d, id);
+      }
+      g.appendChild(d);
+    });
+  } else if(currentElementTab==="advanced"){
+    normalNonLegend.filter(x=>{const t=tierOf(x);return t>=4&&t<=7;}).forEach(id=>{
+      const e=ELEMENTS[id];
+      const discovered = id in S.unlocked;
+      const d=document.createElement("div");
+      d.className="el"+((!discovered||count(id)<=0)?" empty":""); d.dataset.id=id;
+      const tierTag=`<small style="color:#7c6bb0">${tierOf(id)}${LANG==="en"?"Lvl":"级"}</small>`;
+      d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name">${elName(id)}${tierTag}</span><span class="cnt">×${count(id)}</span>`;
+      if(discovered&&count(id)>0){
+        if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
+        else makeDraggable(d, id);
+      }
+      g.appendChild(d);
+    });
+  } else if(currentElementTab==="life"){
+    const hpCount={};
+    (S.lifePool||[]).forEach(h=>{hpCount[h]=(hpCount[h]||0)+1;});
+    [...new Set(S.discoveredLifeHps)].sort((a,b)=>a-b).forEach(hp=>{
+      const cnt=hpCount[hp]||0;
+      const d=document.createElement("div");
+      d.className="el"+(cnt<=0?" empty":""); d.dataset.id="life";
+      d.innerHTML=`<span class="ico">${assetHtml("elements","life",ELEMENTS.life.i,"26px")}</span><span class="name">${elName("life")}</span><span class="cnt" style="color:${cnt>0?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
+      if(cnt>0){
+        if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace("life",hp));
+        else makeDraggable(d, "life");
+        d.dataset.hp=hp;
+      }else{
+        d.addEventListener("click",()=>toast(LANG==="en"?`No HP${hp} life left, synthesize more!`:`HP${hp}的生命已用完，再合成一些吧！`));
+      }
+      g.appendChild(d);
+    });
+  } else if(currentElementTab==="legend"){
+    // chest信息卡
+    const chestCard=document.createElement("div");
+    chestCard.className="el legendInfoCard"+(S.chest>0?"":" empty");
+    chestCard.innerHTML=`<span class="ico">🧰</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("chest")}</span><span class="cnt">×${S.chest||0}</span>`;
+    chestCard.addEventListener("click",()=>toast(t("npc.chestHint")||(LANG==="en"?"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料")));
+    g.appendChild(chestCard);
+    // coin信息卡
+    const coinCard=document.createElement("div");
+    coinCard.className="el legendInfoCard"+(S.coin>0?"":" empty");
+    coinCard.innerHTML=`<span class="ico">💰</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("coin")}</span><span class="cnt">×${S.coin||0}</span>`;
+    coinCard.addEventListener("click",()=>toast(LANG==="en"?"💰 Coins: earned from buildings and selling elements":"💰 金币：建筑产出和出售元素获得"));
+    g.appendChild(coinCard);
+    // magicCrystal
+    const mcDiscovered = "magicCrystal" in S.unlocked;
+    const mcCard=document.createElement("div");
+    mcCard.className="el"+((!mcDiscovered||count("magicCrystal")<=0)?" empty":"");
+    mcCard.innerHTML=`<span class="ico">🔮</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("magicCrystal")}</span><span class="cnt">×${count("magicCrystal")}</span>`;
+    if(mcDiscovered&&count("magicCrystal")>0){
+      mcCard.addEventListener("click",()=>toast(LANG==="en"?"🔮 Magic Crystal: used to transform pet species at Pet Detail":"🔮 魔法水晶：在宠物详情页用于转换物种"));
+    } else {
+      mcCard.addEventListener("click",()=>toast(LANG==="en"?"Craft: 💎Jade + 🧬Life + 💨Air":"合成：💎玉石 + 🧬生命 + 💨气"));
     }
-    g.appendChild(d);
-  });
+    g.appendChild(mcCard);
+    // rainbow
+    const rbDiscovered = "rainbow" in S.unlocked;
+    const rbCard=document.createElement("div");
+    rbCard.className="el"+((!rbDiscovered||count("rainbow")<=0)?" empty":"");
+    rbCard.innerHTML=`<span class="ico">🌈</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("rainbow")}</span><span class="cnt">×${count("rainbow")}</span>`;
+    if(rbDiscovered&&count("rainbow")>0){
+      rbCard.addEventListener("click",()=>toast(LANG==="en"?"🌈 Rainbow: feed to pets at Pet Detail (full satiety + intimacy)":"🌈 彩虹：在宠物详情页喂食（饱食度满+亲密度+5）"));
+    } else {
+      rbCard.addEventListener("click",()=>toast(LANG==="en"?"Craft: 💧Water + 🔥Fire + 💨Air":"合成：💧水 + 🔥火 + 💨气"));
+    }
+    g.appendChild(rbCard);
+    // elixir按HP分组
+    const exCount={};
+    (S.elixirPool||[]).forEach(h=>{exCount[h]=(exCount[h]||0)+1;});
+    [...new Set(S.discoveredElixirHps)].sort((a,b)=>a-b).forEach(hp=>{
+      const cnt=exCount[hp]||0;
+      const d=document.createElement("div");
+      d.className="el"+(cnt<=0?" empty":""); d.dataset.id="elixir";
+      d.innerHTML=`<span class="ico">💊</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("elixir")}</span><span class="cnt" style="color:${cnt>0?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
+      if(cnt>0){
+        d.addEventListener("click",()=>toast(LANG==="en"?`💊 Elixir HP${hp}: use at Pet Detail to fully revive a pet with matching maxHp`:`💊 万能药HP${hp}：在宠物详情页对maxHp匹配的宠物使用，满血复活`));
+      }else{
+        d.addEventListener("click",()=>toast(LANG==="en"?"Craft: 🧬Life + 💎Jade + 🔥Fire (HP from input life)":"合成：🧬生命 + 💎玉石 + 🔥火（HP由输入生命决定）"));
+      }
+      g.appendChild(d);
+    });
+  }
   $("#discCount").textContent = foundElementKinds();
   $("#totalRecipes").textContent = totalElementKinds();
 }
 
 /* ============ 拖拽（Pointer Events，兼容触屏） ============ */
-let dragId=null, ghost=null, activePointer=null, startX=0, startY=0;
+let dragId=null, dragHp=null, ghost=null, activePointer=null, startX=0, startY=0;
 function makeDraggable(el, id){
   el.addEventListener("pointerdown", ev=>{
     if(dragId) return;                       // 同一时刻只允许一个拖拽，防叠影
-    if(count(id)<=0){ toast(t("craft.usedUp",elName(id))); return; }
+    if(id==="life"||id==="elixir"){
+      if(id==="life"){ ensureLifePoolSync(); if(!S.lifePool.length) return; }
+      else { ensureElixirPoolSync(); if(!S.elixirPool.length) return; }
+    } else if(count(id)<=0){ toast(t("craft.usedUp",elName(id))); return; }
     ev.preventDefault();
     activePointer=ev.pointerId;
     dragId=id;
+    dragHp = el.dataset.hp ? parseInt(el.dataset.hp) : null;
     startX=ev.clientX; startY=ev.clientY;
     document.body.classList.add("dragging");
     ghost=document.createElement("div");
@@ -1824,10 +1984,10 @@ window.addEventListener("pointerup", ev=>{
   const target=document.elementFromPoint(ev.clientX, ev.clientY);
   const slot=target && target.closest(".slot");
   if(slot){
-    dropToSlot(slot, dragId);
+    dropToSlot(slot, dragId, dragHp);
   } else {
     const moved=Math.abs(ev.clientX-startX)+Math.abs(ev.clientY-startY);
-    if(moved<8) autoPlace(dragId);
+    if(moved<8) autoPlace(dragId, dragHp);
   }
   cleanupDrag();
 });
@@ -1838,38 +1998,67 @@ window.addEventListener("pointercancel", ev=>{
 window.addEventListener("blur", cleanupDrag);
 function moveGhost(ev){ if(ghost){ ghost.style.left=(ev.clientX-17)+"px"; ghost.style.top=(ev.clientY-17)+"px"; } }
 function cleanupDrag(){
-  dragId=null; activePointer=null;
+  dragId=null; dragHp=null; activePointer=null;
   document.body.classList.remove("dragging");
   if(ghost){ ghost.remove(); ghost=null; }
 }
 
-let selA=null, selB=null, resultTimer=null;
+let selA=null, selB=null, selC=null, resultTimer=null;
+let selAHp=null, selBHp=null, selCHp=null;
 function clearResult(){ const res=$("#result"); if(res) res.innerHTML=""; }
-function dropToSlot(slot, id){
-  if(count(id)<=0) return;
-  setSlot(slot, id);
+function dropToSlot(slot, id, hp=null){
+  if(id==="life"){
+    ensureLifePoolSync();
+    if(!S.lifePool.length) return;
+    if(hp===null) hp=S.lifePool[0];
+  } else if(id==="elixir"){
+    ensureElixirPoolSync();
+    if(!S.elixirPool.length) return;
+    if(hp===null) hp=S.elixirPool[0];
+  } else if(count(id)<=0) return;
+  setSlot(slot, id, hp);
   updateCraftBtn();
 }
-function autoPlace(id){
-  if(count(id)<=0) return;
+function autoPlace(id, hp=null){
+  if(id==="life"){
+    ensureLifePoolSync();
+    if(!S.lifePool.length) return;
+    if(hp===null){ hp=S.lifePool[0]; }
+    if(!S.lifePool.includes(hp)) return;
+  }
+  if(id==="elixir"){
+    ensureElixirPoolSync();
+    if(!S.elixirPool.length) return;
+    if(hp===null){ hp=S.elixirPool[0]; }
+    if(!S.elixirPool.includes(hp)) return;
+  }
+  if(id!=="life"&&id!=="elixir"&&count(id)<=0) return;
   let slot;
   if(!selA) slot=$("#slotA");
   else if(!selB) slot=$("#slotB");
-  else slot=$("#slotB");
-  setSlot(slot, id);
+  else if(!selC) slot=$("#slotC");
+  else slot=$("#slotC");
+  setSlot(slot, id, hp);
   updateCraftBtn();
 }
-function setSlot(slot, id){
-  if(slot.id==="slotA") selA=id; else selB=id;
-  slot.innerHTML=`<span style="font-size:40px">${ELEMENTS[id].i}</span>`;
+function setSlot(slot, id, hp=null){
+  if(slot.id==="slotA"){ selA=id; selAHp=hp; }
+  else if(slot.id==="slotB"){ selB=id; selBHp=hp; }
+  else { selC=id; selCHp=hp; }
+  let label = ELEMENTS[id].i;
+  if(id==="life" && hp!==null) label += `<small style="font-size:11px;color:var(--ok)">HP${hp}</small>`;
+  if(id==="elixir" && hp!==null) label += `<small style="font-size:11px;color:var(--ok)">HP${hp}</small>`;
+  slot.innerHTML=`<span style="font-size:40px;line-height:1;">${label}</span>`;
   slot.dataset.filled=id;
+  if(hp!==null) slot.dataset.hp=hp; else delete slot.dataset.hp;
   slot.classList.add("pop"); setTimeout(()=>slot.classList.remove("pop"),450);
   clearResult(); clearTimeout(resultTimer);
 }
 function clearSlots(){
-  selA=selB=null;
-  [["#slotA",selA],["#slotB",selB]].forEach(([s])=>{
-    const el=$(s); el.innerHTML='<span class="lbl">'+t('slot.hint')+'</span>'; delete el.dataset.filled;
+  selA=selB=selC=null;
+  selAHp=selBHp=selCHp=null;
+  ["#slotA","#slotB","#slotC"].forEach(s=>{
+    const el=$(s); el.innerHTML='<span class="lbl">'+t('slot.hint')+'</span>'; delete el.dataset.filled; delete el.dataset.hp;
   });
 }
 function updateCraftBtn(){
@@ -1902,8 +2091,13 @@ function netWorth(){
   v+=(S.chest||0)*10;
   // 元素库存（含未孕育的生命）
   Object.entries(S.unlocked||{}).forEach(([id,n])=>{
-    if(n>0&&ELEMENTS[id]) v+=n*tierOf(id)*BUY_RATE;
+    if(n>0&&ELEMENTS[id]){
+      if(id==="magicCrystal") v+=n*LEGEND_BUY.magicCrystal;
+      else if(id==="rainbow") v+=n*LEGEND_BUY.rainbow;
+      else v+=n*tierOf(id)*BUY_RATE;
+    }
   });
+  (S.elixirPool||[]).forEach(hp=>{ v+=ELIXIR_BUY[hp]||50; });
   // 宠物：按生命值折算（生命孕育成宠物后价值随 maxHp 走）
   (S.petList||[]).forEach(p=>{ v+=(p.maxHp||5)*BUY_RATE; });
   // 建筑+地皮
@@ -1956,7 +2150,9 @@ document.querySelectorAll(".slot").forEach(function(el){
   el.addEventListener("click", function(){
     if(this.dataset.filled && !dragId){
       delete this.dataset.filled;
-      if(this.id==="slotA") selA=null; else selB=null;
+      if(this.id==="slotA"){ selA=null; selAHp=null; }
+      else if(this.id==="slotB"){ selB=null; selBHp=null; }
+      else { selC=null; selCHp=null; }
       this.innerHTML='<span class="lbl">'+t('slot.hint')+'</span>';
       updateCraftBtn();
     }
@@ -2148,48 +2344,113 @@ function _animPetBurst(){
 /* ============ 合成 ============ */
 $("#craftBtn").addEventListener("click", ()=>{
   if(!selA||!selB) return;
-  const cost=craftCost(selA,selB);
-  const recipe = R.find(r=>(r[0]===selA&&r[1]===selB)||(r[0]===selB&&r[1]===selA));
   const res=$("#result");
-  if(!recipe){
-    res.innerHTML=t("craft.invalid");
-    $("#slots").classList.add("shake");
-    setTimeout(()=>$("#slots").classList.remove("shake"),400);
-    clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2000);
-    return;
+  const isThree = !!(selA&&selB&&selC);
+  let recipe, out, cost;
+  if(isThree){
+    const inputs=[selA,selB,selC].sort();
+    recipe = R.find(r=>r.length===4 && [r[0],r[1],r[2]].sort().join("|")===inputs.join("|"));
+    if(!recipe){
+      res.innerHTML=t("craft.invalid");
+      $("#slots").classList.add("shake");
+      setTimeout(()=>$("#slots").classList.remove("shake"),400);
+      clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2000);
+      return;
+    }
+    out=recipe[3];
+    cost=craftCost(selA,selB,selC);
+  } else {
+    cost=craftCost(selA,selB);
+    recipe = R.find(r=>r.length===3&&((r[0]===selA&&r[1]===selB)||(r[0]===selB&&r[1]===selA)));
+    if(!recipe){
+      res.innerHTML=t("craft.invalid");
+      $("#slots").classList.add("shake");
+      setTimeout(()=>$("#slots").classList.remove("shake"),400);
+      clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2000);
+      return;
+    }
+    out=recipe[2];
   }
   const bi=$("#batchInput");
   const wantN=bi?Math.max(1,Math.min(+bi.max||1,Math.floor(+bi.value)||1)):1;
-  const out=recipe[2];
   const isNew=!["coin","chest"].includes(out)&&!(out in S.unlocked)&&count(out)===0;
   let done=0,coinGain=0,chestGain=0;
+  const inputs = isThree
+    ? [{id:selA,hp:selAHp},{id:selB,hp:selBHp},{id:selC,hp:selCHp}]
+    : [{id:selA,hp:selAHp},{id:selB,hp:selBHp}];
   for(let i=0;i<wantN;i++){
-    if(selA===selB){if(count(selA)<2)break;}
-    else{if(count(selA)<1||count(selB)<1)break;}
-    S.unlocked[selA]--;S.unlocked[selB]--;
-    [selA,selB].forEach(k=>{S.unlocked[k]=Math.max(0,S.unlocked[k]);});
+    let canCraft=true;
+    const idCounts={};
+    inputs.forEach(inp=>{ idCounts[inp.id]=(idCounts[inp.id]||0)+1; });
+    for(const [id,cnt] of Object.entries(idCounts)){
+      if(id==="life"){ ensureLifePoolSync(); if(S.lifePool.length<cnt) canCraft=false; }
+      else if(id==="elixir"){ ensureElixirPoolSync(); if(S.elixirPool.length<cnt) canCraft=false; }
+      else if(count(id)<cnt) canCraft=false;
+    }
+    if(!canCraft) break;
+    inputs.forEach(inp=>{
+      if(inp.id==="life"){
+        ensureLifePoolSync();
+        let idx;
+        if(inp.hp!==null && S.lifePool.includes(inp.hp)) idx=S.lifePool.indexOf(inp.hp);
+        else idx=0;
+        S.lifePool.splice(idx,1);
+        S.unlocked.life=Math.max(0,(S.unlocked.life||0)-1);
+      } else if(inp.id==="elixir"){
+        ensureElixirPoolSync();
+        let idx;
+        if(inp.hp!==null && S.elixirPool.includes(inp.hp)) idx=S.elixirPool.indexOf(inp.hp);
+        else idx=0;
+        S.elixirPool.splice(idx,1);
+        S.unlocked.elixir=Math.max(0,(S.unlocked.elixir||0)-1);
+      } else {
+        S.unlocked[inp.id]=Math.max(0,(S.unlocked[inp.id]||0)-1);
+      }
+    });
     if(out==="coin"){S.coin+=5;coinGain+=5;}
     else if(out==="chest"){S.chest+=1;S.coin+=10;chestGain++;}
-    else if(out==="life"){S.unlocked.life=(S.unlocked.life||0)+1;S.lifePool.push(cost); if(!S.discoveredLifeHps.includes(cost)) S.discoveredLifeHps.push(cost);}
+    else if(out==="life"){
+      S.unlocked.life=(S.unlocked.life||0)+1;
+      S.lifePool.push(cost);
+      if(!S.discoveredLifeHps.includes(cost)) S.discoveredLifeHps.push(cost);
+    }
+    else if(out==="elixir"){
+      const lifeInput = inputs.find(inp=>inp.id==="life");
+      const elixirHp = lifeInput && lifeInput.hp ? lifeInput.hp : 10;
+      S.unlocked.elixir=(S.unlocked.elixir||0)+1;
+      S.elixirPool.push(elixirHp);
+      if(!S.discoveredElixirHps.includes(elixirHp)) S.discoveredElixirHps.push(elixirHp);
+    }
     else{S.unlocked[out]=(S.unlocked[out]||0)+1;}
     done++;
   }
-  if(done===0){toast(t("craft.notEnough",elName(selA),elName(selB)));return;}
+  if(done===0){
+    const names=inputs.map(inp=>elName(inp.id)).join("/");
+    toast(t("craft.notEnough",names,""));
+    return;
+  }
   let ot=ELEMENTS[out].i+" "+elName(out);
   if(out==="coin")ot+=t("craft.coinGain",coinGain);
   else if(out==="chest")ot+=t("craft.chestGain",chestGain*10);
   else if(out==="life")ot+=` <small style="color:var(--ok)">${t("craft.lifeHp",cost)}</small>`;
+  else if(out==="elixir"){
+    const lifeInput = inputs.find(inp=>inp.id==="life");
+    const ehp = lifeInput && lifeInput.hp ? lifeInput.hp : 10;
+    ot+=` <small style="color:var(--ok)">HP${ehp}</small>`;
+  }
   if(done>1)ot="×"+done+" "+ot;
   if(done<wantN)ot+=` <small style="color:var(--dim)">${t("craft.partial",done,wantN)}</small>`;
   res.innerHTML=`<span class="pop">${ot}</span>`;
   if(isNew&&done>0){res.innerHTML=`<span class="new pop">${t("craft.newBadge")}</span> ${res.innerHTML}`;toast(t("craft.newElement",elName(out),ELEMENTS[out].i));}
-  // 合成成功粒子爆发
   if(done>0){
     const _slots=$("#slots");
     if(_slots){ const _r=_slots.getBoundingClientRect(); craftParticleBurst(_r.left+_r.width/2,_r.top+_r.height/2,ELEMENTS[out].i); }
   }
   clearTimeout(resultTimer);resultTimer=setTimeout(clearResult,2500);
-  if(done>0){ const rk=[selA,selB].sort().join("+"); if(!S.craftedRecipes.includes(rk)) S.craftedRecipes.push(rk); }
+  if(done>0){
+    const rk=inputs.map(inp=>inp.id).sort().join("+");
+    if(!S.craftedRecipes.includes(rk)) S.craftedRecipes.push(rk);
+  }
   clearSlots();updateCraftBtn();const _bi=$("#batchInput");if(_bi)_bi.value=1;
   renderAll();save();
 });
@@ -2237,7 +2498,14 @@ function setCartQty(id,val){
 function clearCart(){ S.shopCart={}; renderElShop(); }
 function cartTotal(){
   if(!S.shopCart) return 0;
-  return Object.entries(S.shopCart).reduce((s,[id,n])=>s+(tierOf(id)*BUY_RATE)*n,0);
+  return Object.entries(S.shopCart).reduce((s,[id,n])=>{
+    if(id.startsWith("elixir_HP")){
+      const hp=parseInt(id.split("_HP")[1]);
+      return s+(ELIXIR_BUY[hp]||50)*n;
+    }
+    if(LEGEND_BUY[id]) return s+LEGEND_BUY[id]*n;
+    return s+(tierOf(id)*BUY_RATE)*n;
+  },0);
 }
 function checkoutCart(){
   if(!S.shopCart||!Object.keys(S.shopCart).length){ toast(LANG==="en"?"Cart is empty":"购物车是空的"); return; }
@@ -2246,7 +2514,16 @@ function checkoutCart(){
   if(!confirm(LANG==="en"?`Buy ${Object.values(S.shopCart).reduce((a,b)=>a+b,0)} items for 💰${total}?`:`确认购买 ${Object.values(S.shopCart).reduce((a,b)=>a+b,0)} 个元素，花费 💰${total}？`)) return;
   S.coin-=total;
   Object.entries(S.shopCart).forEach(([id,n])=>{
-    S.unlocked[id]=(S.unlocked[id]||0)+n;
+    if(id.startsWith("elixir_HP")){
+      const hp=parseInt(id.split("_HP")[1]);
+      S.unlocked.elixir=(S.unlocked.elixir||0)+n;
+      if(!S.elixirPool) S.elixirPool=[];
+      if(!S.discoveredElixirHps) S.discoveredElixirHps=[];
+      for(let i=0;i<n;i++){ S.elixirPool.push(hp); }
+      if(!S.discoveredElixirHps.includes(hp)) S.discoveredElixirHps.push(hp);
+    } else {
+      S.unlocked[id]=(S.unlocked[id]||0)+n;
+    }
   });
   toast(LANG==="en"?`🛒 Bought ${Object.values(S.shopCart).reduce((a,b)=>a+b,0)} items for -💰${total}`:`🛒 购买了 ${Object.values(S.shopCart).reduce((a,b)=>a+b,0)} 个元素，-💰${total}`);
   S.shopCart={};
@@ -2270,14 +2547,42 @@ function renderElShop(){
     </div>`;
   });
   gridHtml+=`</div>`;
+  // 传说元素区域
+  ensureElixirPoolSync();
+  if(!S.discoveredElixirHps) S.discoveredElixirHps=[];
+  (S.elixirPool||[]).forEach(h=>{ if(!S.discoveredElixirHps.includes(h)) S.discoveredElixirHps.push(h); });
+  const legendItems=[];
+  if("magicCrystal" in S.unlocked) legendItems.push({id:"magicCrystal", price:LEGEND_BUY.magicCrystal});
+  if("rainbow" in S.unlocked) legendItems.push({id:"rainbow", price:LEGEND_BUY.rainbow});
+  (S.discoveredElixirHps||[]).sort((a,b)=>a-b).forEach(hp=>{
+    legendItems.push({id:"elixir_HP"+hp, price:ELIXIR_BUY[hp]||50, hp:hp});
+  });
+  if(legendItems.length){
+    gridHtml+=`<div style="font-weight:700;font-size:13px;margin:12px 0 6px;color:var(--gold);">${t("shop.legendarySection")}</div>`;
+    gridHtml+=`<div class="shopElementGrid">`;
+    legendItems.forEach(item=>{
+      const e = item.hp ? ELEMENTS.elixir : ELEMENTS[item.id];
+      const inCart=S.shopCart?.[item.id]||0;
+      const nameLabel = item.hp ? `${elName("elixir")} HP${item.hp}` : elName(item.id);
+      gridHtml+=`<div class="shopElCard" onclick="addToCart('${item.id}')" title="${nameLabel} · 💰${item.price}">
+        <button class="addBtn" onclick="event.stopPropagation();addToCart('${item.id}')">+</button>
+        <div class="ico">${e.i}</div>
+        <div class="nm">${nameLabel}</div>
+        <div class="pr">💰${item.price}${inCart?` <span style="color:var(--ok)">×${inCart}</span>`:""}</div>
+      </div>`;
+    });
+    gridHtml+=`</div>`;
+  }
   // 右侧购物车
   let cartHtml=`<div class="shopCart"><div class="shopCartTitle"><span>🛒 ${LANG==="en"?"Cart":"购物车"}</span>${S.shopCart&&Object.keys(S.shopCart).length?`<span style="font-size:11px;color:var(--dim);cursor:pointer;" onclick="clearCart()">${LANG==="en"?"Clear":"清空"}</span>`:""}</div>`;
   if(!S.shopCart||!Object.keys(S.shopCart).length){
     cartHtml+=`<div class="shopCartEmpty">${LANG==="en"?"Tap elements to add to cart":"点击元素加入购物车"}</div>`;
   }else{
     Object.entries(S.shopCart).forEach(([id,n])=>{
-      const e=ELEMENTS[id];
-      cartHtml+=`<div class="shopCartItem"><span class="ico">${e.i}</span><span class="nm">${elName(id)}</span><span class="qtyStepper"><button class="rmBtn" onclick="decCart('${id}')">−</button><input type="number" class="qtyInput" value="${n}" min="1" max="${batchMax()||5}" onchange="setCartQty('${id}',this.value)" onclick="this.select()"><button class="rmBtn" onclick="incCart('${id}')">＋</button></span><button class="rmBtn" onclick="removeFromCart('${id}')" title="${LANG==="en"?"Remove":"移除"}">🗑</button></div>`;
+      const isElixirHp = id.startsWith("elixir_HP");
+      const e = isElixirHp ? ELEMENTS.elixir : ELEMENTS[id];
+      const nm = isElixirHp ? `${elName("elixir")} HP${id.split("_HP")[1]}` : elName(id);
+      cartHtml+=`<div class="shopCartItem"><span class="ico">${e.i}</span><span class="nm">${nm}</span><span class="qtyStepper"><button class="rmBtn" onclick="decCart('${id}')">−</button><input type="number" class="qtyInput" value="${n}" min="1" max="${batchMax()||5}" onchange="setCartQty('${id}',this.value)" onclick="this.select()"><button class="rmBtn" onclick="incCart('${id}')">＋</button></span><button class="rmBtn" onclick="removeFromCart('${id}')" title="${LANG==="en"?"Remove":"移除"}">🗑</button></div>`;
     });
     cartHtml+=`<div class="shopCartTotal"><span>${LANG==="en"?"Total":"合计"}</span><span style="color:var(--gold)">💰${cartTotal()}</span></div>`;
   }
@@ -2316,6 +2621,29 @@ function renderTradePanel(){
       <button data-tradeel="${id}" style="background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰<span class="tradePrice">${price}</span></button>
     </div>`;
   });
+  // 传说元素出售
+  ensureElixirPoolSync();
+  const legendSellItems=[];
+  if(count("magicCrystal")>0) legendSellItems.push({id:"magicCrystal", price:LEGEND_SELL.magicCrystal, own:count("magicCrystal")});
+  if(count("rainbow")>0) legendSellItems.push({id:"rainbow", price:LEGEND_SELL.rainbow, own:count("rainbow")});
+  const exCount={};
+  (S.elixirPool||[]).forEach(h=>{exCount[h]=(exCount[h]||0)+1;});
+  Object.entries(exCount).sort((a,b)=>a[0]-b[0]).forEach(([hp,cnt])=>{
+    legendSellItems.push({id:"elixir_HP"+hp, price:ELIXIR_SELL[hp]||40, own:cnt, hp:parseInt(hp)});
+  });
+  if(legendSellItems.length){
+    html+=`<div style="font-weight:700;font-size:13px;margin:12px 0 4px;color:var(--gold);">${t("shop.legendarySection")}</div>`;
+    legendSellItems.forEach(item=>{
+      const e = item.hp ? ELEMENTS.elixir : ELEMENTS[item.id];
+      const nm = item.hp ? `${elName("elixir")} HP${item.hp}` : elName(item.id);
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
+        <span style="font-size:18px">${e.i}</span>
+        <span style="font-size:13px">${nm}</span>
+        <span style="font-size:10px;color:var(--dim)">×${item.own}</span>
+        <button data-tradelegend="${item.id}" style="margin-left:auto;background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰${item.price}</button>
+      </div>`;
+    });
+  }
   // 宠物置换
   html+=`<div style="font-weight:700;font-size:13px;margin:12px 0 4px;">${LANG==="en"?"🐾 Pets":"🐾 宠物"}</div>`;
   if(!S.petList.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No pets":"暂无宠物"}</div>`; }
@@ -2355,6 +2683,31 @@ function renderTradePanel(){
     S.unlocked[id]=Math.max(0,(S.unlocked[id]||0)-n);
     S.coin+=earn; S.totalEarned+=earn;
     toast(LANG==="en"?`♻️ Sold ${n}× ${elName(id)} → +💰${earn}`:`♻️ 卖出 ${n}× ${elName(id)} → +💰${earn}`);
+    renderAll(); renderTradePanel(); save();
+  }));
+  // 传说元素出售
+  box.querySelectorAll("[data-tradelegend]").forEach(btn=>btn.addEventListener("click",()=>{
+    const id=btn.dataset.tradelegend;
+    if(id.startsWith("elixir_HP")){
+      const hp=parseInt(id.split("_HP")[1]);
+      const price=ELIXIR_SELL[hp]||40;
+      const own=(S.elixirPool||[]).filter(h=>h===hp).length;
+      if(own<1) return;
+      if(!confirm(LANG==="en"?`Sell 1× Elixir HP${hp} for 💰${price}?`:`确认卖出 1× 万能药HP${hp}，获得 💰${price}？`)) return;
+      const idx=S.elixirPool.indexOf(hp);
+      if(idx>=0) S.elixirPool.splice(idx,1);
+      S.unlocked.elixir=Math.max(0,(S.unlocked.elixir||0)-1);
+      S.coin+=price; S.totalEarned+=price;
+      toast(LANG==="en"?`♻️ Sold Elixir HP${hp} → +💰${price}`:`♻️ 卖出万能药HP${hp} → +💰${price}`);
+    } else {
+      const price=LEGEND_SELL[id]||0;
+      const own=count(id);
+      if(own<1) return;
+      if(!confirm(LANG==="en"?`Sell 1× ${elName(id)} for 💰${price}?`:`确认卖出 1× ${elName(id)}，获得 💰${price}？`)) return;
+      S.unlocked[id]=Math.max(0,(S.unlocked[id]||0)-1);
+      S.coin+=price; S.totalEarned+=price;
+      toast(LANG==="en"?`♻️ Sold ${elName(id)} → +💰${price}`:`♻️ 卖出${elName(id)} → +💰${price}`);
+    }
     renderAll(); renderTradePanel(); save();
   }));
   // 宠物置换
@@ -3230,10 +3583,27 @@ function renderPetDetail(){
       <button id="petRenameBtn" style="flex:1;min-width:100px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">✏️ ${LANG==="en"?"Rename":"改名"}</button>
       ${canUpload?`<button id="petAvatarBtn" style="flex:1;min-width:100px;background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-weight:700;">📷 ${LANG==="en"?"Avatar":"头像"}</button>`:''}
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      ${(()=>{
+        const canTransform = count("magicCrystal")>=1 && p.id!=="panda";
+        const needElixirHp = p.maxHp;
+        const hasElixir = (S.elixirPool||[]).includes(needElixirHp);
+        const canElixir = (p.sick||p.hp<p.maxHp) && hasElixir;
+        const canRainbow = count("rainbow")>=1 && !p.sick;
+        return `
+          <button id="petTransformBtn" style="flex:1;min-width:90px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-weight:700;${canTransform?'':'opacity:.4;cursor:not-allowed;'}" title="${p.id==='panda'?t('pet.pandaCannotTransform'):t('pet.transformSpecies')}">${t("pet.transformSpecies")}</button>
+          <button id="petElixirBtn" style="flex:1;min-width:90px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-weight:700;${canElixir?'':'opacity:.4;cursor:not-allowed;'}" title="${!hasElixir?t('pet.needElixirHp',needElixirHp):t('pet.useElixir')}">${t("pet.useElixir")}</button>
+          <button id="petRainbowBtn" style="flex:1;min-width:90px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-weight:700;${canRainbow?'':'opacity:.4;cursor:not-allowed;'}" title="${t('pet.feedRainbow')}">${t("pet.feedRainbow")}</button>
+        `;
+      })()}
+    </div>
     <input type="file" id="petAvatarInput" accept="image/*" style="display:none">
   `;
   $("#petRenameBtn")?.addEventListener("click",()=>renamePet(selectedPetIdx));
   $("#petAvatarBtn")?.addEventListener("click",()=>$("#petAvatarInput").click());
+  $("#petTransformBtn")?.addEventListener("click",()=>transformPetSpecies(selectedPetIdx));
+  $("#petElixirBtn")?.addEventListener("click",()=>useElixirOnPet(selectedPetIdx));
+  $("#petRainbowBtn")?.addEventListener("click",()=>feedRainbowToPet(selectedPetIdx));
   const avatarInput=$("#petAvatarInput");
   if(avatarInput){
     avatarInput.onchange=async e=>{
@@ -3261,6 +3631,51 @@ function curePet(idx){
   p.hp=p.maxHp; p.sick=false;
   toast(t("pet.cured",PETS.find(x=>x.id===p.id).n,cost));
   renderAll(); save();
+}
+/* 转换物种：消耗1个魔法水晶，熊猫不可转换。
+   maxHp保持不变（孕育时生命HP决定，与物种无关）。 */
+function transformPetSpecies(idx){
+  const p=S.petList[idx]; if(!p) return;
+  if(p.id==="panda"){ toast(t("pet.pandaCannotTransform")); return; }
+  if(count("magicCrystal")<1){ toast(LANG==="en"?"Need 🔮Magic Crystal":"需要🔮魔法水晶"); return; }
+  const transformable = PETS.filter(x=>x.id!=="panda");
+  const options = transformable.map((d,i)=>`${i+1}. ${d.i} ${petName(d)}`).join("\n");
+  const choice = prompt(`${t("pet.transformSelect")}\n${options}\n\n${LANG==="en"?"Enter number (1-5):":"输入序号(1-5)："}`);
+  if(!choice) return;
+  const num=parseInt(choice);
+  if(isNaN(num)||num<1||num>transformable.length){ toast(LANG==="en"?"Invalid choice":"无效选择"); return; }
+  const newSpecies=transformable[num-1];
+  S.unlocked.magicCrystal=Math.max(0,(S.unlocked.magicCrystal||0)-1);
+  const oldName=p.name;
+  p.id=newSpecies.id;
+  p.hp=Math.min(p.hp, p.maxHp);
+  toast(t("pet.transformed",oldName,newSpecies.i+petName(newSpecies)));
+  renderPetDetail(); renderAll(); save();
+}
+/* 使用万能药：消耗对应HP的万能药，满血复活+治愈 */
+function useElixirOnPet(idx){
+  const p=S.petList[idx]; if(!p) return;
+  if(!p.sick&&p.hp>=p.maxHp){ toast(LANG==="en"?"Pet is already full HP":"宠物已是满血状态"); return; }
+  ensureElixirPoolSync();
+  const needHp=p.maxHp;
+  const poolIdx=(S.elixirPool||[]).indexOf(needHp);
+  if(poolIdx<0){ toast(t("pet.needElixirHp",needHp)); return; }
+  S.elixirPool.splice(poolIdx,1);
+  S.unlocked.elixir=Math.max(0,(S.unlocked.elixir||0)-1);
+  p.hp=p.maxHp; p.sick=false;
+  toast(t("pet.elixirRevived",p.name));
+  renderPetDetail(); renderAll(); save();
+}
+/* 喂食彩虹：消耗1个彩虹，饱食度满+亲密度+5 */
+function feedRainbowToPet(idx){
+  const p=S.petList[idx]; if(!p) return;
+  if(p.sick){ toast(LANG==="en"?"Sick pet cannot eat rainbow":"生病的宠物不能吃彩虹"); return; }
+  if(count("rainbow")<1){ toast(LANG==="en"?"Need 🌈Rainbow":"需要🌈彩虹"); return; }
+  S.unlocked.rainbow=Math.max(0,(S.unlocked.rainbow||0)-1);
+  p.sat=100;
+  p.intimacy=Math.min(100,(p.intimacy||0)+5);
+  toast(t("pet.rainbowFed",p.name));
+  renderPetDetail(); renderAll(); save();
 }
 
 /* ============ 主题与素材系统 ============ */
@@ -3436,14 +3851,16 @@ async function importPack(pack){
 const RECIPE_KEY = "synth-town-recipe-unlock";
 const BASIC_PWD = "1986";
 const ADVANCED_PWD = "cosmos";
-function getRecipeUnlock(){ try{ return JSON.parse(localStorage.getItem(RECIPE_KEY))||{basic:false,advanced:false}; }catch(e){ return {basic:false,advanced:false}; } }
+const NEWLEGEND_PWD = "0902";
+function getRecipeUnlock(){ try{ const s=JSON.parse(localStorage.getItem(RECIPE_KEY))||{}; return {basic:!!s.basic,advanced:!!s.advanced,newLegend:!!s.newLegend}; }catch(e){ return {basic:false,advanced:false,newLegend:false}; } }
 function setRecipeUnlock(s){ try{ localStorage.setItem(RECIPE_KEY, JSON.stringify(s)); }catch(e){} }
 function recipeKey(a,b){ return [a,b].sort().join("+"); }
 function renderRecipeBook(){
   const u=getRecipeUnlock();
-  const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard");
+  const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard"), nlCard=$("#newLegendLockCard");
   const basicPwdBox=$("#basicPwdBox"), basicBtn=$("#basicUnlockBtn");
   const advPwdBox=$("#advancedPwdBox"), advBtn=$("#advancedUnlockBtn");
+  const nlPwdBox=$("#newLegendPwdBox"), nlBtn=$("#newLegendUnlockBtn");
   const content=$("#recipeContent");
   const crafted=new Set(S.craftedRecipes||[]);
   // 按层级统计：总数、已合成数、密码解锁数（生命按实际等级=材料之和，宝箱纳入）
@@ -3481,6 +3898,25 @@ function renderRecipeBook(){
     advPwdBox.style.display=""; advBtn.disabled=false; advBtn.style.display="";
     advPwdBox.querySelectorAll(".pwdCell").forEach(c=>c.disabled=false);
     advCard.querySelector(".lockDesc").textContent=t("recipe.advancedDesc");
+  }
+  // 新传说锁：独立显示
+  if(u.newLegend){
+    nlCard.style.display="none";
+  } else {
+    nlCard.style.display="flex";
+    nlCard.classList.remove("locked","unlocked");
+    nlCard.querySelector(".lockIcon").textContent="🔮";
+    nlPwdBox.style.display=""; nlBtn.disabled=false; nlBtn.style.display="";
+    nlPwdBox.querySelectorAll(".pwdCell").forEach(c=>c.disabled=false);
+    nlCard.querySelector(".lockDesc").textContent=t("recipe.newLegendDesc");
+  }
+  // 渲染新传说配方区
+  const nlSec=$("#recipeNewLegendSection");
+  if(u.newLegend && nlSec){
+    nlSec.style.display="block";
+    renderNewLegendRecipes();
+  } else if(nlSec){
+    nlSec.style.display="none";
   }
   // 配方内容：只要有已合成或已解锁的配方就显示
   const hasAnyVisible=R.some(([a,b,out])=>{
@@ -3526,11 +3962,29 @@ function renderRecipes(u,crafted){
   advSec.innerHTML=advHtml;
   advSec.style.display=advHtml?"block":"none";
 }
+function renderNewLegendRecipes(){
+  const sec=$("#recipeNewLegendSection");
+  if(!sec) return;
+  const recipes=[
+    {a:"jade",b:"life",c:"air",out:"magicCrystal",note:""},
+    {a:"life",b:"jade",c:"fire",out:"elixir",note:LANG==="en"?"(HP from input Life)":"(HP由输入生命决定)"},
+    {a:"water",b:"fire",c:"air",out:"rainbow",note:""},
+  ];
+  let html=`<div class="recipeTierGroup"><div class="recipeTierTitle" style="color:var(--gold);">🔮 ${t("recipe.newLegendTitle")}</div><div class="recipeList">`;
+  recipes.forEach(r=>{
+    const ea=ELEMENTS[r.a], eb=ELEMENTS[r.b], ec=ELEMENTS[r.c], eo=ELEMENTS[r.out];
+    let resultLabel=eo.i+elName(r.out);
+    if(r.note) resultLabel+=`<small style="color:var(--ok)">${r.note}</small>`;
+    html+=`<div class="recipeItem"><span>${ea.i}</span><span class="plus">+</span><span>${eb.i}</span><span class="plus">+</span><span>${ec.i}</span><span class="arrow">→</span><span class="result">${resultLabel}</span></div>`;
+  });
+  html+=`</div></div>`;
+  sec.innerHTML=html;
+}
 $("#recipeBtn").addEventListener("click", ()=>{ renderRecipeBook(); $("#recipeOverlay").classList.add("show"); });
 $("#recipeCloseBtn").addEventListener("click", ()=>$("#recipeOverlay").classList.remove("show"));
 $("#recipeOverlay").addEventListener("click", e=>{ if(e.target.id==="recipeOverlay") $("#recipeOverlay").classList.remove("show"); });
 /* 密码格子构建 */
-let basicCells=[], advCells=[];
+let basicCells=[], advCells=[], newLegendCells=[];
 function buildPwdCells(container, len, numeric, onComplete){
   container.innerHTML="";
   const cells=[];
@@ -3564,6 +4018,10 @@ function buildPwdBoxes(){
     else{ toast(t("recipe.wrongPwd")); clearPwd(advCells); }
   });
   advCells.forEach(c=>c.disabled=true);
+  newLegendCells=buildPwdCells($("#newLegendPwdBox"), 4, true, (val)=>{
+    if(val===NEWLEGEND_PWD){ const u=getRecipeUnlock(); u.newLegend=true; setRecipeUnlock(u); clearPwd(newLegendCells); renderRecipeBook(); }
+    else{ toast(t("recipe.wrongPwd")); clearPwd(newLegendCells); }
+  });
 }
 $("#basicUnlockBtn").addEventListener("click", ()=>{
   const val=basicCells.map(c=>c.value).join("").toLowerCase();
@@ -3574,6 +4032,11 @@ $("#advancedUnlockBtn").addEventListener("click", ()=>{
   const val=advCells.map(c=>c.value).join("").toLowerCase();
   if(val===ADVANCED_PWD){ const u=getRecipeUnlock(); u.advanced=true; setRecipeUnlock(u); clearPwd(advCells); renderRecipeBook(); }
   else{ toast(t("recipe.wrongPwd")); clearPwd(advCells); }
+});
+$("#newLegendUnlockBtn").addEventListener("click", ()=>{
+  const val=newLegendCells.map(c=>c.value).join("");
+  if(val===NEWLEGEND_PWD){ const u=getRecipeUnlock(); u.newLegend=true; setRecipeUnlock(u); clearPwd(newLegendCells); renderRecipeBook(); }
+  else{ toast(t("recipe.wrongPwd")); clearPwd(newLegendCells); }
 });
 $("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") tooltipTopRight($("#basicUnlockBtn"), t("recipe.hoverHint")); });
 $("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") tooltipTopRight($("#advancedUnlockBtn"), t("recipe.hoverHint")); });
