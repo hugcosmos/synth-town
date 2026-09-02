@@ -411,6 +411,8 @@
   .shopCartItem .qtyStepper{display:flex;align-items:center;gap:2px;flex-shrink:0;}
   .shopCartItem .qtyStepper .rmBtn{font-size:13px;font-weight:700;color:var(--gold);padding:0 3px;line-height:1.2;}
   .shopCartItem .qtyStepper .qty{min-width:18px;text-align:center;font-size:12px;}
+  .shopCartItem .qtyStepper .qtyInput{width:36px;text-align:center;font-size:12px;font-weight:700;color:var(--gold);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:2px 0;}
+  .shopCartItem .qtyStepper .qtyInput:focus{outline:none;border-color:var(--gold);}
   .shopCartItem .rmBtn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:0 2px;}
   .shopCartTotal{font-size:14px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);display:flex;justify-content:space-between;}
   .shopCartActions{display:flex;gap:6px;margin-top:8px;}
@@ -1751,12 +1753,11 @@ function foundElementKinds(){
 function renderElements(){
   const g=$("#elementGrid");
   g.innerHTML="";
-  // 宝箱固定卡片（始终展示，可合成但需囤积）
+  // 宝箱固定卡片（始终展示，可合成但需囤积）- 特殊元素无等级，黄色显示
   const boxCard=document.createElement("div");
   boxCard.className="el"+(S.chest>0?"":" empty");
   boxCard.dataset.id="chest";
-  const boxTip=S.chest>0?`<small style="color:var(--gold);font-size:9px">${LANG==="en"?"material":"建造材料"}</small>`:"";
-  boxCard.innerHTML=`<span class="ico">🧰</span><span class="name">${elName("chest")}${boxTip}</span><span class="cnt">×${S.chest||0}</span>`;
+  boxCard.innerHTML=`<span class="ico">🧰</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("chest")}</span><span class="cnt">×${S.chest||0}</span>`;
   boxCard.addEventListener("click",()=>toast(t("npc.chestHint")||(LANG==="en"?"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料")));
   g.appendChild(boxCard);
   const showSet=elementShowSet();
@@ -2218,6 +2219,15 @@ function incCart(id){
   S.shopCart[id]=(S.shopCart[id]||0)+1;
   renderElShop();
 }
+function setCartQty(id,val){
+  if(!S.shopCart) S.shopCart={};
+  let n=parseInt(val);
+  if(isNaN(n)||n<1) n=1;
+  const max=batchMax()||5;
+  if(n>max) n=max;
+  S.shopCart[id]=n;
+  renderElShop();
+}
 function clearCart(){ S.shopCart={}; renderElShop(); }
 function cartTotal(){
   if(!S.shopCart) return 0;
@@ -2261,7 +2271,7 @@ function renderElShop(){
   }else{
     Object.entries(S.shopCart).forEach(([id,n])=>{
       const e=ELEMENTS[id];
-      cartHtml+=`<div class="shopCartItem"><span class="ico">${e.i}</span><span class="nm">${elName(id)}</span><span class="qtyStepper"><button class="rmBtn" onclick="decCart('${id}')">−</button><span class="qty">${n}</span><button class="rmBtn" onclick="incCart('${id}')">＋</button></span><button class="rmBtn" onclick="removeFromCart('${id}')" title="${LANG==="en"?"Remove":"移除"}">🗑</button></div>`;
+      cartHtml+=`<div class="shopCartItem"><span class="ico">${e.i}</span><span class="nm">${elName(id)}</span><span class="qtyStepper"><button class="rmBtn" onclick="decCart('${id}')">−</button><input type="number" class="qtyInput" value="${n}" min="1" max="${batchMax()||5}" onchange="setCartQty('${id}',this.value)" onclick="this.select()"><button class="rmBtn" onclick="incCart('${id}')">＋</button></span><button class="rmBtn" onclick="removeFromCart('${id}')" title="${LANG==="en"?"Remove":"移除"}">🗑</button></div>`;
     });
     cartHtml+=`<div class="shopCartTotal"><span>${LANG==="en"?"Total":"合计"}</span><span style="color:var(--gold)">💰${cartTotal()}</span></div>`;
   }
