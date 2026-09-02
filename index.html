@@ -1775,6 +1775,14 @@ function ensureLifePoolSync(){
   while(S.lifePool.length<n) S.lifePool.push(tierOf("life"));
   if(S.lifePool.length>n) S.lifePool.length=n;
 }
+// 保证 elixirPool 与 S.unlocked.elixir 一致（万能药按HP值存储，旧档兜底按默认HP补齐）
+function ensureElixirPoolSync(){
+  if(!S.elixirPool) S.elixirPool=[];
+  const n=S.unlocked.elixir||0;
+  if(S.elixirPool.length===n) return;
+  while(S.elixirPool.length<n) S.elixirPool.push(tierOf("elixir")||10);
+  if(S.elixirPool.length>n) S.elixirPool.length=n;
+}
 function totalElementKinds(){ return BASE.length+normalElementSet().size+LIFE_HPS.length+1; } // +1 宝箱
 function foundElementKinds(){
   ensureLifePoolSync();
