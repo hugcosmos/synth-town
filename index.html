@@ -1059,6 +1059,7 @@ const LEGEND_BUY = {magicCrystal:50, rainbow:15};
 const LEGEND_SELL = {magicCrystal:40, rainbow:12};
 const ELIXIR_BUY = {5:25, 6:30, 9:45, 10:50, 11:55};
 const ELIXIR_SELL = {5:20, 6:24, 9:36, 10:40, 11:44};
+const LIFE_BUY = {5:20, 6:24, 9:36, 10:40, 11:44};
 
 const RECIPES = [
   ["earth","water","mud"],
@@ -1448,6 +1449,10 @@ const I18N = {
     "pet.pandaCannotTransform":"🐼 熊猫是传说物种，不可转换",
     "pet.feedRainbow":"🌈 喂彩虹",
     "pet.rainbowFed":"🌈 {0} 吃了彩虹（饱食度满+亲密度+5）",
+    "shop.lockedAdvanced":"🔒 合成任一进阶元素后解锁",
+    "shop.lockedLife":"🔒 合成任一生命后解锁",
+    "shop.advancedLockedHint":"🔒 合成任一4级及以上元素后，解锁进阶分栏购买",
+    "shop.lifeLockedHint":"🔒 合成任一生命后，解锁生命分栏购买",
   },
   en: {
     "app.title":"⚗️ My Town",
@@ -1608,6 +1613,10 @@ const I18N = {
     "pet.pandaCannotTransform":"🐼 Panda is legendary, cannot transform",
     "pet.feedRainbow":"🌈 Feed Rainbow",
     "pet.rainbowFed":"🌈 {0} ate Rainbow (full satiety + intimacy +5)",
+    "shop.lockedAdvanced":"🔒 Craft any advanced element to unlock",
+    "shop.lockedLife":"🔒 Craft any life to unlock",
+    "shop.advancedLockedHint":"🔒 Craft any Tier 4+ element to unlock the Advanced tab",
+    "shop.lifeLockedHint":"🔒 Craft any life to unlock the Life tab",
   }
 };
 let LANG = localStorage.getItem("synth-town-lang") || "zh";
@@ -2580,6 +2589,10 @@ function cartTotal(){
       const hp=parseInt(id.split("_HP")[1]);
       return s+(ELIXIR_BUY[hp]||50)*n;
     }
+    if(id.startsWith("life_HP")){
+      const hp=parseInt(id.split("_HP")[1]);
+      return s+(LIFE_BUY[hp]||20)*n;
+    }
     if(LEGEND_BUY[id]) return s+LEGEND_BUY[id]*n;
     return s+(tierOf(id)*BUY_RATE)*n;
   },0);
@@ -2598,6 +2611,13 @@ function checkoutCart(){
       if(!S.discoveredElixirHps) S.discoveredElixirHps=[];
       for(let i=0;i<n;i++){ S.elixirPool.push(hp); }
       if(!S.discoveredElixirHps.includes(hp)) S.discoveredElixirHps.push(hp);
+    } else if(id.startsWith("life_HP")){
+      const hp=parseInt(id.split("_HP")[1]);
+      S.unlocked.life=(S.unlocked.life||0)+n;
+      if(!S.lifePool) S.lifePool=[];
+      if(!S.discoveredLifeHps) S.discoveredLifeHps=[];
+      for(let i=0;i<n;i++){ S.lifePool.push(hp); }
+      if(!S.discoveredLifeHps.includes(hp)) S.discoveredLifeHps.push(hp);
     } else {
       S.unlocked[id]=(S.unlocked[id]||0)+n;
     }
@@ -2609,20 +2629,34 @@ function checkoutCart(){
 function renderShopElementTabs(){
   const box=$("#shopElementTabs");
   if(!box) return;
-  // 商店只卖基础(lv1-3)和传说元素
-  const basicCount=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]&&shopSellable(k)).length;
-  // 传说栏可购买总数：magicCrystal(1) + rainbow(1) + 万能药5种HP = 7
-  const legendCount = 2 + LIFE_HPS.length;
+  // basic：所有tier1-3非传说非生命元素总数
+  const basicCount=Object.keys(ELEMENTS).filter(k=>{const t=tierOf(k);return t>=1&&t<=3&&!LEGENDARY_IDS.has(k)&&k!=="life";}).length;
+  // advanced：所有tier4-7非传说非生命元素总数
+  const advancedCount=Object.keys(ELEMENTS).filter(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life";}).length;
+  // life：LIFE_HPS 种数
+  const lifeCount=LIFE_HPS.length;
+  // legend：magicCrystal+rainbow + 万能药HP变体
+  const legendCount=2+LIFE_HPS.length;
+  // 解锁状态
+  const advancedUnlocked=Object.keys(S.unlocked||{}).some(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life";});
+  const lifeUnlocked=(S.discoveredLifeHps||[]).length>0||(S.lifePool||[]).length>0;
   const tabs=[
-    {id:"basic", label:t("tab.basic"), count:basicCount},
-    {id:"legend", label:t("tab.legend"), count:legendCount},
+    {id:"basic", label:t("tab.basic"), count:basicCount, locked:false},
+    {id:"advanced", label:t("tab.advanced"), count:advancedCount, locked:!advancedUnlocked},
+    {id:"life", label:t("tab.life"), count:lifeCount, locked:!lifeUnlocked},
+    {id:"legend", label:t("tab.legend"), count:legendCount, locked:false},
   ];
   box.innerHTML="";
   tabs.forEach(tab=>{
     const btn=document.createElement("button");
     btn.className="elementTab"+(currentShopElementTab===tab.id?" active":"");
-    btn.textContent=`${tab.label} ${tab.count}`;
+    btn.textContent=tab.locked?`🔒 ${tab.label} ${tab.count}`:`${tab.label} ${tab.count}`;
     btn.addEventListener("click",()=>{
+      if(tab.locked){
+        if(tab.id==="advanced") toast(t("shop.lockedAdvanced"));
+        else if(tab.id==="life") toast(t("shop.lockedLife"));
+        return;
+      }
       currentShopElementTab=tab.id;
       renderShopElementTabs();
       renderElShop();
@@ -2637,10 +2671,24 @@ function renderElShop(){
   // 左侧元素网格（根据当前分栏）
   let gridHtml=`<div class="shopElementGrid">`;
   if(currentShopElementTab==="basic"){
-    const ids=Object.keys(S.unlocked).filter(k=>ELEMENTS[k] && shopSellable(k)).sort((a,b)=>tierOf(a)-tierOf(b));
-    if(!ids.length){
-      gridHtml+=`<span style="color:var(--dim);font-size:12px;grid-column:1/-1;">${t("shop.empty")}</span>`;
+    // 展示 ALL tier1-3 非传说非生命元素（不只是已发现的）
+    const ids=Object.keys(ELEMENTS).filter(k=>{const t=tierOf(k);return t>=1&&t<=3&&!LEGENDARY_IDS.has(k)&&k!=="life";}).sort((a,b)=>tierOf(a)-tierOf(b));
+    ids.forEach(id=>{
+      const e=ELEMENTS[id], price=tierOf(id)*BUY_RATE;
+      const inCart=S.shopCart?.[id]||0;
+      gridHtml+=`<div class="shopElCard" onclick="addToCart('${id}')" title="${elName(id)} · ${tierOf(id)}${LANG==="en"?"Lvl":"级"} · 💰${price}">
+        <button class="addBtn" onclick="event.stopPropagation();addToCart('${id}')">+</button>
+        <div class="ico">${e.i}</div>
+        <div class="nm">${elName(id)}</div>
+        <div class="pr">💰${price}${inCart?` <span style="color:var(--ok)">×${inCart}</span>`:""}</div>
+      </div>`;
+    });
+  } else if(currentShopElementTab==="advanced"){
+    const advancedUnlocked=Object.keys(S.unlocked||{}).some(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life";});
+    if(!advancedUnlocked){
+      gridHtml+=`<span style="color:var(--dim);font-size:13px;grid-column:1/-1;padding:20px;text-align:center;">${t("shop.advancedLockedHint")}</span>`;
     }else{
+      const ids=Object.keys(ELEMENTS).filter(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life";}).sort((a,b)=>tierOf(a)-tierOf(b));
       ids.forEach(id=>{
         const e=ELEMENTS[id], price=tierOf(id)*BUY_RATE;
         const inCart=S.shopCart?.[id]||0;
@@ -2648,6 +2696,25 @@ function renderElShop(){
           <button class="addBtn" onclick="event.stopPropagation();addToCart('${id}')">+</button>
           <div class="ico">${e.i}</div>
           <div class="nm">${elName(id)}</div>
+          <div class="pr">💰${price}${inCart?` <span style="color:var(--ok)">×${inCart}</span>`:""}</div>
+        </div>`;
+      });
+    }
+  } else if(currentShopElementTab==="life"){
+    const lifeUnlocked=(S.discoveredLifeHps||[]).length>0||(S.lifePool||[]).length>0;
+    if(!lifeUnlocked){
+      gridHtml+=`<span style="color:var(--dim);font-size:13px;grid-column:1/-1;padding:20px;text-align:center;">${t("shop.lifeLockedHint")}</span>`;
+    }else{
+      LIFE_HPS.forEach(hp=>{
+        const id="life_HP"+hp;
+        const e=ELEMENTS.life;
+        const price=LIFE_BUY[hp]||20;
+        const inCart=S.shopCart?.[id]||0;
+        const nameLabel=`${elName("life")} HP${hp}`;
+        gridHtml+=`<div class="shopElCard" onclick="addToCart('${id}')" title="${nameLabel} · 💰${price}">
+          <button class="addBtn" onclick="event.stopPropagation();addToCart('${id}')">+</button>
+          <div class="ico">${e.i}</div>
+          <div class="nm">${nameLabel}</div>
           <div class="pr">💰${price}${inCart?` <span style="color:var(--ok)">×${inCart}</span>`:""}</div>
         </div>`;
       });
@@ -2681,8 +2748,9 @@ function renderElShop(){
   }else{
     Object.entries(S.shopCart).forEach(([id,n])=>{
       const isElixirHp = id.startsWith("elixir_HP");
-      const e = isElixirHp ? ELEMENTS.elixir : ELEMENTS[id];
-      const nm = isElixirHp ? `${elName("elixir")} HP${id.split("_HP")[1]}` : elName(id);
+      const isLifeHp = id.startsWith("life_HP");
+      const e = isElixirHp||isLifeHp ? (isElixirHp?ELEMENTS.elixir:ELEMENTS.life) : ELEMENTS[id];
+      const nm = isElixirHp?`${elName("elixir")} HP${id.split("_HP")[1]}`:isLifeHp?`${elName("life")} HP${id.split("_HP")[1]}`:elName(id);
       cartHtml+=`<div class="shopCartItem"><span class="ico">${e.i}</span><span class="nm">${nm}</span><span class="qtyStepper"><button class="rmBtn" onclick="decCart('${id}')">−</button><input type="number" class="qtyInput" value="${n}" min="1" max="${batchMax()||5}" onchange="setCartQty('${id}',this.value)" onclick="this.select()"><button class="rmBtn" onclick="incCart('${id}')">＋</button></span><button class="rmBtn" onclick="removeFromCart('${id}')" title="${LANG==="en"?"Remove":"移除"}">🗑</button></div>`;
     });
     cartHtml+=`<div class="shopCartTotal"><span>${LANG==="en"?"Total":"合计"}</span><span style="color:var(--gold)">💰${cartTotal()}</span></div>`;
@@ -2704,7 +2772,7 @@ function switchShopSub(sub){
   $("#tradePanel").style.display=sub==="trade"?"":"none";
   if(sub==="trade") renderTradePanel();
 }
-const TRADE_EXCLUDE = new Set(["life","chest","coin","charcoal","tower"]);
+const TRADE_EXCLUDE = new Set(["life","chest","coin","charcoal","tower","elixir"]);
 function renderTradePanel(){
   const box=$("#tradePanel"); if(!box) return;
   let html=`<div style="font-size:11px;color:var(--dim);margin-bottom:8px">${LANG==="en"?"Sell Lv.3+ elements at 80% of buy price (tier×4). Pets convert to coins.":"仅回收3级及以上元素，按购买价80%（等级×4金币）。宠物可折算金币。"}</div>`;
@@ -3496,7 +3564,25 @@ function renderPets(){
       <div class="petCardActions">
         ${!p.sick?`<button class="petActBtn feed" data-feed="${idx}" ${(S.food[d.food]||0)>0?"":"disabled"} title="${LANG==="en"?"Feed":"喂食"}">🍖</button>`:`<button class="petActBtn feed" disabled title="${LANG==="en"?"Sick":"生病中"}">🤒</button>`}
         ${!p.sick?`<button class="petActBtn play" data-interact="${idx}" title="${LANG==="en"?"Play":"玩"}">💕</button>`:`<button class="petActBtn play" disabled>🤒</button>`}
-        ${(p.hp<p.maxHp)?`<button class="petActBtn cure" data-cure="${idx}" ${hasB("hospital")&&S.coin>=cureCost?"":"disabled"} title="${LANG==="en"?"Heal":"治疗"}">🏥💰${cureCost}</button>`:`<button class="petActBtn cure" disabled style="opacity:.2">🏥</button>`}
+        ${(()=>{
+          const needHeal = p.sick || p.hp < p.maxHp;
+          if(!needHeal) return `<button class="petActBtn cure" disabled style="opacity:.2" title="${LANG==="en"?"Healthy":"健康"}">🏥</button>`;
+          const hasMatchingElixir = (S.elixirPool||[]).includes(p.maxHp);
+          const hasHospital = hasB("hospital");
+          if(hasHospital){
+            let btns = `<button class="petActBtn cure" data-cure="${idx}" ${S.coin>=cureCost?"":"disabled"} title="${LANG==="en"?`Hospital Heal (💰${cureCost})`:`医院治疗（💰${cureCost}）`}">🏥💰${cureCost}</button>`;
+            if(hasMatchingElixir){
+              btns += `<button class="petActBtn cure" data-elixir="${idx}" title="${LANG==="en"?"Use Elixir (full heal)":"使用药丸（满血复活）"}" style="color:#b388ff">💊</button>`;
+            }
+            return btns;
+          } else {
+            if(hasMatchingElixir){
+              return `<button class="petActBtn cure" data-elixir="${idx}" title="${LANG==="en"?"Use Elixir (full heal)":"使用药丸（满血复活）"}" style="color:#b388ff">💊</button>`;
+            } else {
+              return `<button class="petActBtn cure" disabled title="${LANG==="en"?`Need HP${p.maxHp} Elixir or build Pet Hospital`:`需要HP${p.maxHp}药丸或搭建宠物医院`}" style="opacity:.5">🏥🔒</button>`;
+            }
+          }
+        })()}
       </div>`;
     list.appendChild(card);
   });
@@ -3508,6 +3594,9 @@ function renderPets(){
   });
   list.querySelectorAll("[data-cure]").forEach(b=>{
     b.addEventListener("click",()=>curePet(+b.dataset.cure));
+  });
+  list.querySelectorAll("[data-elixir]").forEach(b=>{
+    b.addEventListener("click",()=>useElixirOnPet(+b.dataset.elixir));
   });
 }
 function hatch(){
@@ -3765,7 +3854,8 @@ function useElixirOnPet(idx){
   S.unlocked.elixir=Math.max(0,(S.unlocked.elixir||0)-1);
   p.hp=p.maxHp; p.sick=false;
   toast(t("pet.elixirRevived",p.name));
-  renderPetDetail(); renderAll(); save();
+  if($("#petDetailOverlay")?.classList.contains("show")) renderPetDetail();
+  renderAll(); save();
 }
 /* 喂食彩虹：消耗1个彩虹，饱食度满+亲密度+5 */
 function feedRainbowToPet(idx){
