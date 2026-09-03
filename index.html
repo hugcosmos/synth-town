@@ -410,6 +410,17 @@
   .shopElCard .addBtn{position:absolute;top:2px;right:2px;width:20px;height:20px;background:var(--gold);color:#1a1530;border:none;border-radius:50%;font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:700;}
   .shopElCard .infoBtn{position:absolute;bottom:2px;right:2px;width:18px;height:18px;background:var(--solid-panel2);color:var(--gold);border:1px solid var(--gold);border-radius:50%;font-size:10px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;z-index:2;}
   .shopElCard .lockMark{position:absolute;top:2px;right:2px;width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:.75;}
+  /* 套餐栏 */
+  .shopBundleGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .shopBundleCard{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;transition:border-color .15s;text-align:center;}
+  .shopBundleCard:hover{border-color:var(--gold);}
+  .shopBundleCard .bundleHead{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
+  .shopBundleCard .bundleItems{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px;}
+  .shopBundleCard .bundlePrice{font-size:13px;color:var(--gold);font-weight:700;}
+  .shopBundleCard.disabled{filter:grayscale(85%);opacity:.5;cursor:not-allowed;}
+  .shopBundleCard.disabled:hover{border-color:var(--line);}
+  .shopBundleLock{display:flex;flex-direction:column;align-items:center;gap:10px;padding:40px 10px;color:var(--dim);text-align:center;}
+  .shopBundleLock .bigLock{font-size:44px;}
   .shopCart{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;position:sticky;top:10px;}
   .shopCartTitle{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
   .shopCartItem{display:flex;align-items:center;gap:4px;padding:4px 0;border-bottom:1px solid var(--line);font-size:12px;}
@@ -1298,7 +1309,10 @@ const SAVE_VERSION = 3; // v1=初始, v2=地块系统, v3=宠物增强(起名/�
 const I18N = {
   zh: {
     "app.title":"⚗️ 我的小镇",
-    "tab.craft":"合成", "tab.town":"小镇", "tab.shop":"商店", "tab.pet":"宠物", "tab.park":"游乐园", "tab.badges":"成就", "tab.all":"全部", "tab.basic":"基础", "tab.advanced":"进阶", "tab.life":"生命", "tab.legend":"传说",
+    "tab.craft":"合成", "tab.town":"小镇", "tab.shop":"商店", "tab.pet":"宠物", "tab.park":"游乐园", "tab.badges":"成就", "tab.all":"全部", "tab.basic":"基础", "tab.advanced":"进阶", "tab.life":"生命", "tab.legend":"传说", "tab.bundle":"套餐",
+    "shop.bundleLocked":"🔒 合成所有元素（获得「元素之王」徽章）后自动解锁套餐栏",
+    "shop.bundleLockedEn":"🔒 Unlocks after crafting all elements (Element Master badge)",
+    "shop.bundleLabel":"{0}套餐", "shop.bundleLabelEn":"{0} Bundle",
     "panel.elements":"元素库（点一下填入合成槽）",
     "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 游乐园",
     "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
@@ -1463,7 +1477,9 @@ const I18N = {
   },
   en: {
     "app.title":"⚗️ My Town",
-    "tab.craft":"Craft", "tab.town":"Town", "tab.shop":"Shop", "tab.pet":"Pets", "tab.park":"Playpark", "tab.badges":"Badges", "tab.all":"All", "tab.basic":"Basic", "tab.advanced":"Advanced", "tab.life":"Life", "tab.legend":"Legendary",
+    "tab.craft":"Craft", "tab.town":"Town", "tab.shop":"Shop", "tab.pet":"Pets", "tab.park":"Playpark", "tab.badges":"Badges", "tab.all":"All", "tab.basic":"Basic", "tab.advanced":"Advanced", "tab.life":"Life", "tab.legend":"Legendary", "tab.bundle":"Bundles",
+    "shop.bundleLocked":"🔒 Craft all elements (Element Master badge) to unlock Bundles",
+    "shop.bundleLabel":"{0} Bundle",
     "panel.elements":"Elements (tap to fill slot)",
     "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Playpark",
     "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
@@ -1804,7 +1820,7 @@ function renderStats(){
 }
 
 /* ============ 元素发现统计 ============
-   元素库可展示的元素种类（共37种）：
+   元素库可展示的元素种类（共36种）：
    基础栏(13): 基础4 + 可合成tier1-3非传说9 (mud,brick,rain,seed,energy,ash,steam,cloud,stone)
    进阶栏(8): tier4-7非传说 (flower,tree,metal,jade,fertilizer,sand,glass,wood)
    生命栏(5): LIFE_HPS 5种HP值 [5,6,9,10,11]
@@ -2611,6 +2627,48 @@ $("#craftBtn").addEventListener("click", ()=>{
 /* ============ 元素商店（双栏购物车） ============ */
 const SHOP_MAX_TIER = 3;
 const shopSellable = id => tierOf(id)<=SHOP_MAX_TIER && id!=="life" && !LEGENDARY_IDS.has(id) && !DEPRECATED_IDS.has(id);
+/* ============ 套餐栏（建筑材料包） ============ */
+// 套餐 = 建造各建筑所需的完整元素材料（不含金币；金币是货币非元素）
+const BUNDLES = [
+  {id:"hut",      n:"小屋",   en:"Hut",        i:"🏠", items:{brick:4,  wood:2}},
+  {id:"shop",     n:"商铺",   en:"Shop",       i:"🏪", items:{brick:8,  wood:4}},
+  {id:"garden",   n:"花园",   en:"Garden",     i:"🌸", items:{flower:14}},
+  {id:"manor",    n:"豪宅",   en:"Manor",      i:"🏯", items:{brick:20, jade:4, flower:10, chest:2}},
+  {id:"hospital", n:"宠物医院",en:"Pet Hospital",i:"🏥", items:{brick:10, flower:4}},
+  {id:"station",  n:"宠物驿站",en:"Pet Station", i:"🛖", items:{wood:4}},
+  {id:"factory",  n:"工厂",   en:"Factory",    i:"🏭", items:{brick:10, chest:5}},
+  {id:"hall",     n:"市政厅", en:"City Hall",  i:"🏛️", items:{brick:50, jade:20, chest:4}},
+];
+// 套餐栏是否解锁：获得「元素之王」徽章
+function bundleUnlocked(){ return !!(S.badges && S.badges.elementMaster); }
+function bundlePrice(items){
+  return Object.entries(items).reduce((s,[id,n])=>{
+    const p = id==="chest" ? (LEGEND_BUY.chest||30) : tierOf(id)*BUY_RATE;
+    return s+p*n;
+  },0);
+}
+function addBundle(b){
+  if(!bundleUnlocked()){ toast(t("shop.bundleLocked")); return; }
+  const bld=BUILDINGS.find(x=>x.id===b.id);
+  if(bld && !buildingUnlocked(bld)){ toast(buildingLockHint(bld)); return; }
+  if(!S.shopCart) S.shopCart={};
+  const max=batchMax()||5;
+  let added=0; const skipped=[];
+  Object.entries(b.items).forEach(([id,n])=>{
+    if(!shopCanBuy(id)){ skipped.push(LANG==="en"?`${elName(id)}: craft first`:`${elName(id)}需先合成`); return; }
+    const cur=S.shopCart[id]||0;
+    const add=Math.min(n, Math.max(0,max-cur));
+    if(add>0){ S.shopCart[id]=cur+add; added+=add; }
+    if(add<n) skipped.push(LANG==="en"?`${elName(id)} max ${max}`:`${elName(id)}达上限${max}`);
+  });
+  const bname = LANG==="en"?b.en:b.n;
+  if(added>0){
+    toast(LANG==="en"?`🛒 ${bname} Bundle: +${added} materials${skipped.length?` (${skipped.join(", ")})`:""}`:`🛒 ${bname}套餐：加入${added}个材料${skipped.length?`（${skipped.join("，")}）`:""}`);
+  } else if(skipped.length){
+    toast(skipped.join("；"));
+  }
+  renderElShop();
+}
 if(!S.shopCart) S.shopCart={};
 function shopItemName(id){
   if(id.startsWith("elixir_HP")) return `${elName("elixir")} HP${id.split("_HP")[1]}`;
@@ -2728,19 +2786,22 @@ function renderShopElementTabs(){
   const lifeCount=LIFE_HPS.length;
   // legend：bunch/garden_flowers/chest/magicCrystal/rainbow(5) + 万能药HP变体(LIFE_HPS)，金币coin是货币不计入
   const legendCount=5+LIFE_HPS.length;
-  // 所有分栏默认展示（每个元素独立判断是否已合成决定能否购买）
+  // 所有分栏默认展示（每个元素独立判断是否已合成决定能否购买）；套餐栏需元素之王徽章解锁
+  const bundleLocked=!bundleUnlocked();
   const tabs=[
     {id:"basic", label:t("tab.basic"), count:basicCount},
     {id:"advanced", label:t("tab.advanced"), count:advancedCount},
     {id:"life", label:t("tab.life"), count:lifeCount},
     {id:"legend", label:t("tab.legend"), count:legendCount},
+    {id:"bundle", label:t("tab.bundle"), count:BUNDLES.length, locked:bundleLocked},
   ];
   box.innerHTML="";
   tabs.forEach(tab=>{
     const btn=document.createElement("button");
-    btn.className="elementTab"+(currentShopElementTab===tab.id?" active":"");
-    btn.textContent=`${tab.label} ${tab.count}`;
+    btn.className="elementTab"+(currentShopElementTab===tab.id?" active":"")+(tab.locked?" locked":"");
+    btn.textContent=tab.locked?`🔒 ${tab.label}`:`${tab.label} ${tab.count}`;
     btn.addEventListener("click",()=>{
+      if(tab.locked){ toast(t("shop.bundleLocked")); return; }
       currentShopElementTab=tab.id;
       renderShopElementTabs();
       renderElShop();
@@ -2827,6 +2888,28 @@ function renderElShop(){
         <div class="pr">💰${item.price}${inCart?` <span style="color:var(--ok)">×${inCart}</span>`:""}</div>
       </div>`;
     });
+  } else if(currentShopElementTab==="bundle"){
+    if(!bundleUnlocked()){
+      // 安全兜底：套餐栏未解锁时显示锁提示
+      gridHtml=`<div class="shopBundleLock"><span class="bigLock">🔒</span><span>${t("shop.bundleLocked")}</span></div>`;
+    } else {
+      // 套餐栏：建筑材料包（需元素之王徽章解锁；建筑前置条件不满足时灰色）
+      gridHtml=`<div class="shopBundleGrid">`;
+      BUNDLES.forEach(b=>{
+        const bld=BUILDINGS.find(x=>x.id===b.id);
+        const bldOk=!!bld && buildingUnlocked(bld);
+        const price=bundlePrice(b.items);
+        const bname=LANG==="en"?b.en:b.n;
+        const itemsHtml=Object.entries(b.items).map(([id,n])=>`<span style="margin:0 3px;">${ELEMENTS[id].i}×${n}</span>`).join("");
+        const hint = bld && !bldOk ? buildingLockHint(bld) : (LANG==="en"?`One bundle = full materials for ${bname}`:`一份套餐=${bname}所需全部元素材料`);
+        gridHtml+=`<div class="shopBundleCard${bldOk?"":" disabled"}" onclick="addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${hint}">
+          <div class="bundleHead">${bld.i} ${bname}</div>
+          <div class="bundleItems">${itemsHtml}</div>
+          <div class="bundlePrice">💰${price}</div>
+        </div>`;
+      });
+      gridHtml+=`</div>`;
+    }
   }
   gridHtml+=`</div>`;
   // 右侧购物车
@@ -3496,18 +3579,18 @@ function npcBadgesLine(){
   const total=BADGES.length;
   const lines=LANG==="en"?[
     `You have ${unlocked}/${total} badges. Keep going!`,
-    "Element Master: discover all 37 elements!",
+    "Element Master: discover all 36 elements!",
     "Animal King: collect all 6 pet species (Cat/Rabbit/Dog/Cow/Horse/Panda)!",
-    "Real Estate Tycoon: build on all 42 plots!",
+    "Real Estate Tycoon: build on all "+totalPlots()+" plots!",
     "Ten-Thousandaire: net worth reaches 10,000!",
     "Millionaire: net worth reaches 1,000,000!",
     "Click a badge to view details and download the image!",
     `Only ${total-unlocked} badge${total-unlocked>1?"s":""} left to unlock!`
   ]:[
     `你已解锁 ${unlocked}/${total} 枚徽章，继续加油！`,
-    "元素之王：发现全部37种元素！",
+    "元素之王：发现全部36种元素！",
     "动物大王：集齐6种动物（猫/兔/狗/牛/马/熊猫）！",
-    "地产大亨：42块地皮全部建成建筑！",
+    "地产大亨："+totalPlots()+"块地皮全部建成建筑！",
     "万元户：资产达到10000！",
     "百万富翁：资产达到1000000！",
     "点击徽章可以查看详情并下载图片哦！",
