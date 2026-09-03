@@ -411,7 +411,8 @@
   .shopElCard .infoBtn{position:absolute;bottom:2px;right:2px;width:18px;height:18px;background:var(--solid-panel2);color:var(--gold);border:1px solid var(--gold);border-radius:50%;font-size:10px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;z-index:2;}
   .shopElCard .lockMark{position:absolute;top:2px;right:2px;width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:.75;}
   /* 套餐栏 */
-  .shopBundleGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .shopBundleGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  @media(max-width:600px){.shopBundleGrid{grid-template-columns:1fr;}}
   .shopBundleCard{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;transition:border-color .15s;text-align:center;}
   .shopBundleCard:hover{border-color:var(--gold);}
   .shopBundleCard .bundleHead{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
@@ -1181,8 +1182,8 @@ const BUILDABLE_POINTS = {
   hill:   [[76,65,5],[36,48,4],[9,60,2],[63,17,5],[87,19,-5],[55,75,-5]],
   forest: [[68,56,5],[32,36,-4],[85,76,5],[15,24,5],[50,78,-5],[82,22,4],[50,24,-5],[18,76,-4]],
   center: [[22,20,-3],[42,18,-3],[58,20,4],[78,18,-2],[24,50,5],[42,48,-3],[58,52,5],[76,50,5],[22,80,4],[42,82,3],[58,80,-5],[78,82,3]],
-  river:  [[23,63,-5],[44,63,2],[55,55,4],[32,17,5],[72,28,-5],[10,19,4],[58,20,-4],[75,45,-3]],
-  factory:[[12,78,3],[32,72,-2],[52,82,3],[72,74,-2],[90,80,3]],
+  river:  [[8,40,5],[26,40,-4],[44,40,4],[60,42,-3],[16,78,-5],[34,78,4],[76,44,3],[92,46,-4]],
+  factory:[[12,86,3],[32,83,-2],[52,84,3],[72,87,-2],[90,85,3]],
 };
 let signAnimated=false; // 路牌首次立起动画标记
 const regionOf = id => REGIONS.find(r=>r.id===id) || REGIONS[0];
@@ -3426,7 +3427,7 @@ function renderBuildingDetail(){
   const hallBonusVal=bid==="hall"?10:0;
   box.innerHTML=`
     <div class="bldDetailHeader">
-      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260902`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
+      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260904`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
       <div>
         <div class="bldDetailName">${customName}</div>
         <div class="bldDetailType">${bldName(b)} ${b.passive?`· ${LANG==="en"?b.passiveEn:b.passive}`:`· 💰+${Math.round(income)}/${INCOME_INTERVAL}s`}</div>
@@ -3658,13 +3659,13 @@ function buildingUnlocked(b){
 function buildingLockHint(b){
   const has=id=>(S.buildings[id]||0)>0;
   const _lockIconStyle="width:16px;height:16px;vertical-align:middle;object-fit:contain;background:transparent;";
-  const hutImg=`<img src="assets/buildings/hut.png" style="${_lockIconStyle}">`;
-  const shopImg=`<img src="assets/buildings/shop.png" style="${_lockIconStyle}">`;
-  const gardenImg=`<img src="assets/buildings/garden.png" style="${_lockIconStyle}">`;
-  const manorImg=`<img src="assets/buildings/manor.png" style="${_lockIconStyle}">`;
-  const stationImg=`<img src="assets/buildings/station.png" style="${_lockIconStyle}">`;
-  const hospitalImg=`<img src="assets/buildings/hospital.png" style="${_lockIconStyle}">`;
-  const factoryImg=`<img src="assets/buildings/factory.png" style="${_lockIconStyle}">`;
+  const hutImg=`<img src="assets/buildings/hut.png?v=20260904" style="${_lockIconStyle}">`;
+  const shopImg=`<img src="assets/buildings/shop.png?v=20260904" style="${_lockIconStyle}">`;
+  const gardenImg=`<img src="assets/buildings/garden.png?v=20260904" style="${_lockIconStyle}">`;
+  const manorImg=`<img src="assets/buildings/manor.png?v=20260904" style="${_lockIconStyle}">`;
+  const stationImg=`<img src="assets/buildings/station.png?v=20260904" style="${_lockIconStyle}">`;
+  const hospitalImg=`<img src="assets/buildings/hospital.png?v=20260904" style="${_lockIconStyle}">`;
+  const factoryImg=`<img src="assets/buildings/factory.png?v=20260904" style="${_lockIconStyle}">`;
   if(b.id==="garden"||b.id==="manor") return LANG==="en"?`Need ${hutImg}Hut + ${shopImg}Shop`:`需要${hutImg}小屋+${shopImg}商店`;
   if(b.id==="station"||b.id==="hospital") return LANG==="en"?`Need ${hutImg}Hut or ${shopImg}Shop`:`需要${hutImg}小屋或${shopImg}商店`;
   if(b.id==="factory") return LANG==="en"?`Need ${hutImg}Hut + ${shopImg}Shop`:`需要${hutImg}小屋+${shopImg}商店`;
@@ -4659,7 +4660,7 @@ function renderMap(){
   });
   const bc={};
   Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
-  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260902`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
+  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260904`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
   let hint="";
   if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.selectedPlot",regionOf(selectedPlot.region).i,regName(regionOf(selectedPlot.region)))} <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
@@ -4700,7 +4701,7 @@ function renderMap(){
     const ti=assetCache.get("regions:"+r.id);
     const defaultBg=`assets/regions/${r.id}.png?v=20260902`;
     const plots=S.plots[r.id]||[];
-    const bldSize=r.plots<=6?42:r.plots<=8?38:32;
+    const bldSize=(r.plots<=6?42:r.plots<=8?38:32)*2;
     const emojiPx=Math.round(bldSize*0.7);
     const points=BUILDABLE_POINTS[r.id]||[];
     // 构建建筑槽
@@ -4721,7 +4722,7 @@ function renderMap(){
         const b=BUILDINGS.find(x=>x.id===p);
         const key=r.id+"_"+i;
         tip=b?((S.buildingNames&&S.buildingNames[key])||bldName(b)):"";
-        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260902`;
+        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260904`;
         const em=b?b.i:"❓";
         inner=`<img src="${bldUrl}" width="${bldSize}" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));transform:rotate(${rot}deg)" onerror="bldImgError(this,'${em}',${emojiPx})" alt="${b?b.n:''}">`;
       }
@@ -4827,7 +4828,7 @@ function renderShop(){
     const lockNote=!unlocked?`<div class="buildLockNote">🔒 ${buildingLockHint(b)}</div>`:"";
     const placeLockNote=!placeOk?`<div class="buildLockNote">${placeNote}</div>`:"";
     const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
-    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260902`;
+    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260904`;
     div.innerHTML=`<div class="top"><span class="ico"><img src="${bldImg}" width="32" height="32" style="object-fit:contain;vertical-align:middle" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}${placeLockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
