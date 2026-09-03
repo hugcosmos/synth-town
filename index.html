@@ -4176,6 +4176,15 @@ function isRecipeCrafted(craftedSet, inputs, out){
   if(inputs.length===2) return craftedSet.has(rk);
   return craftedSet.has(rk+":"+out)||craftedSet.has(rk);
 }
+// 元素是否已发现（与元素库"已发现"口径一致：普通元素看 unlocked 属性存在，生命/宝箱等看特殊标记）
+function elDiscovered(id){
+  if(id==="chest") return !!(S.chestVisited||(S.chest||0)>0);
+  if(id==="life") return (S.discoveredLifeHps||[]).length>0;
+  if(id.startsWith("life:")) return (S.discoveredLifeHps||[]).includes(+id.slice(5));
+  if(id==="elixir") return (S.discoveredElixirHps||[]).length>0;
+  if(id.startsWith("elixir:")) return (S.discoveredElixirHps||[]).includes(+id.slice(7));
+  return id in (S.unlocked||{});
+}
 function renderRecipeBook(){
   const u=getRecipeUnlock();
   const basicCard=$("#basicLockCard"), advCard=$("#advancedLockCard"), nlCard=$("#newLegendLockCard");
@@ -4184,22 +4193,19 @@ function renderRecipeBook(){
   const nlPwdBox=$("#newLegendPwdBox"), nlBtn=$("#newLegendUnlockBtn");
   const content=$("#recipeContent");
   const crafted=new Set(S.craftedRecipes||[]);
-  // 按层级统计：总数、已合成数、密码解锁数（生命按实际等级=材料之和，宝箱纳入）
-  const tierStats={};
+  // 按层级统计输出元素集合（基础=1-3级、高级=4级+；生命按实际等级=材料之和）
+  const basicOuts=new Set(), advOuts=new Set();
   R.forEach(r=>{
     const isThree=r.length===4;
     const out=isThree?r[3]:r[2];
     if(out==="coin"||NEW_LEGEND_OUTS.has(out)) return;
     const inputs=isThree?[r[0],r[1],r[2]]:[r[0],r[1]];
     const t=out==="life"?craftCost(...inputs):tierOf(out);
-    if(!tierStats[t]) tierStats[t]={total:0,crafted:0};
-    tierStats[t].total++;
-    if(isRecipeCrafted(crafted, inputs, out)) tierStats[t].crafted++;
+    const key=out==="life"?"life:"+craftCost(...inputs):out;
+    (Number(t)<=3?basicOuts:advOuts).add(key);
   });
-  const basicTiers=Object.keys(tierStats).filter(t=>Number(t)<=3);
-  const advTiers=Object.keys(tierStats).filter(t=>Number(t)>3);
-  const basicAllCrafted=basicTiers.length>0 && basicTiers.every(t=>tierStats[t].crafted===tierStats[t].total);
-  const advAllCrafted=advTiers.length>0 && advTiers.every(t=>tierStats[t].crafted===tierStats[t].total);
+  const basicAllCrafted=basicOuts.size>0 && [...basicOuts].every(k=>elDiscovered(k));
+  const advAllCrafted=advOuts.size>0 && [...advOuts].every(k=>elDiscovered(k));
   // 基础锁：1-3级都已合成 → 不显示；密码已解锁 → 不显示；否则显示
   if(basicAllCrafted||u.basic){
     basicCard.style.display="none";
@@ -4251,7 +4257,8 @@ function renderRecipeBook(){
     if(out==="coin"||NEW_LEGEND_OUTS.has(out)) return false;
     const inputs=isThree?[r[0],r[1],r[2]]:[r[0],r[1]];
     const t=out==="life"?craftCost(...inputs):tierOf(out);
-    return isRecipeCrafted(crafted, inputs, out)||(t<=3&&u.basic)||(t>3&&u.advanced);
+    const outKey=out==="life"?"life:"+craftCost(...inputs):out;
+    return isRecipeCrafted(crafted, inputs, out)||(t<=3&&u.basic)||(t>3&&u.advanced)||elDiscovered(outKey);
   });
   if(hasAnyVisible){
     content.style.display="block";
@@ -4277,7 +4284,9 @@ function renderRecipes(u,crafted){
   tiers.forEach(tier=>{
     const isBasic=Number(tier)<=3;
     const recipes=byTier[tier].filter(item=>{
-      return isRecipeCrafted(crafted, item.inputs, item.out)||(isBasic&&u.basic)||(!isBasic&&u.advanced);
+      // 显示条件：已合成该配方 或 密码解锁 或 输出元素已发现（不管用哪条路径合成，有该元素即显示其配方）
+      const outKey = item.out==="life" ? "life:"+craftCost(...item.inputs) : item.out;
+      return isRecipeCrafted(crafted, item.inputs, item.out)||(isBasic&&u.basic)||(!isBasic&&u.advanced)||elDiscovered(outKey);
     });
     if(recipes.length===0) return;
     let html=`<div class="recipeTierGroup"><div class="recipeTierTitle">${t("recipe.tier",tier)}</div><div class="recipeList">`;
