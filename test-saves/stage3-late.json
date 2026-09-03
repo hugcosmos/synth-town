@@ -228,9 +228,9 @@
       "energy+bunch",
       "energy+garden_flowers",
       "flower+fertilizer",
-      "fire+jade+life",
-      "air+jade+life",
-      "water+air+fire"
+      "fire+jade+life:elixir",
+      "air+jade+life:magicCrystal",
+      "air+fire+water:rainbow"
     ],
     "lastTick": 1788449604306,
     "bonusAccumulator": 0,
