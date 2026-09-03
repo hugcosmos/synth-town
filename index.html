@@ -1339,6 +1339,7 @@ const I18N = {
     "reset.confirm":"确定重置全部进度吗？不可恢复。",
     "craft.usedUp":"{0} 已用完，再去合成一些吧",
     "craft.invalid":"❌ 无效组合，换个思路试试",
+    "craft.legendOrder":"⚠️ 传说元素有固定配方顺序，请按配方书顺序放置（如彩虹：水+气+火）",
     "craft.notEnough":"{0} 或 {1} 数量不够",
     "craft.newElement":"🎉 发现新元素：{0} {1}",
     "craft.newBadge":"🎉 新元素！",
@@ -1503,6 +1504,7 @@ const I18N = {
     "reset.confirm":"Reset all progress? This cannot be undone.",
     "craft.usedUp":"{0} is used up, craft some more",
     "craft.invalid":"❌ Invalid combination, try another approach",
+    "craft.legendOrder":"⚠️ Legendary elements have a fixed recipe order — follow the recipe book (e.g. Rainbow: Water+Air+Fire)",
     "craft.notEnough":"Not enough {0} or {1}",
     "craft.newElement":"🎉 Discovered new element: {0} {1}",
     "craft.newBadge":"🎉 New Element!",
@@ -2147,9 +2149,8 @@ function setSlot(slot, id, hp=null){
   if(slot.id==="slotA"){ selA=id; selAHp=hp; }
   else if(slot.id==="slotB"){ selB=id; selBHp=hp; }
   else { selC=id; selCHp=hp; }
+  // 生命/万能药只显示图标，不显示HP小字（窄槽位会溢出；HP已记录在sel*Hp，合成结果会自动带出）
   let label = ELEMENTS[id].i;
-  if(id==="life" && hp!==null) label += `<small style="font-size:11px;color:var(--ok)">HP${hp}</small>`;
-  if(id==="elixir" && hp!==null) label += `<small style="font-size:11px;color:var(--ok)">HP${hp}</small>`;
   slot.innerHTML=`<span style="font-size:40px;line-height:1;">${label}</span>`;
   slot.dataset.filled=id;
   if(hp!==null) slot.dataset.hp=hp; else delete slot.dataset.hp;
@@ -2450,18 +2451,50 @@ function findTwoRecipe(a,b){
   const r=R.find(r=>r.length===3&&((r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a)));
   return r?r[2]:null;
 }
+// 三元素全排列
+function perm3(a,b,c){ return [[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]]; }
+// 三个元素是否为某个传说配方（4元素配方）的材料集合
+function isLegendMaterialSet(a,b,c){
+  return perm3(a,b,c).some(p=>R.some(r=>r.length===4&&r[0]===p[0]&&r[1]===p[1]&&r[2]===p[2]));
+}
+// 尝试三个元素的任意顺序，仅当所有能走通的排列结果唯一时返回该结果；歧义(>1种结果)或走不通返回null
+function tryThreeUnique(a,b,c){
+  const outs=new Set();
+  for(const p of perm3(a,b,c)){
+    let o=null;
+    const rl=R.find(r=>r.length===4&&r[0]===p[0]&&r[1]===p[1]&&r[2]===p[2]);
+    if(rl){ o=rl[3]; }
+    else {
+      const mid=findTwoRecipe(p[0],p[1]);
+      if(mid){ o=findTwoRecipe(mid,p[2]); }
+    }
+    if(o) outs.add(o);
+  }
+  return outs.size===1 ? [...outs][0] : null;
+}
 $("#craftBtn").addEventListener("click", ()=>{
   if(!selA||!selB) return;
   const res=$("#result");
   const isThree = !!(selA&&selB&&selC);
   let recipe, out, cost;
   if(isThree){
-    // 1. 先匹配传说固定三元素配方（有序匹配）
+    // 1. 先匹配传说固定三元素配方（有序匹配，如彩虹 水+气+火）
     recipe = R.find(r=>r.length===4 && r[0]===selA && r[1]===selB && r[2]===selC);
     if(recipe){
       out=recipe[3];
+    } else if(isLegendMaterialSet(selA,selB,selC)){
+      // 2. 材料属于传说配方但顺序不同：尝试任意顺序，结果唯一才支持
+      //    （魔法水晶/万能药任意顺序可合成；彩虹乱序存在歧义→提示按配方书顺序）
+      out = tryThreeUnique(selA,selB,selC);
+      if(!out){
+        res.innerHTML=t("craft.legendOrder");
+        $("#slots").classList.add("shake");
+        setTimeout(()=>$("#slots").classList.remove("shake"),400);
+        clearTimeout(resultTimer); resultTimer=setTimeout(clearResult, 2500);
+        return;
+      }
     } else {
-      // 2. 普通三元素两步合成：(A+B)+C，前两个先合成，结果再和第三个合成
+      // 3. 普通三元素两步合成：(A+B)+C，前两个先合成，结果再和第三个合成
       //    只要两步都能走得通且结果唯一就支持；顺序不同结果可能不同
       const mid = findTwoRecipe(selA, selB);
       if(mid){
