@@ -1298,7 +1298,7 @@ const SAVE_VERSION = 3; // v1=初始, v2=地块系统, v3=宠物增强(起名/�
 const I18N = {
   zh: {
     "app.title":"⚗️ 我的小镇",
-    "tab.craft":"合成", "tab.town":"小镇", "tab.shop":"商店", "tab.pet":"宠物", "tab.park":"游乐园", "tab.badges":"成就", "tab.basic":"基础", "tab.advanced":"进阶", "tab.life":"生命", "tab.legend":"传说",
+    "tab.craft":"合成", "tab.town":"小镇", "tab.shop":"商店", "tab.pet":"宠物", "tab.park":"游乐园", "tab.badges":"成就", "tab.all":"全部", "tab.basic":"基础", "tab.advanced":"进阶", "tab.life":"生命", "tab.legend":"传说",
     "panel.elements":"元素库（点一下填入合成槽）",
     "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 游乐园",
     "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
@@ -1462,7 +1462,7 @@ const I18N = {
   },
   en: {
     "app.title":"⚗️ My Town",
-    "tab.craft":"Craft", "tab.town":"Town", "tab.shop":"Shop", "tab.pet":"Pets", "tab.park":"Playpark", "tab.badges":"Badges", "tab.basic":"Basic", "tab.advanced":"Advanced", "tab.life":"Life", "tab.legend":"Legendary",
+    "tab.craft":"Craft", "tab.town":"Town", "tab.shop":"Shop", "tab.pet":"Pets", "tab.park":"Playpark", "tab.badges":"Badges", "tab.all":"All", "tab.basic":"Basic", "tab.advanced":"Advanced", "tab.life":"Life", "tab.legend":"Legendary",
     "panel.elements":"Elements (tap to fill slot)",
     "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Playpark",
     "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
@@ -1858,7 +1858,7 @@ function foundElementKinds(){
 }
 
 /* ============ 元素库 ============ */
-let currentElementTab="basic";
+let currentElementTab="all";
 let currentShopElementTab="basic";
 function isAdvancedTabUnlocked(){
   return Object.keys(S.unlocked||{}).some(k=>{
@@ -1894,6 +1894,7 @@ function renderElementTabs(){
   const counts=tabElementCounts();
   const advUnlocked=isAdvancedTabUnlocked();
   const tabs=[
+    {id:"all", label:t("tab.all"), count:[foundElementKinds(),totalElementKinds()], locked:false},
     {id:"basic", label:t("tab.basic"), count:counts.basic, locked:false},
     {id:"advanced", label:t("tab.advanced"), count:counts.advanced, locked:!advUnlocked},
     {id:"life", label:t("tab.life"), count:counts.life, locked:false},
@@ -1925,7 +1926,7 @@ function renderElements(){
   (S.elixirPool||[]).forEach(h=>{ if(!S.discoveredElixirHps.includes(h)) S.discoveredElixirHps.push(h); });
   const normalNonLegend = [...normalElementSet()].filter(x=>!LEGENDARY_IDS.has(x));
 
-  // 通用：普通元素卡片（基础/进阶栏共用）
+  // 通用：普通元素卡片（基础/进阶/全部 共用）
   function makeNormalEl(id){
     const e=ELEMENTS[id];
     const discovered = id in S.unlocked;   // 是否获得过（合成/购买），消耗后仍算已发现
@@ -1944,104 +1945,108 @@ function renderElements(){
     }
     g.appendChild(d);
   }
-
-  if(currentElementTab==="basic"){
-    BASE.forEach(id=>makeNormalEl(id));
-    normalNonLegend.filter(x=>{const t=tierOf(x);return t>=1&&t<=3;}).forEach(id=>makeNormalEl(id));
-  } else if(currentElementTab==="advanced"){
-    normalNonLegend.filter(x=>{const t=tierOf(x);return t>=4&&t<=7;}).forEach(id=>makeNormalEl(id));
-  } else if(currentElementTab==="life"){
-    const hpCount={};
-    (S.lifePool||[]).forEach(h=>{hpCount[h]=(hpCount[h]||0)+1;});
-    LIFE_HPS.forEach(hp=>{
-      const cnt=hpCount[hp]||0;
-      const discovered=(S.discoveredLifeHps||[]).includes(hp); // 是否合成过该HP生命，消耗后仍算已发现
-      const d=document.createElement("div");
-      d.className="el"+(discovered?"":" empty"); d.dataset.id="life";
-      d.innerHTML=`<span class="ico">${assetHtml("elements","life",ELEMENTS.life.i,"26px")}</span><span class="name">${elName("life")}</span><span class="cnt" style="color:${discovered?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
-      if(cnt>0){
-        if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace("life",hp));
-        else makeDraggable(d, "life");
-        d.dataset.hp=hp;
-      }else if(discovered){
-        d.addEventListener("click",()=>toast(LANG==="en"?`HP${hp} life used up, synthesize more!`:`HP${hp}的生命已用完，再合成一些吧！`));
-      }else{
-        d.addEventListener("click",()=>toast(LANG==="en"?`HP${hp} life not discovered yet`:`尚未发现HP${hp}的生命`));
-      }
-      g.appendChild(d);
-    });
-  } else if(currentElementTab==="legend"){
-    // chest信息卡
+  // 生命卡片（生命栏/全部 共用）
+  function makeLifeEl(hp){
+    const cnt=(S.lifePool||[]).filter(h=>h===hp).length;
+    const discovered=(S.discoveredLifeHps||[]).includes(hp);
+    const d=document.createElement("div");
+    d.className="el"+(discovered?"":" empty"); d.dataset.id="life";
+    d.innerHTML=`<span class="ico">${assetHtml("elements","life",ELEMENTS.life.i,"26px")}</span><span class="name">${elName("life")}</span><span class="cnt" style="color:${discovered?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
+    if(cnt>0){
+      if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace("life",hp));
+      else makeDraggable(d, "life");
+      d.dataset.hp=hp;
+    }else if(discovered){
+      d.addEventListener("click",()=>toast(LANG==="en"?`HP${hp} life used up, synthesize more!`:`HP${hp}的生命已用完，再合成一些吧！`));
+    }else{
+      d.addEventListener("click",()=>toast(LANG==="en"?`HP${hp} life not discovered yet`:`尚未发现HP${hp}的生命`));
+    }
+    g.appendChild(d);
+  }
+  // 万能药卡片（传说栏/全部 共用）
+  function makeElixirEl(hp){
+    const cnt=(S.elixirPool||[]).filter(h=>h===hp).length;
+    const discovered=(S.discoveredElixirHps||[]).includes(hp);
+    const d=document.createElement("div");
+    d.className="el"+(discovered?"":" empty"); d.dataset.id="elixir";
+    d.innerHTML=`<span class="ico">💊</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("elixir")}</span><span class="cnt" style="color:${discovered?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
+    if(cnt>0){
+      d.addEventListener("click",()=>toast(LANG==="en"?`💊 Elixir HP${hp}: use at Pet Detail to fully revive a pet with matching maxHp`:`💊 万能药HP${hp}：在宠物详情页对maxHp匹配的宠物使用，满血复活`));
+    }else if(discovered){
+      d.addEventListener("click",()=>toast(LANG==="en"?`💊 Elixir HP${hp} used up, synthesize more!`:`💊 万能药HP${hp}已用完，再合成一些吧！`));
+    }else{
+      d.addEventListener("click",()=>toast(LANG==="en"?`💊 Elixir HP${hp} not synthesized yet`:`💊 万能药HP${hp}尚未合成`));
+    }
+    g.appendChild(d);
+  }
+  // 宝箱卡（传说栏/全部 共用）
+  function makeChestCard(){
     const chestVisited = S.chestVisited || (S.chest>0);
     const chestCard=document.createElement("div");
     chestCard.className="el legendInfoCard"+(chestVisited?"":" empty");
     chestCard.innerHTML=`<span class="ico">🧰</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("chest")}</span><span class="cnt">×${S.chest||0}</span>`;
     chestCard.addEventListener("click",()=>toast(t("npc.chestHint")||(LANG==="en"?"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料")));
     g.appendChild(chestCard);
-    // bunch（花丛）— 可拖拽传说元素
-    ["bunch","garden_flowers"].forEach(id=>{
-      const e=ELEMENTS[id];
-      const discovered = id in S.unlocked; // 是否获得过
-      const own = count(id);
-      const d=document.createElement("div");
-      d.className="el"+(discovered?"":" empty"); d.dataset.id=id;
-      d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name" style="color:var(--gold);font-weight:600;">${elName(id)}</span><span class="cnt">×${own}</span>`;
-      if(own>0){
-        if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
-        else makeDraggable(d, id);
-      }else if(discovered){
-        d.addEventListener("click",()=>toast(LANG==="en"?`${elName(id)} used up, synthesize more!`:`${elName(id)}已用完，再合成一些吧！`));
-      }else{
-        d.addEventListener("click",()=>toast(LANG==="en"?`${elName(id)} not synthesized yet`:`${elName(id)}尚未合成`));
-      }
-      g.appendChild(d);
-    });
-    // magicCrystal — 始终展示
-    const mcDiscovered = "magicCrystal" in S.unlocked;
-    const mcHas = count("magicCrystal")>0;
-    const mcCard=document.createElement("div");
-    mcCard.className="el"+(mcDiscovered?"":" empty");
-    mcCard.innerHTML=`<span class="ico">🔮</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("magicCrystal")}</span><span class="cnt">×${count("magicCrystal")}</span>`;
-    if(mcHas){
-      mcCard.addEventListener("click",()=>toast(LANG==="en"?"🔮 Magic Crystal: used to transform pet species at Pet Detail":"🔮 魔法水晶：在宠物详情页用于转换物种"));
-    } else if(mcDiscovered){
-      mcCard.addEventListener("click",()=>toast(LANG==="en"?"🔮 Magic Crystal used up, synthesize more!":"🔮 魔法水晶已用完，再合成一些吧！"));
-    } else {
-      mcCard.addEventListener("click",()=>toast(LANG==="en"?"Craft: 💎Jade + 🧬Life + 💨Air":"合成：💎玉石 + 🧬生命 + 💨气"));
+  }
+  // 花丛/花海（传说栏/全部 共用）
+  function makeFlowerEl(id){
+    const e=ELEMENTS[id];
+    const discovered = id in S.unlocked;
+    const own = count(id);
+    const d=document.createElement("div");
+    d.className="el"+(discovered?"":" empty"); d.dataset.id=id;
+    d.innerHTML=`<span class="ico">${assetHtml("elements",id,e.i,"26px")}</span><span class="name" style="color:var(--gold);font-weight:600;">${elName(id)}</span><span class="cnt">×${own}</span>`;
+    if(own>0){
+      if(window.innerWidth<=860) d.addEventListener("click",()=>autoPlace(id));
+      else makeDraggable(d, id);
+    }else if(discovered){
+      d.addEventListener("click",()=>toast(LANG==="en"?`${elName(id)} used up, synthesize more!`:`${elName(id)}已用完，再合成一些吧！`));
+    }else{
+      d.addEventListener("click",()=>toast(LANG==="en"?`${elName(id)} not synthesized yet`:`${elName(id)}尚未合成`));
     }
-    g.appendChild(mcCard);
-    // rainbow — 始终展示
-    const rbDiscovered = "rainbow" in S.unlocked;
-    const rbHas = count("rainbow")>0;
-    const rbCard=document.createElement("div");
-    rbCard.className="el"+(rbDiscovered?"":" empty");
-    rbCard.innerHTML=`<span class="ico">🌈</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("rainbow")}</span><span class="cnt">×${count("rainbow")}</span>`;
-    if(rbHas){
-      rbCard.addEventListener("click",()=>toast(LANG==="en"?"🌈 Rainbow: feed to pets at Pet Detail (full satiety + intimacy)":"🌈 彩虹：在宠物详情页喂食（饱食度满+亲密度+5）"));
-    } else if(rbDiscovered){
-      rbCard.addEventListener("click",()=>toast(LANG==="en"?"🌈 Rainbow used up, synthesize more!":"🌈 彩虹已用完，再合成一些吧！"));
+    g.appendChild(d);
+  }
+  // 魔法水晶/彩虹（传说栏/全部 共用）
+  function makeSpecialEl(id){
+    const discovered = id in S.unlocked;
+    const has = count(id)>0;
+    const e=ELEMENTS[id];
+    const tipHas = id==="magicCrystal"
+      ? (LANG==="en"?"🔮 Magic Crystal: used to transform pet species at Pet Detail":"🔮 魔法水晶：在宠物详情页用于转换物种")
+      : (LANG==="en"?"🌈 Rainbow: feed to pets at Pet Detail (full satiety + intimacy)":"🌈 彩虹：在宠物详情页喂食（饱食度满+亲密度+5）");
+    const d=document.createElement("div");
+    d.className="el"+(discovered?"":" empty");
+    d.innerHTML=`<span class="ico">${e.i}</span><span class="name" style="color:var(--gold);font-weight:600;">${elName(id)}</span><span class="cnt">×${count(id)}</span>`;
+    if(has){
+      d.addEventListener("click",()=>toast(tipHas));
+    } else if(discovered){
+      d.addEventListener("click",()=>toast(LANG==="en"?`${elName(id)} used up, synthesize more!`:`${elName(id)}已用完，再合成一些吧！`));
     } else {
-      rbCard.addEventListener("click",()=>toast(LANG==="en"?"Craft: 💧Water + 🔥Fire + 💨Air":"合成：💧水 + 🔥火 + 💨气"));
+      d.addEventListener("click",()=>toast(LANG==="en"?`${elName(id)} not synthesized yet`:`${elName(id)}尚未合成`));
     }
-    g.appendChild(rbCard);
-    // 万能药按HP — 遍历所有LIFE_HPS
-    const exCount={};
-    (S.elixirPool||[]).forEach(h=>{exCount[h]=(exCount[h]||0)+1;});
-    LIFE_HPS.forEach(hp=>{
-      const cnt=exCount[hp]||0;
-      const discovered=(S.discoveredElixirHps||[]).includes(hp); // 是否合成过该HP万能药
-      const d=document.createElement("div");
-      d.className="el"+(discovered?"":" empty"); d.dataset.id="elixir";
-      d.innerHTML=`<span class="ico">💊</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("elixir")}</span><span class="cnt" style="color:${discovered?'var(--ok)':'var(--dim)'};font-size:10px;">HP${hp} ×${cnt}</span>`;
-      if(cnt>0){
-        d.addEventListener("click",()=>toast(LANG==="en"?`💊 Elixir HP${hp}: use at Pet Detail to fully revive a pet with matching maxHp`:`💊 万能药HP${hp}：在宠物详情页对maxHp匹配的宠物使用，满血复活`));
-      }else if(discovered){
-        d.addEventListener("click",()=>toast(LANG==="en"?`💊 Elixir HP${hp} used up, synthesize more!`:`💊 万能药HP${hp}已用完，再合成一些吧！`));
-      }else{
-        d.addEventListener("click",()=>toast(LANG==="en"?"Craft: 🧬Life + 💎Jade + 🔥Fire (HP from input life)":"合成：🧬生命 + 💎玉石 + 🔥火（HP由输入生命决定）"));
-      }
-      g.appendChild(d);
-    });
+    g.appendChild(d);
+  }
+
+  if(currentElementTab==="all"){
+    // 全部：只展示已拥有的元素（合成工作台，无需切tab找材料）
+    [...BASE, ...normalNonLegend].forEach(id=>{ if(id in S.unlocked) makeNormalEl(id); });
+    LIFE_HPS.forEach(hp=>{ if((S.discoveredLifeHps||[]).includes(hp)) makeLifeEl(hp); });
+    if(S.chestVisited||S.chest>0) makeChestCard();
+    ["bunch","garden_flowers"].forEach(id=>{ if(id in S.unlocked) makeFlowerEl(id); });
+    ["magicCrystal","rainbow"].forEach(id=>{ if(id in S.unlocked) makeSpecialEl(id); });
+    LIFE_HPS.forEach(hp=>{ if((S.discoveredElixirHps||[]).includes(hp)) makeElixirEl(hp); });
+  } else if(currentElementTab==="basic"){
+    BASE.forEach(id=>makeNormalEl(id));
+    normalNonLegend.filter(x=>{const t=tierOf(x);return t>=1&&t<=3;}).forEach(id=>makeNormalEl(id));
+  } else if(currentElementTab==="advanced"){
+    normalNonLegend.filter(x=>{const t=tierOf(x);return t>=4&&t<=7;}).forEach(id=>makeNormalEl(id));
+  } else if(currentElementTab==="life"){
+    LIFE_HPS.forEach(hp=>makeLifeEl(hp));
+  } else if(currentElementTab==="legend"){
+    makeChestCard();
+    ["bunch","garden_flowers"].forEach(id=>makeFlowerEl(id));
+    ["magicCrystal","rainbow"].forEach(id=>makeSpecialEl(id));
+    LIFE_HPS.forEach(hp=>makeElixirEl(hp));
   }
   $("#discCount").textContent = foundElementKinds();
   $("#totalRecipes").textContent = totalElementKinds();
