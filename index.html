@@ -812,6 +812,7 @@
       </div>
       <div id="shopElementTabs" class="elementTabBar" style="margin-bottom:8px;"></div>
       <div id="elShop"></div>
+      <div id="tradeTabs" class="elementTabBar" style="margin-bottom:8px;display:none;"></div>
       <div id="tradePanel" style="display:none"></div>
     </section>
   </section>
@@ -1058,8 +1059,8 @@ const BASE = ["earth","water","fire","air"];
 const LEGENDARY_IDS = new Set(["bunch","garden_flowers","chest","coin","magicCrystal","elixir","rainbow"]);
 const DEPRECATED_IDS = new Set(["charocal","tower"]); // 废弃占位元素，不纳入商店展示与统计
 const NEW_LEGEND_OUTS = new Set(["magicCrystal","elixir","rainbow"]);
-const LEGEND_BUY = {magicCrystal:50, rainbow:15};
-const LEGEND_SELL = {magicCrystal:40, rainbow:12};
+const LEGEND_BUY = {magicCrystal:50, rainbow:15, bunch:40, garden_flowers:45, chest:30};
+const LEGEND_SELL = {magicCrystal:40, rainbow:12, bunch:32, garden_flowers:36};
 const ELIXIR_BUY = {5:25, 6:30, 9:45, 10:50, 11:55};
 const ELIXIR_SELL = {5:20, 6:24, 9:36, 10:40, 11:44};
 const LIFE_BUY = {5:20, 6:24, 9:36, 10:40, 11:44};
@@ -2645,6 +2646,10 @@ function checkoutCart(){
       if(!S.discoveredLifeHps) S.discoveredLifeHps=[];
       for(let i=0;i<n;i++){ S.lifePool.push(hp); }
       if(!S.discoveredLifeHps.includes(hp)) S.discoveredLifeHps.push(hp);
+    } else if(id==="chest"){
+      // 宝箱数量用独立变量S.chest
+      S.chest=(S.chest||0)+n;
+      S.chestVisited=true;
     } else {
       S.unlocked[id]=(S.unlocked[id]||0)+n;
     }
@@ -2662,8 +2667,8 @@ function renderShopElementTabs(){
   const advancedCount=Object.keys(ELEMENTS).filter(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life"&&!DEPRECATED_IDS.has(k);}).length;
   // life：LIFE_HPS 种数
   const lifeCount=LIFE_HPS.length;
-  // legend：magicCrystal+rainbow + 万能药HP变体
-  const legendCount=2+LIFE_HPS.length;
+  // legend：bunch/garden_flowers/chest/coin/magicCrystal/rainbow(6) + 万能药HP变体(LIFE_HPS)
+  const legendCount=6+LIFE_HPS.length;
   // 解锁状态
   const advancedUnlocked=Object.keys(S.unlocked||{}).some(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life";});
   const lifeUnlocked=(S.discoveredLifeHps||[]).length>0||(S.lifePool||[]).length>0;
@@ -2698,13 +2703,12 @@ function renderElShop(){
   // 左侧元素网格（根据当前分栏）
   let gridHtml=`<div class="shopElementGrid">`;
   if(currentShopElementTab==="basic"){
-    // 展示 ALL tier1-3 非传说非生命非废弃元素（不只是已发现的）
+    // 展示 ALL tier1-3 非传说非生命非废弃元素，基础栏默认解锁，全部彩色可购买
     const ids=Object.keys(ELEMENTS).filter(k=>{const t=tierOf(k);return t>=1&&t<=3&&!LEGENDARY_IDS.has(k)&&k!=="life"&&!DEPRECATED_IDS.has(k);}).sort((a,b)=>tierOf(a)-tierOf(b));
     ids.forEach(id=>{
       const e=ELEMENTS[id], price=tierOf(id)*BUY_RATE;
       const inCart=S.shopCart?.[id]||0;
-      const discovered=!!S.unlocked?.[id];
-      gridHtml+=`<div class="shopElCard${discovered?"":" undiscovered"}" onclick="addToCart('${id}')" title="${elName(id)} · ${tierOf(id)}${LANG==="en"?"Lvl":"级"} · 💰${price}${discovered?"":" · "+(LANG==="en"?"Not yet crafted":"尚未合成")}">
+      gridHtml+=`<div class="shopElCard" onclick="addToCart('${id}')" title="${elName(id)} · ${tierOf(id)}${LANG==="en"?"Lvl":"级"} · 💰${price}">
         <button class="addBtn" onclick="event.stopPropagation();addToCart('${id}')">+</button>
         <div class="ico">${e.i}</div>
         <div class="nm">${elName(id)}</div>
@@ -2720,8 +2724,7 @@ function renderElShop(){
       ids.forEach(id=>{
         const e=ELEMENTS[id], price=tierOf(id)*BUY_RATE;
         const inCart=S.shopCart?.[id]||0;
-        const discovered=!!S.unlocked?.[id];
-        gridHtml+=`<div class="shopElCard${discovered?"":" undiscovered"}" onclick="addToCart('${id}')" title="${elName(id)} · ${tierOf(id)}${LANG==="en"?"Lvl":"级"} · 💰${price}${discovered?"":" · "+(LANG==="en"?"Not yet crafted":"尚未合成")}">
+        gridHtml+=`<div class="shopElCard" onclick="addToCart('${id}')" title="${elName(id)} · ${tierOf(id)}${LANG==="en"?"Lvl":"级"} · 💰${price}">
           <button class="addBtn" onclick="event.stopPropagation();addToCart('${id}')">+</button>
           <div class="ico">${e.i}</div>
           <div class="nm">${elName(id)}</div>
@@ -2739,9 +2742,8 @@ function renderElShop(){
         const e=ELEMENTS.life;
         const price=LIFE_BUY[hp]||20;
         const inCart=S.shopCart?.[id]||0;
-        const discovered=(S.discoveredLifeHps||[]).includes(hp);
         const nameLabel=`${elName("life")} HP${hp}`;
-        gridHtml+=`<div class="shopElCard${discovered?"":" undiscovered"}" onclick="addToCart('${id}')" title="${nameLabel} · 💰${price}${discovered?"":" · "+(LANG==="en"?"Not yet crafted":"尚未合成")}">
+        gridHtml+=`<div class="shopElCard" onclick="addToCart('${id}')" title="${nameLabel} · 💰${price}">
           <button class="addBtn" onclick="event.stopPropagation();addToCart('${id}')">+</button>
           <div class="ico">${e.i}</div>
           <div class="nm">${nameLabel}</div>
@@ -2750,8 +2752,17 @@ function renderElShop(){
       });
     }
   } else if(currentShopElementTab==="legend"){
-    // 传说元素区域 — 始终展示所有可购买项（未发现也可购买）
+    // 传说元素区域 — 始终展示全部11个传说元素（传说栏默认解锁，全部彩色可购买）
+    // 金币(coin)为游戏货币，不售出，仅作信息卡展示
+    gridHtml+=`<div class="shopElCard" onclick="toast('${LANG==="en"?"💰 Coin is game currency, earned from buildings & selling":"💰 金币为游戏货币，通过建筑产出和出售元素获得"}')" title="${LANG==="en"?"Coin: game currency":"金币：游戏货币"}">
+      <div class="ico">💰</div>
+      <div class="nm" style="color:var(--gold);font-weight:600;">${elName("coin")}</div>
+      <div class="pr" style="color:var(--dim);">${LANG==="en"?"Currency":"货币"}</div>
+    </div>`;
     const legendItems=[
+      {id:"bunch", price:LEGEND_BUY.bunch},
+      {id:"garden_flowers", price:LEGEND_BUY.garden_flowers},
+      {id:"chest", price:LEGEND_BUY.chest},
       {id:"magicCrystal", price:LEGEND_BUY.magicCrystal},
       {id:"rainbow", price:LEGEND_BUY.rainbow},
     ];
@@ -2761,9 +2772,8 @@ function renderElShop(){
     legendItems.forEach(item=>{
       const e = item.hp ? ELEMENTS.elixir : ELEMENTS[item.id];
       const inCart=S.shopCart?.[item.id]||0;
-      const discovered = item.hp ? (S.discoveredElixirHps||[]).includes(item.hp) : !!S.unlocked?.[item.id];
       const nameLabel = item.hp ? `${elName("elixir")} HP${item.hp}` : elName(item.id);
-      gridHtml+=`<div class="shopElCard${discovered?"":" undiscovered"}" onclick="addToCart('${item.id}')" title="${nameLabel} · 💰${item.price}${discovered?"":" · "+(LANG==="en"?"Not yet crafted":"尚未合成")}">
+      gridHtml+=`<div class="shopElCard" onclick="addToCart('${item.id}')" title="${nameLabel} · 💰${item.price}">
         <button class="addBtn" onclick="event.stopPropagation();addToCart('${item.id}')">+</button>
         <div class="ico">${e.i}</div>
         <div class="nm">${nameLabel}</div>
@@ -2801,41 +2811,69 @@ function switchShopSub(sub){
   $("#shopTradeTab").style.background=sub==="trade"?"var(--panel2)":"transparent";
   $("#elShop").style.display=sub==="buy"?"":"none";
   $("#tradePanel").style.display=sub==="trade"?"":"none";
-  // 置换商店不需要分栏标签（只置换进阶/生命/传说，不按分栏过滤）
-  const tabsEl=$("#shopElementTabs");
-  if(tabsEl) tabsEl.style.display=sub==="buy"?"":"none";
-  if(sub==="trade") renderTradePanel();
+  // 购买显示购买分栏标签，置换显示置换分栏标签
+  const buyTabs=$("#shopElementTabs"), tradeTabs=$("#tradeTabs");
+  if(buyTabs) buyTabs.style.display=sub==="buy"?"":"none";
+  if(tradeTabs) tradeTabs.style.display=sub==="trade"?"":"none";
+  if(sub==="trade"){ renderTradeTabs(); renderTradePanel(); }
 }
 const TRADE_EXCLUDE = new Set(["life","chest","coin","charcoal","tower","elixir"]);
+let currentTradeTab="advanced";
+function renderTradeTabs(){
+  const box=$("#tradeTabs"); if(!box) return;
+  // 各分栏可置换数量
+  const advCount=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]&&count(k)>0&&!TRADE_EXCLUDE.has(k)&&tierOf(k)>=4&&tierOf(k)<=7).length;
+  const legendTradeIds=["bunch","garden_flowers","magicCrystal","rainbow"];
+  const legendCount=legendTradeIds.filter(id=>count(id)>0).length + ((S.elixirPool||[]).length>0?Object.keys((S.elixirPool||[]).reduce((a,h)=>(a[h]=1,a),{})).length:0);
+  const petCount=S.petList.length;
+  const tabs=[
+    {id:"advanced", label:t("tab.advanced"), count:advCount},
+    {id:"legend", label:t("tab.legend"), count:legendCount},
+    {id:"pet", label:t("tab.pet"), count:petCount},
+  ];
+  box.innerHTML="";
+  tabs.forEach(tab=>{
+    const btn=document.createElement("button");
+    btn.className="elementTab"+(currentTradeTab===tab.id?" active":"");
+    btn.textContent=`${tab.label} ${tab.count}`;
+    btn.addEventListener("click",()=>{
+      currentTradeTab=tab.id;
+      renderTradeTabs();
+      renderTradePanel();
+    });
+    box.appendChild(btn);
+  });
+}
 function renderTradePanel(){
   const box=$("#tradePanel"); if(!box) return;
-  let html=`<div style="font-size:11px;color:var(--dim);margin-bottom:8px">${LANG==="en"?"Sell Lv.3+ elements at 80% of buy price (tier×4). Pets convert to coins.":"仅回收3级及以上元素，按购买价80%（等级×4金币）。宠物可折算金币。"}</div>`;
-  // 元素置换（仅3级及以上元素）
-  const elIds=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]&&count(k)>0&&!TRADE_EXCLUDE.has(k)&&tierOf(k)>=3).sort((a,b)=>tierOf(a)-tierOf(b));
-  html+=`<div style="font-weight:700;font-size:13px;margin:8px 0 4px;">${LANG==="en"?"📦 Elements":"📦 元素"}</div>`;
-  if(!elIds.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No sellable elements":"暂无可置换元素"}</div>`; }
-  elIds.forEach(id=>{
-    const e=ELEMENTS[id], price=tierOf(id)*4, own=count(id);
-    html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
-      <span style="font-size:18px">${e.i}</span>
-      <span style="font-size:13px">${elName(id)}</span>
-      <span style="font-size:10px;color:var(--dim)">×${own}</span>
-      <span class="qtyWrap" style="margin-left:auto"><button type="button" class="qtyBtn" data-tqmin="${id}">−</button><input type="text" class="tradeQty" data-id="${id}" inputmode="numeric" pattern="[0-9]*" min="1" max="${own}" value="1" autocomplete="off" style="width:44px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text);font-size:12px;text-align:center;"><button type="button" class="qtyBtn" data-tqplus="${id}">＋</button></span>
-      <button data-tradeel="${id}" style="background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰<span class="tradePrice">${price}</span></button>
-    </div>`;
-  });
-  // 传说元素出售
-  ensureElixirPoolSync();
-  const legendSellItems=[];
-  if(count("magicCrystal")>0) legendSellItems.push({id:"magicCrystal", price:LEGEND_SELL.magicCrystal, own:count("magicCrystal")});
-  if(count("rainbow")>0) legendSellItems.push({id:"rainbow", price:LEGEND_SELL.rainbow, own:count("rainbow")});
-  const exCount={};
-  (S.elixirPool||[]).forEach(h=>{exCount[h]=(exCount[h]||0)+1;});
-  Object.entries(exCount).sort((a,b)=>a[0]-b[0]).forEach(([hp,cnt])=>{
-    legendSellItems.push({id:"elixir_HP"+hp, price:ELIXIR_SELL[hp]||40, own:cnt, hp:parseInt(hp)});
-  });
-  if(legendSellItems.length){
-    html+=`<div style="font-weight:700;font-size:13px;margin:12px 0 4px;color:var(--gold);">${t("shop.legendarySection")}</div>`;
+  let html=`<div style="font-size:11px;color:var(--dim);margin-bottom:8px">${LANG==="en"?"Sell Lv.4+ elements at 80% of buy price (tier×4). Pets convert to coins.":"仅回收4级及以上元素，按购买价80%（等级×4金币）。宠物可折算金币。"}</div>`;
+  if(currentTradeTab==="advanced"){
+    // 进阶元素置换（tier4-7，仅3级以上的元素）
+    const elIds=Object.keys(S.unlocked).filter(k=>ELEMENTS[k]&&count(k)>0&&!TRADE_EXCLUDE.has(k)&&tierOf(k)>=4&&tierOf(k)<=7).sort((a,b)=>tierOf(a)-tierOf(b));
+    if(!elIds.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No sellable advanced elements":"暂无可置换的进阶元素"}</div>`; }
+    elIds.forEach(id=>{
+      const e=ELEMENTS[id], price=tierOf(id)*4, own=count(id);
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
+        <span style="font-size:18px">${e.i}</span>
+        <span style="font-size:13px">${elName(id)}</span>
+        <span style="font-size:10px;color:var(--dim)">×${own}</span>
+        <span class="qtyWrap" style="margin-left:auto"><button type="button" class="qtyBtn" data-tqmin="${id}">−</button><input type="text" class="tradeQty" data-id="${id}" inputmode="numeric" pattern="[0-9]*" min="1" max="${own}" value="1" autocomplete="off" style="width:44px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text);font-size:12px;text-align:center;"><button type="button" class="qtyBtn" data-tqplus="${id}">＋</button></span>
+        <button data-tradeel="${id}" style="background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰<span class="tradePrice">${price}</span></button>
+      </div>`;
+    });
+  } else if(currentTradeTab==="legend"){
+    // 传说元素出售
+    ensureElixirPoolSync();
+    const legendSellItems=[];
+    ["bunch","garden_flowers","magicCrystal","rainbow"].forEach(id=>{
+      if(count(id)>0) legendSellItems.push({id:id, price:LEGEND_SELL[id], own:count(id)});
+    });
+    const exCount={};
+    (S.elixirPool||[]).forEach(h=>{exCount[h]=(exCount[h]||0)+1;});
+    Object.entries(exCount).sort((a,b)=>a[0]-b[0]).forEach(([hp,cnt])=>{
+      legendSellItems.push({id:"elixir_HP"+hp, price:ELIXIR_SELL[hp]||40, own:cnt, hp:parseInt(hp)});
+    });
+    if(!legendSellItems.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No sellable legendary elements":"暂无可置换的传说元素"}</div>`; }
     legendSellItems.forEach(item=>{
       const e = item.hp ? ELEMENTS.elixir : ELEMENTS[item.id];
       const nm = item.hp ? `${elName("elixir")} HP${item.hp}` : elName(item.id);
@@ -2846,20 +2884,20 @@ function renderTradePanel(){
         <button data-tradelegend="${item.id}" style="margin-left:auto;background:var(--gold);border:none;color:#3a2a00;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰${item.price}</button>
       </div>`;
     });
+  } else if(currentTradeTab==="pet"){
+    // 宠物置换
+    if(!S.petList.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No pets":"暂无宠物"}</div>`; }
+    S.petList.forEach((p,idx)=>{
+      const d=PETS.find(x=>x.id===p.id);
+      const refund=Math.floor((p.maxHp||5)*5+(p.intimacy||0)*0.5);
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
+        <span style="font-size:18px">${d?d.i:"🐾"}</span>
+        <span style="font-size:13px">${p.name}</span>
+        <span style="font-size:10px;color:var(--dim)">HP${p.maxHp} 亲密度${p.intimacy}</span>
+        <button data-tradepet="${idx}" style="margin-left:auto;background:#e74c3c;border:none;color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰${refund}</button>
+      </div>`;
+    });
   }
-  // 宠物置换
-  html+=`<div style="font-weight:700;font-size:13px;margin:12px 0 4px;">${LANG==="en"?"🐾 Pets":"🐾 宠物"}</div>`;
-  if(!S.petList.length){ html+=`<div style="color:var(--dim);font-size:12px;padding:4px 0">${LANG==="en"?"No pets":"暂无宠物"}</div>`; }
-  S.petList.forEach((p,idx)=>{
-    const d=PETS.find(x=>x.id===p.id);
-    const refund=Math.floor((p.maxHp||5)*5+(p.intimacy||0)*0.5);
-    html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
-      <span style="font-size:18px">${d?d.i:"🐾"}</span>
-      <span style="font-size:13px">${p.name}</span>
-      <span style="font-size:10px;color:var(--dim)">HP${p.maxHp} 亲密度${p.intimacy}</span>
-      <button data-tradepet="${idx}" style="margin-left:auto;background:#e74c3c;border:none;color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:700;">💰${refund}</button>
-    </div>`;
-  });
   box.innerHTML=html;
   // 元素置换数量步进
   box.querySelectorAll(".tradeQty").forEach(inp=>{
@@ -2886,7 +2924,7 @@ function renderTradePanel(){
     S.unlocked[id]=Math.max(0,(S.unlocked[id]||0)-n);
     S.coin+=earn; S.totalEarned+=earn;
     toast(LANG==="en"?`♻️ Sold ${n}× ${elName(id)} → +💰${earn}`:`♻️ 卖出 ${n}× ${elName(id)} → +💰${earn}`);
-    renderAll(); renderTradePanel(); save();
+    renderAll(); renderTradeTabs(); renderTradePanel(); save();
   }));
   // 传说元素出售
   box.querySelectorAll("[data-tradelegend]").forEach(btn=>btn.addEventListener("click",()=>{
@@ -2911,7 +2949,7 @@ function renderTradePanel(){
       S.coin+=price; S.totalEarned+=price;
       toast(LANG==="en"?`♻️ Sold ${elName(id)} → +💰${price}`:`♻️ 卖出${elName(id)} → +💰${price}`);
     }
-    renderAll(); renderTradePanel(); save();
+    renderAll(); renderTradeTabs(); renderTradePanel(); save();
   }));
   // 宠物置换
   box.querySelectorAll("[data-tradepet]").forEach(btn=>btn.addEventListener("click",()=>{
@@ -2923,7 +2961,7 @@ function renderTradePanel(){
     S._pandaSlotWarned=false; // 送走宠物后重置熊猫保底警告，允许再次检查
     toast(LANG==="en"?`♻️ ${p.name} left for 💰${refund}`:`♻️ ${p.name} 离开了，获得 💰${refund}`);
     checkPandaReward(); // 送走后立即检查是否满足熊猫保底条件
-    renderAll(); renderTradePanel(); save();
+    renderAll(); renderTradeTabs(); renderTradePanel(); save();
   }));
 }
 
