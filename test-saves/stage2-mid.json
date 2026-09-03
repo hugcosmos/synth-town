@@ -1,0 +1,163 @@
+{
+  "game": "synth-town",
+  "version": 3,
+  "exportedAt": "2026-09-03T15:34:24.478Z",
+  "exportType": "full",
+  "_note": "中期:地图解锁(2建筑)/宠物系统/进阶合成/商店进阶购买(净资产>1000,批量10)",
+  "save": {
+    "unlocked": {
+      "earth": 12,
+      "water": 10,
+      "fire": 8,
+      "air": 9,
+      "mud": 4,
+      "brick": 3,
+      "rain": 2,
+      "seed": 3,
+      "flower": 1,
+      "energy": 5,
+      "tree": 1,
+      "wood": 1,
+      "stone": 2,
+      "metal": 1,
+      "ash": 1,
+      "fertilizer": 1,
+      "sand": 1,
+      "glass": 1,
+      "steam": 2,
+      "cloud": 1,
+      "jade": 1,
+      "life": 0
+    },
+    "drawn": true,
+    "coin": 800,
+    "chest": 1,
+    "coinVisited": false,
+    "chestVisited": true,
+    "lifePool": [
+      5,
+      6
+    ],
+    "discoveredLifeHps": [
+      5,
+      6
+    ],
+    "elixirPool": [],
+    "discoveredElixirHps": [],
+    "pets": {},
+    "petList": [
+      {
+        "id": "cat",
+        "hp": 5,
+        "maxHp": 5,
+        "sat": 80,
+        "sick": false,
+        "name": "咪咪",
+        "bornAt": 1788190464306,
+        "intimacy": 1,
+        "avatar": null,
+        "interactDate": "2026-09-03",
+        "interactCount": 0
+      }
+    ],
+    "food": {},
+    "buildings": {},
+    "regions": {},
+    "plots": {
+      "plain": [
+        null,
+        null,
+        "hut",
+        "shop",
+        false,
+        false,
+        false,
+        false
+      ],
+      "hill": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "forest": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "center": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "river": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "factory": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    "plotsVersion": 2,
+    "theme": "night",
+    "totalEarned": 0,
+    "craftedRecipes": [
+      "earth+water",
+      "fire+mud",
+      "air+water",
+      "earth+rain",
+      "air+fire",
+      "earth+seed",
+      "seed+earth",
+      "fire+stone",
+      "mud+air",
+      "energy+seed",
+      "water+stone",
+      "earth+fire",
+      "seed+ash",
+      "stone+stone",
+      "fire+sand",
+      "fire+water",
+      "air+steam",
+      "energy+jade"
+    ],
+    "lastTick": 1788449544306,
+    "bonusAccumulator": 0,
+    "lastBonusSettle": 1788449664306,
+    "lastOfflineShow": null,
+    "pandaRewardClaimed": false,
+    "badges": {},
+    "parkSlots": null,
+    "buildingNames": {},
+    "townName": null,
+    "regionNames": {},
+    "_pandaSlotWarned": false,
+    "shopCart": {}
+  }
+}

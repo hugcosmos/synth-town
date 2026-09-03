@@ -1,0 +1,106 @@
+{
+  "game": "synth-town",
+  "version": 3,
+  "exportedAt": "2026-09-03T15:34:24.477Z",
+  "exportType": "full",
+  "_note": "新手:基础合成/商店基础购买(净资产约375>100,批量5)/第一块地",
+  "save": {
+    "unlocked": {
+      "earth": 15,
+      "water": 12,
+      "fire": 10,
+      "air": 14
+    },
+    "drawn": true,
+    "coin": 120,
+    "chest": 0,
+    "coinVisited": false,
+    "chestVisited": false,
+    "lifePool": [],
+    "discoveredLifeHps": [],
+    "elixirPool": [],
+    "discoveredElixirHps": [],
+    "pets": {},
+    "petList": [],
+    "food": {},
+    "buildings": {},
+    "regions": {},
+    "plots": {
+      "plain": [
+        null,
+        null,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "hill": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "forest": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "center": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "river": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "factory": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    "plotsVersion": 2,
+    "theme": "night",
+    "totalEarned": 0,
+    "craftedRecipes": [],
+    "lastTick": 1788449604306,
+    "bonusAccumulator": 0,
+    "lastBonusSettle": 1788449664306,
+    "lastOfflineShow": null,
+    "pandaRewardClaimed": false,
+    "badges": {},
+    "parkSlots": null,
+    "buildingNames": {},
+    "townName": null,
+    "regionNames": {},
+    "_pandaSlotWarned": false,
+    "shopCart": {}
+  }
+}
