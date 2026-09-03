@@ -521,6 +521,13 @@
     box-shadow:0 0 14px 5px rgba(76,217,123,.7);
     pointer-events:none;
   }
+  .bldSlot.freeSlot{z-index:4; opacity:.45;}
+  .bldSlot.freeSlot::after{
+    content:""; position:absolute; inset:-6px; border-radius:50%;
+    box-shadow:0 0 16px 6px rgba(84,217,255,.8);
+    animation:emptyPulse 1.6s ease-in-out infinite;
+    pointer-events:none;
+  }
   .emptySlot{
     width:36px;height:36px;border:3px solid rgba(255,215,94,.95);border-radius:50%;
     background:rgba(255,255,255,.25);
@@ -1422,7 +1429,24 @@ const I18N = {
     "town.unlockMap2":"🗺️ 建成任意 2 个建筑，解锁底图模式（买地建造，各区域成本/产出不同）",
     "town.moveMode":"🏗️ 移动模式：点一块 🟫 空地移入，或",
     "town.selectedPlot":"📍 已选 {0}{1} 空地，下方选建筑建造，或",
+    "town.freeArrange":"🖐️ 自由摆放：点地图新位置放置，或",
+    "town.freeArrangeHint":"🖐️ 自由摆放：拖拽建筑或点地图新位置放置",
+    "town.freeArrangeActive":"🖐️ 点击地图新位置放置建筑（或点取消）",
+    "town.resetLayout":"↩️ 恢复默认布局",
+    "town.resetLayoutConfirm":"确认恢复所有建筑到默认位置？",
+    "town.placeTooClose":"⚠️ 离其他建筑太近了！",
+    "town.placeOutOfRange":"⚠️ 位置超出安全范围！",
+    "town.placeSameRegion":"⚠️ 建筑只能在本区域内摆放！",
+    "town.placeDone":"✅ 建筑已摆放！",
+    "town.freeArrangeLocked":"🔒 获得「地产大亨」徽章后可自由摆放建筑",
     "town.mapTitle":"小镇",
+    "town.freeMoveMode":"🖐️ 自由摆放：点地图新位置放置，或",
+    "town.freeMoveHint":"🖐️ 自由摆放：点击地图新位置放置建筑",
+    "town.resetLayout":"↩️ 恢复默认布局",
+    "town.resetLayoutConfirm":"↩️ 恢复全部建筑到默认位置？",
+    "town.placeOut":"📍 超出安全范围，请放到地图中间区域",
+    "town.placeClose":"📏 离其他建筑太近啦",
+    "town.placeDone":"✅ 建筑已摆放",
     "town.nameTown":"✏️ 命名小镇",
     "town.nameRegion":"✏️ 命名区域",
     "town.nameTownPrompt":"给小镇起个名字（最多12字）：",
@@ -1590,6 +1614,13 @@ const I18N = {
     "town.moveMode":"🏗️ Move mode: tap a 🟫 empty land to move, or",
     "town.selectedPlot":"📍 Selected {0}{1} empty land, choose building below, or",
     "town.mapTitle":"My Town",
+    "town.freeMoveMode":"🖐️ Free arrange: tap a map spot to place, or",
+    "town.freeMoveHint":"🖐️ Free arrange: tap a map spot to place the building",
+    "town.resetLayout":"↩️ Reset layout",
+    "town.resetLayoutConfirm":"↩️ Reset all buildings to default positions?",
+    "town.placeOut":"📍 Out of safe range, place near map center",
+    "town.placeClose":"📏 Too close to another building",
+    "town.placeDone":"✅ Building placed",
     "town.nameTown":"✏️ Name Town",
     "town.nameRegion":"✏️ Name Region",
     "town.nameTownPrompt":"Name your town (max 12 chars):",
@@ -3107,7 +3138,7 @@ const BADGES = [
    check:()=>{const t=new Set(S.petList.map(p=>p.id));return ["cat","rabbit","dog","cow","horse","panda"].every(x=>t.has(x));},
    progress:()=>{const t=new Set(S.petList.map(p=>p.id));const n=["cat","rabbit","dog","cow","horse","panda"].filter(x=>t.has(x)).length;return [n,6];}},
   {id:"realEstateTycoon", name:"地产大亨", en:"Real Estate Tycoon", img:"assets/badges/real-estate-tycoon.png?v=20260902",
-   descZh:"解锁全部地皮且每块都有建筑", descEn:"Unlock all plots with buildings on each",
+   descZh:"解锁全部地皮且每块都有建筑 · 解锁自由摆放建筑位置", descEn:"Unlock all plots with buildings on each · unlock free building placement",
    check:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));const tp=totalPlots();return total>=tp&&built>=tp;},
    progress:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return [built,totalPlots()];}},
   {id:"tenThousandaire", name:"万元户", en:"Ten-Thousandaire", img:"assets/badges/ten-thousandaire.png?v=20260902",
@@ -3250,7 +3281,7 @@ function saveTownScreenshot(){
   const outer=$("#mapPanelOuter");
   if(!outer || typeof html2canvas==="undefined"){ toast(LANG==="en"?"📷 Image save not available":"📷 图片保存功能不可用"); return; }
   // 截图前取消选中状态，避免hint出现在截图中
-  if(selectedPlot||moveMode){ cancelSelection(); }
+  if(selectedPlot||moveMode||freeMove){ cancelSelection(); freeMove=null; }
   outer.classList.add("screenshot-mode");
   toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
   // 等待浏览器重排后再截图
@@ -3443,7 +3474,7 @@ function renderBuildingDetail(){
     const nm=prompt(LANG==="en"?"Rename building (max 20 chars):":"给建筑起名（最多20字符）：",customName);
     if(nm&&nm.trim()){ if(!S.buildingNames)S.buildingNames={}; S.buildingNames[key]=nm.trim().slice(0,20); toast(LANG==="en"?"✅ Renamed!":"✅ 已改名！"); renderBuildingDetail(); renderAll(); save(); }
   };
-  $("#bldMoveBtn").onclick=()=>{ closeBuildingDetail(); startMove(region,index); toast(LANG==="en"?"📦 Select an empty plot to move":"📦 选择一块空地移动建筑"); };
+  $("#bldMoveBtn").onclick=()=>{ closeBuildingDetail(); startMove(region,index); };
   $("#bldDemolishBtn").onclick=()=>{ closeBuildingDetail(); demolishPlot(region,index); };
 }
 
@@ -4662,13 +4693,15 @@ function renderMap(){
   Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
   const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260904`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
   let hint="";
-  if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
+  if(freeMove) hint=`<div style="background:#54d9ff22;border:1px solid #54d9ff;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#9fe8ff;">${t("town.freeMoveHint")} <button onclick="cancelFreeMove()" style="background:none;border:none;color:#54d9ff;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
+  else if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(selectedPlot) hint=`<div style="background:var(--gold)22;border:1px solid var(--gold);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.selectedPlot",regionOf(selectedPlot.region).i,regName(regionOf(selectedPlot.region)))} <button onclick="cancelSelection()" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   let html=`<div class="mapTopRow">
     <div class="mapStats"><span>${t("town.mapStats.buildings")} <b>${totalBld}</b></span><span>${t("town.mapStats.output")} <b>+${Math.round(totalOut)}</b>/${INCOME_INTERVAL}s</span><span>${t("town.mapStats.land")} <b>${bought}</b>/${totalPlots()}</span></div>`;
   if(mapUnlocked()){
     html+=`<div class="mapActions">
       <button id="townNameBtn" title="${t("town.nameTown")}">✏️ ${LANG==="en"?"Rename":"改名"}</button>
+      ${freeMoveUnlocked()?`<button id="resetBldBtn" title="${t("town.resetLayout")}" style="background:none;border-color:var(--line);color:var(--dim);">↩️ ${LANG==="en"?"Layout":"默认布局"}</button>`:""}
       <button id="townSaveBtn" style="background:var(--gold);border-color:var(--gold);color:#1a1530;">💾 ${t("btn.save")}</button>
       <span class="compass">🧭 N</span>
     </div>`;
@@ -4699,18 +4732,20 @@ function renderMap(){
     tile.className="tile";
     tile.style.cssText=`grid-area:${r.area};`;
     const ti=assetCache.get("regions:"+r.id);
-    const defaultBg=`assets/regions/${r.id}.png?v=20260902`;
+    const defaultBg=`assets/regions/${r.id}.png?v=${r.id==="center"?"20260904":"20260902"}`;
     const plots=S.plots[r.id]||[];
-    const bldSize=(r.plots<=6?42:r.plots<=8?38:32)*2;
+    const _mobMap=window.innerWidth<=860||isTouchDevice();
+    const bldSize=Math.round((r.plots<=6?42:r.plots<=8?38:32)*(_mobMap?1.5:2));
     const emojiPx=Math.round(bldSize*0.7);
     const points=BUILDABLE_POINTS[r.id]||[];
     // 构建建筑槽
     let slotsHtml="";
     plots.forEach((p,i)=>{
-      const pt=points[i]||[50,50,0];
-      const left=pt[0], top=pt[1], rot=pt[2];
+      const pos=bldDisplayPos(r.id,i);
+      const left=pos.x, top=pos.y, rot=pos.rot||0;
       const sel=selectedPlot&&selectedPlot.region===r.id&&selectedPlot.index===i;
       const ms=moveMode&&moveMode.fromRegion===r.id&&moveMode.fromIndex===i;
+      const fs=freeMove&&freeMove.fromRegion===r.id&&freeMove.fromIndex===i;
       let inner="",tip="";
       if(p===false){
         inner=`<span class="lockedSlot">🔒</span>`;
@@ -4726,7 +4761,7 @@ function renderMap(){
         const em=b?b.i:"❓";
         inner=`<img src="${bldUrl}" width="${bldSize}" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));transform:rotate(${rot}deg)" onerror="bldImgError(this,'${em}',${emojiPx})" alt="${b?b.n:''}">`;
       }
-      const slotCls="bldSlot"+(sel?" selSlot":"")+(ms?" moveSlot":"");
+      const slotCls="bldSlot"+(sel?" selSlot":"")+(ms?" moveSlot":"")+(fs?" freeSlot":"");
       slotsHtml+=`<div class="${slotCls}" data-r="${r.id}" data-i="${i}" title="${tip}" style="left:${left}%;top:${top}%;">${inner}</div>`;
     });
     // 装饰层（已移除小路纹理）
@@ -4742,12 +4777,66 @@ function renderMap(){
       cell.addEventListener("click",ev=>{
         ev.stopPropagation();
         const rid=cell.dataset.r,idx=+cell.dataset.i,p=S.plots[rid][idx];
+        if(freeMove){ if(p&&p!==null){ openBuildingDetail(rid,idx); } return; }
         if(moveMode){if(p===null)completeMove(rid,idx);else toast(t("town.onlyEmpty"));return;}
         if(p===false)buyPlot(rid,idx);
         else if(p===null)selectPlot(rid,idx);
         else{openBuildingDetail(rid,idx);}
       });
     });
+    // 自由摆放：点击地图空白处放置（桌面拖拽由 bldSlot 拖拽处理）
+    const canvas=tile.querySelector(".mapCanvas");
+    canvas.addEventListener("click",ev=>{
+      if(!freeMove) return;
+      ev.stopPropagation();
+      const rect=canvas.getBoundingClientRect();
+      const x=(ev.clientX-rect.left)/rect.width*100;
+      const y=(ev.clientY-rect.top)/rect.height*100;
+      placeFreeMove(r.id,x,y);
+    });
+    // 桌面拖拽：地产大亨解锁后可直接拖动建筑
+    if(!isTouchDevice()){
+      tile.querySelectorAll(".bldSlot").forEach(slot=>{
+        const img=slot.querySelector("img"); if(!img) return;
+        let dragging=false,startX=0,startY=0,moved=false;
+        const ghost=document.createElement("img");
+        ghost.style.cssText="position:fixed;pointer-events:none;z-index:999;opacity:.85;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));";
+        img.addEventListener("pointerdown",e=>{
+          if(!freeMoveUnlocked()) return;
+          dragging=true;moved=false;startX=e.clientX;startY=e.clientY;
+          img.setPointerCapture(e.pointerId);
+        });
+        img.addEventListener("pointermove",e=>{
+          if(!dragging) return;
+          if(!moved&&Math.hypot(e.clientX-startX,e.clientY-startY)<6) return;
+          moved=true;
+          ghost.src=img.src; ghost.width=img.width; ghost.height=img.height;
+          ghost.style.left=(e.clientX-img.width/2)+"px"; ghost.style.top=(e.clientY-img.height/2)+"px";
+          document.body.appendChild(ghost);
+          img.style.opacity=".3";
+        });
+        img.addEventListener("pointerup",e=>{
+          if(!dragging) return; dragging=false;
+          if(ghost.parentNode) ghost.parentNode.removeChild(ghost);
+          img.style.opacity="";
+          if(!moved) return; // 未拖拽视为点击
+          const rid=slot.dataset.r,idx=+slot.dataset.i;
+          const canvas2=slot.closest(".mapCanvas");
+          const rect=canvas2.getBoundingClientRect();
+          const x=(e.clientX-rect.left)/rect.width*100;
+          const y=(e.clientY-rect.top)/rect.height*100;
+          // 自由摆放模式或直接拖拽放置
+          if(freeMove&&freeMove.fromRegion===rid&&freeMove.fromIndex===idx){ placeFreeMove(rid,x,y); }
+          else if(freeMove){ toast(LANG==="en"?"🚫 Can't move across regions!":"🚫 不能跨区域摆放！"); }
+          else{
+            // 未进入自由模式：拖拽等同于先进入再放置
+            const b=BUILDINGS.find(b2=>b2.id===S.plots[rid][idx]);
+            freeMove={fromRegion:rid,fromIndex:idx,bid:S.plots[rid][idx]};
+            placeFreeMove(rid,x,y);
+          }
+        });
+      });
+    }
     grid.appendChild(tile);
   });
   // 路牌点击 → 改名
@@ -4764,6 +4853,8 @@ function renderMap(){
   });
   const townSaveBtn=outer.querySelector("#townSaveBtn");
   if(townSaveBtn) townSaveBtn.addEventListener("click",()=>saveTownScreenshot());
+  const resetBldBtn=outer.querySelector("#resetBldBtn");
+  if(resetBldBtn) resetBldBtn.addEventListener("click",()=>resetBldFree());
   // 区域命名点击
   outer.querySelectorAll(".regionNameLabel").forEach(label=>{
     label.addEventListener("click",e=>{
@@ -4838,6 +4929,60 @@ function renderShop(){
 // 地块交互状态
 let selectedPlot=null;   // {region,index} 选中的空地
 let moveMode=null;       // {fromRegion,fromIndex,bid} 移动模式
+let freeMove=null;       // {fromRegion,fromIndex,bid} 自由摆放模式（地产大亨解锁）
+
+// 地产大亨解锁 → 自由摆放
+function freeMoveUnlocked(){ return !!(S.badges&&S.badges.realEstateTycoon); }
+// 建筑显示位置（自定义优先，否则默认放置点）
+function bldDisplayPos(region,index){
+  if(S.bldFree&&S.bldFree[region+"_"+index]) return S.bldFree[region+"_"+index];
+  const pts=BUILDABLE_POINTS[region]||[];
+  const pt=pts[index]||[50,50,0];
+  return {x:pt[0],y:pt[1],rot:pt[2]};
+}
+// 自由摆放校验：安全范围 + 相邻最小间距（同区域）
+function validateFreePos(region,x,y){
+  if(x<10||x>90||y<12||y>88) return "out";
+  const r=regionOf(region); if(!r) return "out";
+  const tileEl=document.querySelector(`.regionNameLabel[data-region="${region}"]`)?.closest(".tile");
+  const canvas=tileEl?tileEl.querySelector(".mapCanvas"):null;
+  const W=canvas?canvas.clientWidth:500, H=canvas?canvas.clientHeight:250;
+  const minGap=Math.min(46,Math.max(34,Math.round(W*0.07)));
+  const plots=S.plots[region]||[];
+  for(let i=0;i<plots.length;i++){
+    if(plots[i]===null||plots[i]===false) continue;
+    const pos=bldDisplayPos(region,i);
+    const dx=(x-pos.x)/100*W, dy=(y-pos.y)/100*H;
+    if(Math.sqrt(dx*dx+dy*dy)<minGap) return "close";
+  }
+  return "ok";
+}
+// 点击/拖拽放置
+function placeFreeMove(region,x,y){
+  if(!freeMove) return;
+  const {fromRegion,fromIndex,bid}=freeMove;
+  if(region!==fromRegion){
+    toast(LANG==="en"?"🚫 Can't move across regions!":"🚫 不能跨区域摆放！");
+    return;
+  }
+  const v=validateFreePos(region,x,y);
+  if(v==="out"){ toast(t("town.placeOut")); return; }
+  if(v==="close"){ toast(t("town.placeClose")); return; }
+  if(!S.bldFree) S.bldFree={};
+  const prev=S.bldFree[region+"_"+fromIndex]||{};
+  S.bldFree[region+"_"+fromIndex]={x:Math.round(x*10)/10,y:Math.round(y*10)/10,rot:prev.rot||(BUILDABLE_POINTS[region]?.[fromIndex]?.[2]||0)};
+  const b=BUILDINGS.find(x=>x.id===bid);
+  toast(t("town.placeDone"));
+  freeMove=null;
+  renderAll(); save();
+}
+function cancelFreeMove(){ freeMove=null; renderAll(); }
+function resetBldFree(){
+  if(!confirm(t("town.resetLayoutConfirm"))) return;
+  S.bldFree={};
+  toast(LANG==="en"?"↩️ Layout reset to default!":"↩️ 已恢复默认布局！");
+  freeMove=null; renderAll(); save();
+}
 
 function buyPlot(region,index){
   const r=regionOf(region), plots=S.plots[region];
@@ -4906,9 +5051,18 @@ function build(b,cost){
 function startMove(region,index){
   const plots=S.plots[region];
   if(!plots||!plots[index]) return;
+  if(freeMoveUnlocked()){
+    // 地产大亨解锁 → 自由摆放模式（区域内任意位置，可拖拽/点击放置）
+    freeMove={fromRegion:region,fromIndex:index,bid:plots[index]};
+    selectedPlot=null;
+    renderAll();
+    toast(LANG==="en"?"🖐️ Free arrange: tap a map spot to place (desktop: drag)":"🖐️ 自由摆放：点击地图位置放置（桌面可拖拽）");
+    return;
+  }
   moveMode={fromRegion:region,fromIndex:index,bid:plots[index]};
   selectedPlot=null;
   renderAll();
+  toast(LANG==="en"?"📦 Select an empty plot to move":"📦 选择一块空地移动建筑");
 }
 function completeMove(toRegion,toIndex){
   if(!moveMode) return;
