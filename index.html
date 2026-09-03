@@ -1673,6 +1673,8 @@ function fresh(){
     coinVisited:false, chestVisited:false, // 是否曾合成过金币/宝箱（消耗后仍算已发现）
     lifePool:[],        // 每个 🧬生命 的生命值
     discoveredLifeHps:[],// 曾经合成过的生命HP值（消耗后仍算已发现）
+    elixirPool:[],      // 每个 💊万能药 的生命值
+    discoveredElixirHps:[],// 曾经合成过的万能药HP值（消耗后仍算已发现）
     pets:{},            // 旧版兼容（迁移用）
     petList:[],         // 宠物实例 [{id,hp,maxHp,sat,sick}]
     food:{},            // 食物库存 foodId -> 数量
@@ -1686,6 +1688,7 @@ function fresh(){
     lastTick:Date.now(),
     bonusAccumulator:0,  // 低产出时累计的宠物/市政厅加成金币（小数）
     lastBonusSettle:Date.now(), // 上次加成结算时间
+    lastOfflineShow:null, // 上次离线收益弹窗时间（防重复弹）
     pandaRewardClaimed:false, // 熊猫保底是否已领取
     badges:{}, // 勋章解锁状态
     parkSlots:null, // 动物乐园窝位分配（null时自动初始化）
@@ -2170,11 +2173,12 @@ function updateBatchInput(){
     if(+input.value<1) input.value=1;
   } else { wrap.style.display="none"; }
 }
-/* 批量上限：净资产≥100→5, ≥1000→10, ≥10000→20, ≥20000→100, 否则0(未解锁) */
+/* 批量上限：净资产≥100→5, ≥1000→10, ≥5000→50, ≥10000→100, ≥1000000→无上限(99999,实际受金币/库存限制) */
 function batchMax(){
   const nw=netWorth();
-  if(nw>=20000) return 100;
-  if(nw>=10000) return 20;
+  if(nw>=1000000) return 99999; // 百万富翁：无额外上限，只要金币够
+  if(nw>=10000) return 100;     // 万元户：最多100
+  if(nw>=5000) return 50;
   if(nw>=1000) return 10;
   if(nw>=100) return 5;
   return 0;
@@ -2768,13 +2772,11 @@ function renderElShop(){
       const inCart=S.shopCart?.[item.id]||0;
       const canBuy=shopCanBuy(item.id);
       const nameLabel = item.hp ? `${elName("elixir")} HP${item.hp}` : elName(item.id);
-      // 传说元素用途提示（hover/❓查看）
-      const tip = item.hp ? (LANG==="en"?`💊 Revives a sick pet with matching HP${item.hp} to full HP (use at Pet Detail) (Craft: Life+Jade+Fire)`:`💊 在宠物详情页对相同HP${item.hp}的生病宠物使用，满血复活（合成：生命+玉石+火）`)
+      // 传说元素用途提示（hover/❓查看，只讲用途不给配方；花丛/花海无提示）
+      const tip = item.hp ? (LANG==="en"?`💊 Revives a sick pet with matching HP${item.hp} to full HP (use at Pet Detail)`:`💊 在宠物详情页对相同HP${item.hp}的生病宠物使用，满血复活`)
         : item.id==="magicCrystal" ? (LANG==="en"?`🔮 Transforms a pet into another species at Pet Detail (except Panda)`:`🔮 在宠物详情页将宠物转换成其他物种（熊猫除外）`)
         : item.id==="rainbow" ? (LANG==="en"?`🌈 Feed to a pet: full satiety +5 intimacy`:`🌈 喂食宠物：饱食度补满 + 亲密度+5`)
-        : item.id==="chest" ? (LANG==="en"?`🧰 Building material for Manor & City Hall (Craft: Metal+Metal)`:`🧰 豪宅/市政厅的建造材料（合成：金属+金属）`)
-        : item.id==="bunch" ? (LANG==="en"?`🌸 Advanced flower element, used in crafting`:`🌸 进阶花类元素，用于合成`)
-        : item.id==="garden_flowers" ? (LANG==="en"?`🌺 Advanced flower element, used in crafting`:`🌺 高阶花类元素，用于合成`)
+        : item.id==="chest" ? (LANG==="en"?`🧰 Building material for Manor & City Hall`:`🧰 豪宅/市政厅的建造材料`)
         : "";
       gridHtml+=`<div class="shopElCard" onclick="addToCart('${item.id}')" title="${nameLabel} · 💰${item.price}${canBuy?"":" · "+(LANG==="en"?"Craft first to buy":"需先合成")}${tip?" · "+tip:""}">
         ${canBuy?`<button class="addBtn" onclick="event.stopPropagation();addToCart('${item.id}')">+</button>`:`<span class="lockMark">🔒</span>`}
@@ -2984,11 +2986,11 @@ const BADGES = [
    check:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));const tp=totalPlots();return total>=tp&&built>=tp;},
    progress:()=>{let total=0,built=0;Object.values(S.plots||{}).forEach(arr=>arr.forEach(p=>{total++;if(p&&p!==null&&p!==false)built++;}));return [built,totalPlots()];}},
   {id:"tenThousandaire", name:"万元户", en:"Ten-Thousandaire", img:"assets/badges/ten-thousandaire.png?v=20260902",
-   descZh:"资产达到10000", descEn:"Net worth reaches 10,000",
+   descZh:"资产达到10000 · 解锁单次最多购买/合成100个元素", descEn:"Net worth 10,000 · unlock buying/crafting up to 100 at once",
    check:()=>netWorth()>=10000,
    progress:()=>[Math.min(netWorth(),10000),10000]},
   {id:"millionaire", name:"百万富翁", en:"Millionaire", img:"assets/badges/millionaire.png?v=20260902",
-   descZh:"资产达到1000000", descEn:"Net worth reaches 1,000,000",
+   descZh:"资产达到1000000 · 解锁无上限批量购买/合成，只要金币够", descEn:"Net worth 1,000,000 · unlock unlimited batch buying/crafting, as long as coins allow",
    check:()=>netWorth()>=1000000,
    progress:()=>[Math.min(netWorth(),1000000),1000000]}
 ];
