@@ -2650,7 +2650,7 @@ function bundlePrice(items){
 function addBundle(b){
   if(!bundleUnlocked()){ toast(t("shop.bundleLocked")); return; }
   const bld=BUILDINGS.find(x=>x.id===b.id);
-  if(bld && !buildingUnlocked(bld)){ toast(buildingLockHint(bld)); return; }
+  if(bld && !buildingUnlocked(bld)){ toast(buildingLockHintText(bld)); return; }
   if(!S.shopCart) S.shopCart={};
   const max=batchMax()||5;
   let added=0; const skipped=[];
@@ -2901,7 +2901,7 @@ function renderElShop(){
         const price=bundlePrice(b.items);
         const bname=LANG==="en"?b.en:b.n;
         const itemsHtml=Object.entries(b.items).map(([id,n])=>`<span style="margin:0 3px;">${ELEMENTS[id].i}×${n}</span>`).join("");
-        const hint = bld && !bldOk ? buildingLockHint(bld) : (LANG==="en"?`One bundle = full materials for ${bname}`:`一份套餐=${bname}所需全部元素材料`);
+        const hint = bld && !bldOk ? buildingLockHintText(bld) : (LANG==="en"?`One bundle = full materials for ${bname}`:`一份套餐=${bname}所需全部元素材料`);
         gridHtml+=`<div class="shopBundleCard${bldOk?"":" disabled"}" onclick="addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${hint}">
           <div class="bundleHead">${bld.i} ${bname}</div>
           <div class="bundleItems">${itemsHtml}</div>
@@ -3098,7 +3098,7 @@ function renderTradePanel(){
 /* ============ 勋章系统 ============ */
 const BADGES = [
   {id:"elementMaster", name:"元素之王", en:"Element Master", img:"assets/badges/element-master.png?v=20260902",
-   descZh:"发现全部36种元素", descEn:"Discover all 36 elements",
+   descZh:"发现全部36种元素 · 解锁商店套餐栏（建筑材料包）", descEn:"Discover all 36 elements · unlock Shop Bundles (building material packs)",
    check:()=>foundElementKinds()>=totalElementKinds(),
    progress:()=>[foundElementKinds(),totalElementKinds()]},
   {id:"animalKing", name:"动物大王", en:"Animal King", img:"assets/badges/animal-king.png?v=20260902",
@@ -3678,7 +3678,20 @@ function buildingLockHint(b){
   }
   return "";
 }
-function bestLifeHp(){ return S.lifePool.length ? Math.max(...S.lifePool) : 0; }
+// 纯文本版建筑解锁条件（用于套餐卡片 title / toast，避免 img HTML 破坏属性）
+function buildingLockHintText(b){
+  const has=id=>(S.buildings[id]||0)>0;
+  const N=id=>{const bb=BUILDINGS.find(x=>x.id===id);return LANG==="en"?(bb?bb.en:id):(bb?bb.n:id);};
+  if(b.id==="garden"||b.id==="manor") return LANG==="en"?`Need ${N("hut")} + ${N("shop")}`:`需要${N("hut")}+${N("shop")}`;
+  if(b.id==="station"||b.id==="hospital") return LANG==="en"?`Need ${N("hut")} or ${N("shop")}`:`需要${N("hut")}或${N("shop")}`;
+  if(b.id==="factory") return LANG==="en"?`Need ${N("hut")} + ${N("shop")}`:`需要${N("hut")}+${N("shop")}`;
+  if(b.id==="hall"){
+    const need=[];
+    ["hut","shop","garden","manor","station","hospital","factory"].forEach(id=>{ if(!has(id)) need.push(N(id)); });
+    return (LANG==="en"?"Need all: ":"需要全部建成：")+need.join(" ");
+  }
+  return "";
+}
 function renderPets(){
   const panel=$("#petPanel"), list=$("#petList");
   if(!panel) return;
