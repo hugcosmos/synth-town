@@ -1830,7 +1830,7 @@ function totalElementKinds(){
   const normalNonLegend = [...normalElementSet()].filter(x=>!LEGENDARY_IDS.has(x));
   const basicN = BASE.length + normalNonLegend.filter(x=>{const t=tierOf(x);return t>=1&&t<=3;}).length;
   const advN = normalNonLegend.filter(x=>{const t=tierOf(x);return t>=4&&t<=7;}).length;
-  const legendNonElixir = 6; // chest, coin, bunch, garden_flowers, magicCrystal, rainbow
+  const legendNonElixir = 5; // chest, bunch, garden_flowers, magicCrystal, rainbow（金币coin是货币不计入元素种类）
   return basicN + advN + LIFE_HPS.length + legendNonElixir + LIFE_HPS.length;
 }
 function foundElementKinds(){
@@ -1846,7 +1846,6 @@ function foundElementKinds(){
   Object.keys(S.unlocked).forEach(k=>{ if(show.has(k)) found.add(k); });
   (S.discoveredLifeHps||[]).forEach(h=>found.add("life:"+h));
   if((S.chestVisited||(S.chest||0)>0)) found.add("chest");
-  if((S.coinVisited||(S.coin||0)>0)) found.add("coin");
   if("magicCrystal" in S.unlocked) found.add("magicCrystal");
   if("rainbow" in S.unlocked) found.add("rainbow");
   (S.discoveredElixirHps||[]).forEach(h=>found.add("elixir:"+h));
@@ -1875,13 +1874,13 @@ function tabElementCounts(){
   const advTotal = advIds.length;
   const lifeFound = (S.discoveredLifeHps||[]).length;
   const lifeTotal = LIFE_HPS.length;
-  const legendFound = ((S.chestVisited||(S.chest||0)>0)?1:0) + ((S.coinVisited||(S.coin||0)>0)?1:0)
+  const legendFound = ((S.chestVisited||(S.chest||0)>0)?1:0)
     + (count("bunch")>0||"bunch" in S.unlocked?1:0)
     + (count("garden_flowers")>0||"garden_flowers" in S.unlocked?1:0)
     + (("magicCrystal" in S.unlocked)?1:0)
     + (("rainbow" in S.unlocked)?1:0)
     + (S.discoveredElixirHps||[]).length;
-  const legendTotal = 6 + LIFE_HPS.length; // 6非药 + 5万能药HP
+  const legendTotal = 5 + LIFE_HPS.length; // 5非药(chest/bunch/garden_flowers/magicCrystal/rainbow) + 5万能药HP
   return {basic:[basicFound,basicTotal], advanced:[advFound,advTotal], life:[lifeFound,lifeTotal], legend:[legendFound,legendTotal]};
 }
 function renderElementTabs(){
@@ -1974,13 +1973,6 @@ function renderElements(){
     chestCard.innerHTML=`<span class="ico">🧰</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("chest")}</span><span class="cnt">×${S.chest||0}</span>`;
     chestCard.addEventListener("click",()=>toast(t("npc.chestHint")||(LANG==="en"?"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料")));
     g.appendChild(chestCard);
-    // coin信息卡
-    const coinVisited = S.coinVisited || (S.coin>0);
-    const coinCard=document.createElement("div");
-    coinCard.className="el legendInfoCard"+(coinVisited?"":" empty");
-    coinCard.innerHTML=`<span class="ico">💰</span><span class="name" style="color:var(--gold);font-weight:600;">${elName("coin")}</span><span class="cnt">×${S.coin||0}</span>`;
-    coinCard.addEventListener("click",()=>toast(LANG==="en"?"💰 Coins: earned from buildings and selling elements":"💰 金币：建筑产出和出售元素获得"));
-    g.appendChild(coinCard);
     // bunch（花丛）— 可拖拽传说元素
     ["bunch","garden_flowers"].forEach(id=>{
       const e=ELEMENTS[id];
@@ -2667,8 +2659,8 @@ function renderShopElementTabs(){
   const advancedCount=Object.keys(ELEMENTS).filter(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life"&&!DEPRECATED_IDS.has(k);}).length;
   // life：LIFE_HPS 种数
   const lifeCount=LIFE_HPS.length;
-  // legend：bunch/garden_flowers/chest/coin/magicCrystal/rainbow(6) + 万能药HP变体(LIFE_HPS)
-  const legendCount=6+LIFE_HPS.length;
+  // legend：bunch/garden_flowers/chest/magicCrystal/rainbow(5) + 万能药HP变体(LIFE_HPS)，金币coin是货币不计入
+  const legendCount=5+LIFE_HPS.length;
   // 解锁状态
   const advancedUnlocked=Object.keys(S.unlocked||{}).some(k=>{const t=tierOf(k);return t>=4&&t<=7&&!LEGENDARY_IDS.has(k)&&k!=="life";});
   const lifeUnlocked=(S.discoveredLifeHps||[]).length>0||(S.lifePool||[]).length>0;
@@ -2752,13 +2744,7 @@ function renderElShop(){
       });
     }
   } else if(currentShopElementTab==="legend"){
-    // 传说元素区域 — 始终展示全部11个传说元素（传说栏默认解锁，全部彩色可购买）
-    // 金币(coin)为游戏货币，不售出，仅作信息卡展示
-    gridHtml+=`<div class="shopElCard" onclick="toast('${LANG==="en"?"💰 Coin is game currency, earned from buildings & selling":"💰 金币为游戏货币，通过建筑产出和出售元素获得"}')" title="${LANG==="en"?"Coin: game currency":"金币：游戏货币"}">
-      <div class="ico">💰</div>
-      <div class="nm" style="color:var(--gold);font-weight:600;">${elName("coin")}</div>
-      <div class="pr" style="color:var(--dim);">${LANG==="en"?"Currency":"货币"}</div>
-    </div>`;
+    // 传说元素区域 — 始终展示全部10个可购买传说元素（金币coin是货币，不在元素商店售卖，顶部状态栏已有数量）
     const legendItems=[
       {id:"bunch", price:LEGEND_BUY.bunch},
       {id:"garden_flowers", price:LEGEND_BUY.garden_flowers},
