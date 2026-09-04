@@ -5032,7 +5032,7 @@ function renderMap(){
     const defaultBg=`assets/regions/${r.id}.png?v=${r.id==="center"?"20260905":"20260902"}`;
     const plots=S.plots[r.id]||[];
     const _mobMap=window.innerWidth<=860||isTouchDevice();
-    const bldSize=Math.round(32*(_mobMap?1.2:2.5)); // 全区域统一图标显示大小：桌面2.5x/移动1.2x
+    const bldSize=Math.round(32*(_mobMap?1.2:2.0)); // 全区域统一图标显示大小：桌面2.0x/移动1.2x
     const emojiPx=Math.round(bldSize*0.7);
     const points=BUILDABLE_POINTS[r.id]||[];
     // 构建建筑槽（只渲染 r.plots 个；兼容 center 从 12 降到 8 的旧档）
@@ -5056,7 +5056,8 @@ function renderMap(){
         tip=b?((S.buildingNames&&S.buildingNames[key])||bldName(b)):"";
         const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260906`;
         const em=b?b.i:"❓";
-        inner=`<img src="${bldUrl}" width="${bldSize}" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));transform:rotate(${rot}deg)" onerror="bldImgError(this,'${em}',${emojiPx})" alt="${b?b.n:''}">`;
+        const _bldW=p==="factory"?Math.round(bldSize*1.2):bldSize;
+        inner=`<img src="${bldUrl}" width="${_bldW}" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));transform:rotate(${rot}deg)" onerror="bldImgError(this,'${em}',${emojiPx})" alt="${b?b.n:''}">`;
       }
       const slotCls="bldSlot"+(sel?" selSlot":"")+(ms?" moveSlot":"")+(fs?" freeSlot":"");
       slotsHtml+=`<div class="${slotCls}" data-r="${r.id}" data-i="${i}" title="${tip}" style="left:${left}%;top:${top}%;">${inner}</div>`;
