@@ -1028,6 +1028,30 @@
   </div>
 </div>
 
+<!-- 神秘礼物：终身荣誉镇长聘书 -->
+<div id="mysteryOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:600;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
+  <div id="mysteryFormBox" style="background:linear-gradient(160deg,#fffdf5,#f5e9c8);border:3px solid #c9a227;border-radius:16px;padding:26px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5);color:#5a3d0e;">
+    <div style="font-size:44px;">🎁</div>
+    <div id="mysteryFormTitle" style="font-size:20px;font-weight:800;letter-spacing:2px;margin:8px 0;">神秘礼物</div>
+    <div id="mysteryFormDesc" style="font-size:13px;color:#8a6d1f;margin:6px 0 14px;">恭喜你集齐三大徽章！请输入你的名字，领取终身荣誉镇长聘书</div>
+    <input id="mysteryNameInput" maxlength="20" placeholder="请输入你的名字" style="width:100%;box-sizing:border-box;padding:10px 12px;border:2px solid #c9a227;border-radius:8px;font-size:15px;background:#fff;color:#5a3d0e;text-align:center;outline:none;">
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:center;">
+      <button onclick="submitMystery()" style="background:linear-gradient(135deg,#d4a017,#b8860b);border:none;color:#fff;border-radius:10px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;">✓ 确认签收</button>
+      <button onclick="closeMystery()" style="background:transparent;border:1px solid #b8860b;color:#8a6d1f;border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;">取消</button>
+    </div>
+  </div>
+  <div id="mysteryCertBox" style="display:none;background:linear-gradient(160deg,#fffdf5,#f3e6c0);border:6px double #b8860b;border-radius:10px;padding:28px 24px;max-width:420px;width:100%;color:#5a3d0e;box-shadow:0 8px 40px rgba(0,0,0,.5);position:relative;">
+    <div style="text-align:center;font-size:26px;font-weight:900;letter-spacing:8px;color:#8a2b2b;margin-bottom:2px;">聘 书</div>
+    <div id="mysteryCertSub" style="text-align:center;font-size:12px;color:#a08030;letter-spacing:2px;margin-bottom:16px;">终身荣誉镇长 · HONORARY MAYOR</div>
+    <div id="mysteryCertBody" style="font-size:14px;line-height:1.9;text-align:left;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:20px;">
+      <div id="mysteryCertDate" style="font-size:12px;color:#7a5d1a;"></div>
+      <div style="width:86px;height:86px;border-radius:50%;border:3px solid #c22;display:flex;align-items:center;justify-content:center;text-align:center;color:#c22;font-size:12px;font-weight:800;transform:rotate(-12deg);opacity:.9;background:rgba(200,30,30,.06);flex-shrink:0;">🏛️<br>荣誉镇长<br>之印</div>
+    </div>
+    <button onclick="closeMystery()" style="position:absolute;top:8px;right:8px;background:transparent;border:none;color:#8a6d1f;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+</div>
+
 <!-- 离线收益弹窗 -->
 <div id="offlineOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:20px;">
   <div style="background:var(--panel);border:1px solid var(--gold);border-radius:16px;padding:24px;max-width:360px;width:100%;text-align:center;box-shadow:0 0 40px rgba(255,215,94,.3);">
@@ -1779,6 +1803,7 @@ function fresh(){
     lastOfflineShow:null, // 上次离线收益弹窗时间（防重复弹）
     pandaRewardClaimed:false, // 熊猫保底是否已领取
     badges:{}, // 勋章解锁状态
+    mysteryGift:null, // 神秘礼物（终身荣誉镇长）{name,date}
     parkSlots:null, // 动物乐园窝位分配（null时自动初始化）
     parkNestPos:{}, // 动物乐园窝自定义摆放位置 {slotIdx:{x,y}百分比}
     buildingNames:{}, // 建筑自定义名 {region_index: name}
@@ -3279,8 +3304,66 @@ function renderBadges(){
       </div>
     </div>`;
   });
+  // 神秘礼物（终身荣誉镇长聘书）
+  const mUnlocked=isMysteryUnlocked();
+  const mg=S.mysteryGift&&S.mysteryGift.name;
+  html+=`<div class="badgeCard ${mUnlocked?"":"locked"} mysteryCard" ${mUnlocked?`onclick="openMystery()" style="cursor:pointer;"`:""}>
+    <div style="font-size:40px;line-height:1;display:flex;align-items:center;justify-content:center;width:64px;height:64px;">${mg?"📜":"🎁"}</div>
+    <div class="badgeInfo">
+      <div class="badgeName">${mg?"✅ ":"🔒 "}${LANG==="en"?(mg?"Honorary Mayor":"Mystery Gift"):(mg?"终身荣誉镇长":"神秘礼物")}</div>
+      <div class="badgeDesc">${mg?(LANG==="en"?`Appointed ${mg} as Honorary Mayor of ${S.townName||"My Town"}`:`已聘任 ${mg} 为 ${S.townName||"我的小镇"} 终身荣誉镇长`):(mUnlocked?(LANG==="en"?"Tap to claim your Honorary Mayor certificate":"点开签收你的终身荣誉镇长聘书！"):(LANG==="en"?"Unlock Element Master + Land Tycoon + Animal King":"集齐「元素之王+地产大亨+动物大王」后解锁"))}</div>
+    </div>
+  </div>`;
   box.innerHTML=html;
 }
+/* ---- 神秘礼物：终身荣誉镇长聘书 ---- */
+function isMysteryUnlocked(){
+  return S.badges&&S.badges["element-master"]&&S.badges["real-estate-tycoon"]&&S.badges["animal-king"];
+}
+function townTotalOut(){
+  let o=0;
+  Object.entries(S.plots||{}).forEach(([rid,plots])=>{
+    const rr=REGIONS.find(r=>r.id===rid);
+    (plots||[]).forEach(p=>{ if(p&&p!==null){ const b=BUILDINGS.find(x=>x.id===p); if(b&&rr) o+=b.income*rr.im; } });
+  });
+  return o;
+}
+function openMystery(){
+  if(!isMysteryUnlocked()){ toast(LANG==="en"?"🎁 Unlock Element Master + Land Tycoon + Animal King to open the Mystery Gift!":"🎁 集齐「元素之王 + 地产大亨 + 动物大王」三大徽章后才能解锁神秘礼物！"); return; }
+  const ov=$("#mysteryOverlay"); if(!ov) return;
+  ov.style.display="flex";
+  if(S.mysteryGift&&S.mysteryGift.name){ showMysteryCert(); }
+  else{
+    $("#mysteryFormBox").style.display="";
+    $("#mysteryCertBox").style.display="none";
+    $("#mysteryFormTitle").textContent=LANG==="en"?"🎁 Mystery Gift":"🎁 神秘礼物";
+    $("#mysteryFormDesc").textContent=LANG==="en"?"Congrats on earning all three master badges! Enter your name to claim your Honorary Mayor certificate.":"恭喜你集齐三大徽章！请输入你的名字，领取终身荣誉镇长聘书";
+    $("#mysteryNameInput").placeholder=LANG==="en"?"Enter your name":"请输入你的名字";
+  }
+}
+function submitMystery(){
+  const name=($("#mysteryNameInput").value||"").trim().slice(0,20);
+  if(!name){ toast(LANG==="en"?"✏️ Please enter your name":"✏️ 请先输入你的名字"); return; }
+  S.mysteryGift={name, date:Date.now()};
+  save(); renderBadges();
+  showMysteryCert();
+}
+function showMysteryCert(){
+  const g=S.mysteryGift; if(!g) return;
+  $("#mysteryFormBox").style.display="none";
+  $("#mysteryCertBox").style.display="";
+  const bldTypes=Object.keys(S.buildings||{}).filter(id=>(S.buildings[id]||0)>0).length;
+  const perMin=Math.round(townTotalOut()*6);
+  const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
+  const d=new Date(g.date);
+  const dateStr=LANG==="en"?d.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}):`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  $("#mysteryCertSub").textContent=LANG==="en"?"Honorary Mayor · 终身荣誉镇长":"终身荣誉镇长 · HONORARY MAYOR";
+  $("#mysteryCertBody").innerHTML=LANG==="en"
+    ?`<p>Dear <b>${g.name}</b>,</p><p>Thank you for your dedication! Your town now has <b>${bldTypes}</b> building types, earning <b>${perMin}</b> coins per minute, and all animals are living happily.</p><p>You are hereby appointed as the <b>Honorary Mayor for Life</b> of <b>${townName}</b>.</p>`
+    :`<p>尊敬的 <b>${g.name}</b>：</p><p>感谢你的辛勤付出！小镇目前已有 <b>${bldTypes}</b> 种建筑物类别，每分钟可赚取 <b>${perMin}</b> 金币，动物们生活得都很开心。</p><p>特此聘请你为 <b>${townName}</b> 的终身荣誉镇长。</p>`;
+  $("#mysteryCertDate").textContent=LANG==="en"?`Issued: ${dateStr}`:`签发日期：${dateStr}`;
+}
+function closeMystery(){ const ov=$("#mysteryOverlay"); if(ov) ov.style.display="none"; }
 let _currentBadgeId=null;
 function openBadgeDetail(id){
   const b=BADGES.find(x=>x.id===id); if(!b) return;
@@ -3308,6 +3391,13 @@ function checkBadges(){
     }
   });
   if(unlockedAny){ renderBadges(); updateTabLockState(); save(); }
+  // 三枚大师徽章集齐 → 神秘礼物解锁，NPC 提示
+  if(isMysteryUnlocked()&&!S.mysteryGift){
+    setTimeout(()=>{
+      const msg=LANG==="en"?"🎁 Mystery Gift unlocked! Collect your Honorary Mayor certificate in the Achievement Hall!":"🎁 神秘礼物已解锁！去成就殿堂签收你的终身荣誉镇长聘书吧！";
+      toast(`🧙‍♂️「${msg}」`,5200);
+    },400);
+  }
 }
 function hasBadge(){ return S.badges&&Object.keys(S.badges).length>0; }
 function tryOpenBadges(){
