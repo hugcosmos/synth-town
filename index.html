@@ -510,8 +510,10 @@
   .tile:hover{filter:brightness(1.1); transform:translateY(-2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 4px 16px rgba(0,0,0,.4);}
   .tile.sel{outline-color:var(--gold); box-shadow:0 0 16px rgba(255,215,94,.4), inset 0 1px 0 rgba(255,255,255,.1);}
   .tileHd{display:flex; align-items:center; justify-content:center; gap:5px;}
-  .tile .rn{font-size:13px; font-weight:800; background:linear-gradient(90deg,#ff6b6b,#ffb84d,#ffe066,#4cd97b,#54d9ff,#a78bfa,#ff6b9d); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .tile .rn{font-size:13px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7);}
+  .tile .rn .rainbowText{background:linear-gradient(90deg,#ff6b6b,#ffb84d,#ffe066,#4cd97b,#54d9ff,#a78bfa,#ff6b9d); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:800;}
   .rainbowText{background:linear-gradient(90deg,#ff6b6b,#ffb84d,#ffe066,#4cd97b,#54d9ff,#a78bfa,#ff6b9d); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:800;}
+  .tabBtn .tabEmoji{filter:brightness(1.35) saturate(1.25) drop-shadow(0 0 2px rgba(255,255,255,.15));}
   .tileFt{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:2px;}
   .tileFt .rm{font-size:9px; opacity:.95; background:rgba(0,0,0,.4); padding:2px 8px; border-radius:10px; white-space:nowrap;}
   .tileFt .bcnt{font-size:10px;color:var(--dim);font-weight:600;}
@@ -5060,7 +5062,7 @@ function renderMap(){
     const regionDisplayName=(S.regionNames&&S.regionNames[r.id])||regName(r);
     const allBought=plots.every(p=>p!==false);
     const costLabel=LANG==="en"?`Cost×${r.cm} Out×${r.im} 💰${r.land}`:`成本×${r.cm} 产出×${r.im} 地价💰${r.land}`;
-    tile.innerHTML=`<div class="tileHd"><span class="rn regionNameLabel" data-region="${r.id}" style="${allBought?'cursor:pointer;':''}" title="${allBought?t("town.nameRegion"):t("town.regionLocked")}">${r.i} ${regionDisplayName}${allBought?' <span class="pencilMark">✏️</span>':''}</span></div>
+    tile.innerHTML=`<div class="tileHd"><span class="rn regionNameLabel" data-region="${r.id}" style="${allBought?'cursor:pointer;':''}" title="${allBought?t("town.nameRegion"):t("town.regionLocked")}"><span class="regionEmoji">${r.i}</span> <span class="rainbowText">${regionDisplayName}</span>${allBought?' <span class="pencilMark">✏️</span>':''}</span></div>
 <div class="mapCanvas" style="background-image:url(${ti||defaultBg})">${decoHtml}${slotsHtml}</div>
 <div class="tileFt"><span class="rm">${costLabel}</span><span class="bcnt">🏗️ ${bc2}/${r.plots}</span>${allBought?`<span class="freeHint" style="color:#4cd97b;font-size:10px;font-weight:700;">✋ ${LANG==="en"?"Drag to move":"可自由摆放"}</span>`:""}</div>`;
     tile.querySelectorAll("[data-r]").forEach(cell=>{
