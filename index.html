@@ -867,10 +867,11 @@
     <section class="panel" style="padding:0;overflow:hidden;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);">
         <h2 style="margin:0;font-size:15px;" data-i18n="panel.park">🌳 动物乐园</h2>
-        <div style="display:flex;gap:6px;align-items:center;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button id="parkFreeBtn" onclick="toggleParkFree()" style="background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;" data-i18n="park.free">🖐️ 自由摆放</button>
           <button onclick="document.getElementById('parkBgFile').click()" style="background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;" title="更换乐园背景">🖼️</button>
           <button id="parkBgResetBtn" style="display:none;background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;" title="恢复默认背景" onclick="resetParkBg()">↩️</button>
-          <button onclick="saveElementAsImage(document.getElementById('parkContainer'),'animal-park.png')" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:700;" data-i18n="btn.save">📷 保存</button>
+          <button onclick="saveParkScreenshot()" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:700;" data-i18n="btn.save">📷 保存</button>
         </div>
       </div>
       <input type="file" id="parkBgFile" accept="image/*" style="display:none">
@@ -1351,7 +1352,7 @@ const I18N = {
     "shop.bundleLockedEn":"🔒 Unlocks after crafting all elements (Element Master badge)",
     "shop.bundleLabel":"{0}套餐", "shop.bundleLabelEn":"{0} Bundle",
     "panel.elements":"元素库（点一下填入合成槽）",
-    "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 游乐园",
+    "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 游乐园", "park.free":"🖐️ 自由摆放",
     "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
     "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭", "btn.recipe":"🔮 配方",
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
@@ -1539,7 +1540,7 @@ const I18N = {
     "shop.bundleLocked":"🔒 Craft all elements (Element Master badge) to unlock Bundles",
     "shop.bundleLabel":"{0} Bundle",
     "panel.elements":"Elements (tap to fill slot)",
-    "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Playpark",
+    "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Playpark", "park.free":"🖐️ Free Arrange",
     "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
     "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close", "btn.recipe":"🔮 Recipe",
     "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
@@ -1779,6 +1780,7 @@ function fresh(){
     pandaRewardClaimed:false, // 熊猫保底是否已领取
     badges:{}, // 勋章解锁状态
     parkSlots:null, // 动物乐园窝位分配（null时自动初始化）
+    parkNestPos:{}, // 动物乐园窝自定义摆放位置 {slotIdx:{x,y}百分比}
     buildingNames:{}, // 建筑自定义名 {region_index: name}
     townName:null, // 小镇自定义名
     regionNames:{}, // 区域自定义名 {regionId: name}
@@ -3677,6 +3679,7 @@ function ensureParkSlots(){
   });
 }
 let selectedParkSlot=null;
+let parkFreeMove=false; // 乐园自由摆放模式
 function isTouchDevice(){ return 'ontouchstart' in window || navigator.maxTouchPoints>0; }
 function renderPark(){
   const box=$("#parkSlots"); if(!box) return;
@@ -3684,16 +3687,19 @@ function renderPark(){
   if(!hasPanda()){ box.innerHTML=""; $("#parkHint").textContent=LANG==="en"?"🔒 Breed a 🐼Panda to unlock the Animal Park!":"🔒 孕育一只🐼熊猫即可解锁动物乐园！"; return; }
   ensureParkSlots();
   const mobile=window.innerWidth<=860||isTouchDevice();
-  $("#parkHint").textContent=mobile
-    ?(LANG==="en"?"👆 Tap a nest to select, tap another to swap · Long-press for profile":"👆 点击一个窝选中，再点击另一个窝交换位置 · 长按查看资料")
-    :(LANG==="en"?"Drag pets to swap nests · Click to view profile":"拖拽宠物交换窝位 · 点击查看资料");
+  $("#parkHint").textContent=parkFreeMove
+    ?(LANG==="en"?"🖐️ Free arrange: drag nests to any position":"🖐️ 自由摆放：把窝拖到任意位置，完成后点「完成」")
+    :(mobile
+      ?(LANG==="en"?"👆 Tap a nest to select, tap another to swap · Long-press for profile":"👆 点击一个窝选中，再点击另一个窝交换位置 · 长按查看资料")
+      :(LANG==="en"?"Drag pets to swap nests · Click to view profile":"拖拽宠物交换窝位 · 点击查看资料"));
   box.innerHTML="";
   PARK_SLOTS.forEach((pos,slotIdx)=>{
     const petIdx=S.parkSlots[slotIdx];
     const pet=petIdx!==null?S.petList[petIdx]:null;
     const d=pet?PETS.find(x=>x.id===pet.id):null;
     const div=document.createElement("div");
-    div.style.cssText=`position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);width:22%;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:visible;`;
+    const ppos=(S.parkNestPos&&S.parkNestPos[slotIdx])?S.parkNestPos[slotIdx]:pos;
+    div.style.cssText=`position:absolute;left:${ppos.x}%;top:${ppos.y}%;transform:translate(-50%,-50%);width:22%;display:flex;align-items:center;justify-content:center;cursor:${parkFreeMove?'move':'pointer'};overflow:visible;`;
     div.dataset.slot=slotIdx;
     if(selectedParkSlot===slotIdx) div.classList.add("parkSlotSel");
     if(pet){
@@ -3713,7 +3719,32 @@ function renderPark(){
           <span style="margin-top:-4px;font-size:clamp(8px,2.2vw,12px);font-weight:700;color:#fff;background:linear-gradient(135deg,#8B4513,#A0522D);padding:1px 8px;border-radius:8px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);">${nameLabel}</span>
         </div>`;
       div.title=pet.name;
-      if(mobile){
+      if(parkFreeMove){
+        // 自由摆放：拖拽窝到任意位置（移动+桌面统一 pointer）
+        let dragging=false;
+        div.style.touchAction="none";
+        div.addEventListener("pointerdown",e=>{
+          e.preventDefault(); e.stopPropagation();
+          dragging=true;
+          try{ div.setPointerCapture(e.pointerId); }catch(_){}
+        });
+        div.addEventListener("pointermove",e=>{
+          if(!dragging) return;
+          const rect=box.parentElement.getBoundingClientRect();
+          const x=(e.clientX-rect.left)/rect.width*100;
+          const y=(e.clientY-rect.top)/rect.height*100;
+          div.style.left=x+"%"; div.style.top=y+"%";
+        });
+        div.addEventListener("pointerup",e=>{
+          if(!dragging) return; dragging=false;
+          const rect=box.parentElement.getBoundingClientRect();
+          const x=(e.clientX-rect.left)/rect.width*100;
+          const y=(e.clientY-rect.top)/rect.height*100;
+          S.parkNestPos[slotIdx]={x:Math.max(8,Math.min(92,x)),y:Math.max(10,Math.min(90,y))};
+          save();
+        });
+        div.addEventListener("pointercancel",()=>{dragging=false;});
+      }else if(mobile){
         // 移动端：点击选中/交换，长按查看资料（位移>8px视为滑动不触发）
         let _lpTimer=null, _lpX=0, _lpY=0;
         div.addEventListener("pointerdown",e=>{
@@ -3740,7 +3771,7 @@ function renderPark(){
       }
     }
     // 桌面端拖拽放置
-    if(!mobile){
+    if(!mobile && !parkFreeMove){
       div.addEventListener("dragover",e=>{ e.preventDefault(); div.style.background="rgba(255,255,255,.2)"; });
       div.addEventListener("dragleave",()=>{ div.style.background=""; });
       div.addEventListener("drop",e=>{
@@ -3766,6 +3797,34 @@ function handleParkSlotClick(slotIdx){
     selectedParkSlot=null;
     renderPark(); save();
   }
+}
+function toggleParkFree(){
+  parkFreeMove=!parkFreeMove;
+  selectedParkSlot=null;
+  renderPark();
+  const btn=$("#parkFreeBtn");
+  if(btn){
+    btn.textContent=parkFreeMove?(LANG==="en"?"✅ Done":"✅ 完成"):(LANG==="en"?"🖐️ Free Arrange":"🖐️ 自由摆放");
+    btn.style.borderColor=parkFreeMove?"var(--gold)":"var(--line)";
+    btn.style.color=parkFreeMove?"var(--gold)":"var(--text)";
+  }
+}
+function saveParkScreenshot(){
+  const el=$("#parkContainer");
+  if(!el||typeof html2canvas==="undefined"){ toast(LANG==="en"?"📷 Image save not available":"📷 图片保存功能不可用"); return; }
+  const title=document.createElement("div");
+  title.style.cssText="position:absolute;top:12px;left:0;right:0;text-align:center;font-size:20px;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);z-index:30;pointer-events:none;letter-spacing:1px;";
+  const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
+  title.textContent=`${townName} · ${LANG==="en"?"Animal Park":"动物乐园"}`;
+  el.appendChild(title);
+  toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
+  requestAnimationFrame(()=>setTimeout(()=>{
+    html2canvas(el,{useCORS:true,backgroundColor:null,scale:2}).then(canvas=>{
+      title.remove();
+      const link=document.createElement("a"); link.download="animal-park.png"; link.href=canvas.toDataURL("image/png"); link.click();
+      toast(LANG==="en"?"📥 Image saved!":"📥 图片已保存！");
+    }).catch(err=>{ title.remove(); toast(LANG==="en"?"❌ Save failed":"❌ 保存失败"); console.error(err); });
+  },60));
 }
 // 乐园NPC提示
 const NPC_PARK_LINES={
