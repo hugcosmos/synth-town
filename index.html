@@ -483,8 +483,11 @@
     display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
     border-radius:12px; padding:8px; background:rgba(0,0,0,.2);
   }
-  /* 截图模式：隐藏按钮，移动端2列排版 */
-  .screenshot-mode .mapActions{display:none !important;}
+  /* 截图模式：隐藏按钮但保留右侧指南针，移动端2列排版 */
+  .screenshot-mode .mapActions{display:flex !important; justify-content:flex-end; gap:6px;}
+  .screenshot-mode .mapActions button{display:none !important;}
+  .screenshot-mode .mapActions .compass{display:inline-flex !important;}
+  .screenshot-mode .mapTopRow{flex-direction:row !important; align-items:center; justify-content:space-between;}
   .screenshot-mode .pencilMark{display:none !important;}
   .screenshot-mode .tileFt{display:none !important;}
   .screenshot-mode .mapGrid{grid-template-columns:repeat(2,1fr) !important;}
@@ -2778,6 +2781,7 @@ function decBundle(bid){
   const cur=S.bundleQty[bid]||0;
   if(cur<=0){ toast(LANG==="en"?"No bundle in cart":"购物车里没有该套餐"); return; }
   S.bundleQty[bid]=cur-1;
+  if(S.bundleQty[bid]<=0) delete S.bundleQty[bid];
   Object.entries(b.items).forEach(([id,n])=>{
     S.shopCart[id]=Math.max(0,(S.shopCart[id]||0)-n);
     if(S.shopCart[id]===0) delete S.shopCart[id];
@@ -2843,7 +2847,7 @@ function setCartQty(id,val){
   S.shopCart[id]=n;
   renderElShop();
 }
-function clearCart(){ S.shopCart={}; renderElShop(); }
+function clearCart(){ S.shopCart={}; if(S.bundleQty) S.bundleQty={}; renderElShop(); }
 function cartTotal(){
   if(!S.shopCart) return 0;
   return Object.entries(S.shopCart).reduce((s,[id,n])=>{
@@ -3379,13 +3383,17 @@ function saveTownScreenshot(){
   if(bgImg&&bgImg!=="none") outer.style.background=`${bgColor} ${bgImg} center/cover no-repeat`;
   else outer.style.background=bgColor;
   outer.classList.add("screenshot-mode");
-  // 截图时路牌改为标题样式：小镇名 · 手绘地图（去掉"欢迎来到"与装饰，建筑统计/指南针仍显示）
+  // 截图时路牌改为顶部纯文字标题（不加地标/路牌杆）
   const sign=$("#townSign");
   const signOrig=sign?sign.innerHTML:null;
   if(sign){
     const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
-    sign.innerHTML=`<div class="signBoard" style="padding:10px 26px;">${townName} · ${LANG==="en"?"Hand-Drawn Map":"手绘地图"}</div><div class="signPost"></div>`;
+    sign.innerHTML=`<div style="font-size:20px;font-weight:700;letter-spacing:1px;padding:4px 0;text-shadow:0 1px 3px rgba(0,0,0,.4);">${townName} · ${LANG==="en"?"Hand-Drawn Map":"手绘地图"}</div>`;
   }
+  // 截图时建筑图标缩小（避免遮挡）
+  const slotImgs=[...outer.querySelectorAll(".bldSlot img")];
+  const iconOrig=slotImgs.map(i=>({w:i.getAttribute("width"),tr:i.style.transform}));
+  slotImgs.forEach(i=>{ const w=parseInt(i.getAttribute("width")||32,10); i.setAttribute("width",Math.round(w*0.55)); i.style.transform=""; });
   toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
   // 等待浏览器重排后再截图
   requestAnimationFrame(()=>{
@@ -3394,6 +3402,7 @@ function saveTownScreenshot(){
         outer.classList.remove("screenshot-mode");
         outer.style.background=prevBg;
         if(sign&&signOrig) sign.innerHTML=signOrig;
+        slotImgs.forEach((i,idx)=>{ if(iconOrig[idx]){ i.setAttribute("width",iconOrig[idx].w); i.style.transform=iconOrig[idx].tr; } });
         const link=document.createElement("a");
         link.download="town-map.png";
         link.href=canvas.toDataURL("image/png");
@@ -3403,6 +3412,7 @@ function saveTownScreenshot(){
         outer.classList.remove("screenshot-mode");
         outer.style.background=prevBg;
         if(sign&&signOrig) sign.innerHTML=signOrig;
+        slotImgs.forEach((i,idx)=>{ if(iconOrig[idx]){ i.setAttribute("width",iconOrig[idx].w); i.style.transform=iconOrig[idx].tr; } });
         toast(LANG==="en"?"❌ Save failed":"❌ 保存失败"); console.error(err);
       });
     },100);
