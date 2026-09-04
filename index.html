@@ -668,9 +668,9 @@
     }
     #view-craft .panel:first-child h2{margin-bottom:4px;font-size:12px;}
     #elementGrid{
-      flex-shrink:0; max-height:none;
+      flex:1; min-height:0;
       grid-template-columns:repeat(6,1fr);
-      overflow:visible;
+      overflow-y:auto;
       gap:3px;
     }
     .el{padding:3px 1px; border-radius:6px;}
