@@ -1,0 +1,267 @@
+{
+  "version": 3,
+  "drawn": true,
+  "coin": 100000,
+  "chest": 0,
+  "coinVisited": true,
+  "chestVisited": false,
+  "lifePool": [],
+  "discoveredLifeHps": [
+    5,
+    6,
+    9,
+    10,
+    11
+  ],
+  "elixirPool": [],
+  "discoveredElixirHps": [],
+  "pets": {},
+  "petList": [
+    {
+      "id": "cat",
+      "hp": 10,
+      "maxHp": 10,
+      "sat": 100,
+      "sick": false,
+      "name": "咪咪",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "rabbit",
+      "hp": 8,
+      "maxHp": 8,
+      "sat": 100,
+      "sick": false,
+      "name": "雪球",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "dog",
+      "hp": 9,
+      "maxHp": 9,
+      "sat": 100,
+      "sick": false,
+      "name": "旺财",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "cow",
+      "hp": 11,
+      "maxHp": 11,
+      "sat": 100,
+      "sick": false,
+      "name": "花花",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "horse",
+      "hp": 10,
+      "maxHp": 10,
+      "sat": 100,
+      "sick": false,
+      "name": "飞飞",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "cat",
+      "hp": 7,
+      "maxHp": 7,
+      "sat": 100,
+      "sick": false,
+      "name": "橘橘",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "rabbit",
+      "hp": 6,
+      "maxHp": 6,
+      "sat": 100,
+      "sick": false,
+      "name": "白白",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "dog",
+      "hp": 8,
+      "maxHp": 8,
+      "sat": 100,
+      "sick": false,
+      "name": "大黄",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "cow",
+      "hp": 9,
+      "maxHp": 9,
+      "sat": 100,
+      "sick": false,
+      "name": "小牛",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    },
+    {
+      "id": "panda",
+      "hp": 15,
+      "maxHp": 15,
+      "sat": 100,
+      "sick": false,
+      "name": "滚滚",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    }
+  ],
+  "food": {
+    "meat": 5,
+    "carrot": 5,
+    "grass": 5,
+    "bamboo": 0
+  },
+  "buildings": {
+    "hut": 5,
+    "shop": 5,
+    "garden": 4,
+    "manor": 3,
+    "hospital": 2,
+    "station": 2,
+    "hall": 2,
+    "factory": 5
+  },
+  "regions": {},
+  "plots": {
+    "hill": [
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop"
+    ],
+    "forest": [
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop"
+    ],
+    "center": [
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop"
+    ],
+    "plain": [
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop"
+    ],
+    "river": [
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop"
+    ],
+    "factory": [
+      "shop",
+      "shop",
+      "shop",
+      "shop",
+      "shop"
+    ]
+  },
+  "plotsVersion": 2,
+  "theme": "night",
+  "totalEarned": 150000,
+  "craftedRecipes": [],
+  "lastTick": 1788518016520,
+  "bonusAccumulator": 0,
+  "lastBonusSettle": 1788518016520,
+  "lastOfflineShow": 1788518016520,
+  "pandaRewardClaimed": true,
+  "badges": {
+    "elementMaster": true,
+    "tenThousandaire": true,
+    "realEstateTycoon": true,
+    "animalKing": true
+  },
+  "mysteryGift": {
+    "name": "测试镇长",
+    "date": 1788518016520
+  },
+  "parkSlots": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "parkNestPos": {},
+  "buildingNames": {},
+  "townName": "我的小镇",
+  "regionNames": {},
+  "_pandaSlotWarned": false,
+  "shopCart": {},
+  "landCost": {},
+  "unlocked": {
+    "earth": 20,
+    "water": 20,
+    "fire": 20,
+    "air": 20,
+    "mud": 20,
+    "brick": 20,
+    "rain": 20,
+    "seed": 20,
+    "energy": 20,
+    "steam": 20,
+    "stone": 20,
+    "sand": 20,
+    "glass": 20,
+    "metal": 20,
+    "cloud": 20,
+    "ash": 20,
+    "flower": 20,
+    "fertilizer": 20,
+    "flower_bush": 20,
+    "flower_sea": 20,
+    "coin": 20,
+    "chest": 20
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "version": 3,
+  "drawn": true,
+  "coin": 50,
+  "chest": 0,
+  "coinVisited": true,
+  "chestVisited": false,
+  "lifePool": [],
+  "discoveredLifeHps": [],
+  "elixirPool": [],
+  "discoveredElixirHps": [],
+  "pets": {},
+  "petList": [
+    {
+      "id": "cat",
+      "hp": 5,
+      "maxHp": 5,
+      "sat": 100,
+      "sick": false,
+      "name": "小橘",
+      "bornAt": 1788431616520,
+      "intimacy": 0,
+      "avatar": null
+    }
+  ],
+  "food": {
+    "meat": 5,
+    "carrot": 5,
+    "grass": 5,
+    "bamboo": 0
+  },
+  "buildings": {
+    "hut": 1
+  },
+  "regions": {},
+  "plots": {
+    "hill": [
+      "hut",
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "forest": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "center": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "plain": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "river": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "factory": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "plotsVersion": 2,
+  "theme": "night",
+  "totalEarned": 0,
+  "craftedRecipes": [],
+  "lastTick": 1788518016520,
+  "bonusAccumulator": 0,
+  "lastBonusSettle": 1788518016520,
+  "lastOfflineShow": 1788518016520,
+  "pandaRewardClaimed": false,
+  "badges": {},
+  "mysteryGift": null,
+  "parkSlots": [
+    0,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "parkNestPos": {},
+  "buildingNames": {},
+  "townName": "我的小镇",
+  "regionNames": {},
+  "_pandaSlotWarned": false,
+  "shopCart": {},
+  "landCost": {},
+  "unlocked": {
+    "earth": 3,
+    "water": 3,
+    "fire": 3,
+    "air": 3,
+    "mud": 3,
+    "brick": 3,
+    "rain": 3,
+    "seed": 3,
+    "energy": 3
+  }
+}
