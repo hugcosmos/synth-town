@@ -1040,15 +1040,26 @@
       <button onclick="closeMystery()" style="background:transparent;border:1px solid #b8860b;color:#8a6d1f;border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;">取消</button>
     </div>
   </div>
-  <div id="mysteryCertBox" style="display:none;background:linear-gradient(160deg,#fffdf5,#f3e6c0);border:6px double #b8860b;border-radius:10px;padding:28px 24px;max-width:420px;width:100%;color:#5a3d0e;box-shadow:0 8px 40px rgba(0,0,0,.5);position:relative;">
-    <div style="text-align:center;font-size:26px;font-weight:900;letter-spacing:8px;color:#8a2b2b;margin-bottom:2px;">聘 书</div>
-    <div id="mysteryCertSub" style="text-align:center;font-size:12px;color:#a08030;letter-spacing:2px;margin-bottom:16px;">终身荣誉镇长 · HONORARY MAYOR</div>
-    <div id="mysteryCertBody" style="font-size:14px;line-height:1.9;text-align:left;"></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:20px;">
-      <div id="mysteryCertDate" style="font-size:12px;color:#7a5d1a;"></div>
-      <div style="width:86px;height:86px;border-radius:50%;border:3px solid #c22;display:flex;align-items:center;justify-content:center;text-align:center;color:#c22;font-size:12px;font-weight:800;transform:rotate(-12deg);opacity:.9;background:rgba(200,30,30,.06);flex-shrink:0;">🏛️<br>荣誉镇长<br>之印</div>
+  <div id="mysteryCertBox" style="display:none;position:relative;background:linear-gradient(165deg,#fdf8e7 0%,#f6e7c1 45%,#efdcae 100%);border:8px double #a97b1f;border-radius:14px;padding:34px 26px 26px;max-width:440px;width:100%;color:#5a3d0e;box-shadow:0 10px 46px rgba(0,0,0,.55), inset 0 0 0 3px #fff8, inset 0 0 0 4px #c9a22733;overflow:hidden;">
+    <!-- 顶部金徽 -->
+    <div style="text-align:center;margin-bottom:8px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;border:3px solid #b8860b;background:radial-gradient(circle,#fff8,#e8c46866);box-shadow:0 0 0 3px #fff7, 0 0 0 4px #b8860b55;">
+        <span style="font-size:30px;">🏛️</span>
+      </div>
     </div>
-    <button onclick="closeMystery()" style="position:absolute;top:8px;right:8px;background:transparent;border:none;color:#8a6d1f;font-size:18px;cursor:pointer;">✕</button>
+    <div style="text-align:center;font-size:30px;font-weight:900;letter-spacing:10px;color:#7a1f1f;text-shadow:0 1px 0 #fff6;margin-bottom:2px;">聘 书</div>
+    <div id="mysteryCertSub" style="text-align:center;font-size:11px;color:#a08030;letter-spacing:3px;margin-bottom:18px;">终身荣誉镇长 · HONORARY MAYOR</div>
+    <div style="border-top:1px solid #c9a22788;border-bottom:1px solid #c9a22788;padding:12px 6px;background:linear-gradient(90deg,transparent,#fff8,transparent);">
+      <div id="mysteryCertBody" style="font-size:14px;line-height:1.95;text-align:left;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;gap:10px;">
+      <div id="mysteryCertDate" style="font-size:11px;color:#7a5d1a;line-height:1.5;"></div>
+      <div style="display:flex;gap:16px;flex-shrink:0;">
+        <div id="mysterySeal1" style="width:84px;height:84px;border-radius:50%;border:2px solid rgba(190,30,30,.85);display:flex;align-items:center;justify-content:center;text-align:center;color:rgba(190,30,30,.92);box-shadow:inset 0 0 14px rgba(190,30,30,.28), 0 0 3px rgba(190,30,30,.3);transform:rotate(-10deg);background:radial-gradient(circle,rgba(190,30,30,.05),rgba(190,30,30,.16));"></div>
+        <div id="mysterySeal2" style="width:84px;height:84px;border-radius:50%;border:2px solid rgba(190,30,30,.85);display:flex;align-items:center;justify-content:center;text-align:center;color:rgba(190,30,30,.92);box-shadow:inset 0 0 14px rgba(190,30,30,.28), 0 0 3px rgba(190,30,30,.3);transform:rotate(10deg);background:radial-gradient(circle,rgba(190,30,30,.05),rgba(190,30,30,.16));"></div>
+      </div>
+    </div>
+    <button onclick="closeMystery()" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:#8a6d1f;font-size:20px;cursor:pointer;line-height:1;">✕</button>
   </div>
 </div>
 
@@ -3307,10 +3318,11 @@ function renderBadges(){
   // 神秘礼物（终身荣誉镇长聘书）
   const mUnlocked=isMysteryUnlocked();
   const mg=S.mysteryGift&&S.mysteryGift.name;
-  html+=`<div class="badgeCard ${mUnlocked?"":"locked"} mysteryCard" ${mUnlocked?`onclick="openMystery()" style="cursor:pointer;"`:""}>
-    <div style="font-size:40px;line-height:1;display:flex;align-items:center;justify-content:center;width:64px;height:64px;">${mg?"📜":"🎁"}</div>
+  const mEmoji=mg?"📜":(mUnlocked?"🎁":"🔒");
+  html+=`<div class="badgeCard ${mUnlocked?"":"locked"} mysteryCard" onclick="openMystery()" style="cursor:pointer;">
+    <div style="font-size:40px;line-height:1;display:flex;align-items:center;justify-content:center;width:64px;height:64px;">${mEmoji}</div>
     <div class="badgeInfo">
-      <div class="badgeName">${mg?"✅ ":"🔒 "}${LANG==="en"?(mg?"Honorary Mayor":"Mystery Gift"):(mg?"终身荣誉镇长":"神秘礼物")}</div>
+      <div class="badgeName">${mEmoji} ${LANG==="en"?(mg?"Honorary Mayor":(mUnlocked?"Mystery Gift":"Mystery Gift")):(mg?"终身荣誉镇长":(mUnlocked?"神秘礼物":"神秘礼物"))}</div>
       <div class="badgeDesc">${mg?(LANG==="en"?`Appointed ${mg} as Honorary Mayor of ${S.townName||"My Town"}`:`已聘任 ${mg} 为 ${S.townName||"我的小镇"} 终身荣誉镇长`):(mUnlocked?(LANG==="en"?"Tap to claim your Honorary Mayor certificate":"点开签收你的终身荣誉镇长聘书！"):(LANG==="en"?"Unlock Element Master + Land Tycoon + Animal King":"集齐「元素之王+地产大亨+动物大王」后解锁"))}</div>
     </div>
   </div>`;
@@ -3318,7 +3330,7 @@ function renderBadges(){
 }
 /* ---- 神秘礼物：终身荣誉镇长聘书 ---- */
 function isMysteryUnlocked(){
-  return S.badges&&S.badges["element-master"]&&S.badges["real-estate-tycoon"]&&S.badges["animal-king"];
+  return S.badges&&S.badges["elementMaster"]&&S.badges["animalKing"]&&S.badges["realEstateTycoon"];
 }
 function townTotalOut(){
   let o=0;
@@ -3362,8 +3374,48 @@ function showMysteryCert(){
     ?`<p>Dear <b>${g.name}</b>,</p><p>Thank you for your dedication! Your town now has <b>${bldTypes}</b> building types, earning <b>${perMin}</b> coins per minute, and all animals are living happily.</p><p>You are hereby appointed as the <b>Honorary Mayor for Life</b> of <b>${townName}</b>.</p>`
     :`<p>尊敬的 <b>${g.name}</b>：</p><p>感谢你的辛勤付出！小镇目前已有 <b>${bldTypes}</b> 种建筑物类别，每分钟可赚取 <b>${perMin}</b> 金币，动物们生活得都很开心。</p><p>特此聘请你为 <b>${townName}</b> 的终身荣誉镇长。</p>`;
   $("#mysteryCertDate").textContent=LANG==="en"?`Issued: ${dateStr}`:`签发日期：${dateStr}`;
+  // 双钢印：众议院 / 参议院
+  const sealStyle="font-size:9px;font-weight:800;letter-spacing:1px;line-height:1.5;";
+  $("#mysterySeal1").innerHTML=`<div style="${sealStyle}">${townName}<br>${LANG==="en"?"House":"众议院"}</div>`;
+  $("#mysterySeal2").innerHTML=`<div style="${sealStyle}">${townName}<br>${LANG==="en"?"Senate":"参议院"}</div>`;
+  // 粒子特效：最隆重的成就
+  playMysteryParticles();
 }
-function closeMystery(){ const ov=$("#mysteryOverlay"); if(ov) ov.style.display="none"; }
+let _mysteryParticlesRAF=null,_mysteryParticleStart=0,_mysteryParticleOpacity=1,_mysteryParticleEpoch=0;
+function playMysteryParticles(){
+  const epoch=(_mysteryParticleEpoch=_mysteryParticleEpoch+1);
+  if(_mysteryParticlesRAF){ cancelAnimationFrame(_mysteryParticlesRAF); _mysteryParticlesRAF=null; }
+  const ov=$("#mysteryOverlay"); if(!ov) return;
+  let c=document.getElementById("mysteryParticles");
+  if(!c){ c=document.createElement("canvas"); c.id="mysteryParticles"; c.style.cssText="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;"; ov.appendChild(c); }
+  const dpr=window.devicePixelRatio||1;
+  const w=ov.clientWidth,h=ov.clientHeight;
+  c.width=w*dpr; c.height=h*dpr;
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+  const N=120; const ps=[];
+  const colors=["#ffd75e","#ffe9a8","#f7b733","#fff3c4","#ffcf40"];
+  for(let i=0;i<N;i++){ ps.push({x:Math.random()*w,y:-10-Math.random()*h*0.6,r:Math.random()*3+2,vy:Math.random()*1.6+0.7,vx:(Math.random()-0.5)*0.9,a:Math.random()*0.75+0.35,tw:Math.random()*Math.PI*2}); }
+  _mysteryParticleStart=Date.now(); _mysteryParticleOpacity=1;
+  c.style.display="block"; c.style.opacity="1";
+  function frame(){
+    if(epoch!==_mysteryParticleEpoch) return;
+    const elapsed=Date.now()-_mysteryParticleStart;
+    if(elapsed>4500){ _mysteryParticleOpacity=Math.max(0,_mysteryParticleOpacity-0.06); c.style.opacity=String(_mysteryParticleOpacity); if(_mysteryParticleOpacity<=0){ c.style.display="none"; _mysteryParticlesRAF=null; return; } }
+    ctx.clearRect(0,0,w,h);
+    ctx.shadowBlur=10; ctx.shadowColor="#ffd75e";
+    ps.forEach(p=>{
+      p.y+=p.vy; p.x+=p.vx+Math.sin(p.tw)*0.3; p.tw+=0.08;
+      if(p.y>h+14){ p.y=-14; p.x=Math.random()*w; }
+      ctx.globalAlpha=p.a*(0.6+0.4*Math.sin(p.tw));
+      ctx.fillStyle=colors[Math.floor(Math.random()*colors.length)];
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+    });
+    ctx.shadowBlur=0;
+    _mysteryParticlesRAF=requestAnimationFrame(frame);
+  }
+  frame();
+}
+function closeMystery(){ const ov=$("#mysteryOverlay"); if(ov) ov.style.display="none"; if(_mysteryParticlesRAF){ cancelAnimationFrame(_mysteryParticlesRAF); _mysteryParticlesRAF=null; } }
 let _currentBadgeId=null;
 function openBadgeDetail(id){
   const b=BADGES.find(x=>x.id===id); if(!b) return;
@@ -5050,7 +5102,7 @@ function renderMap(){
     html+=`<div class="mapActions">
       <button id="townNameBtn" title="${t("town.nameTown")}">✏️ ${LANG==="en"?"Rename":"改名"}</button>
       ${freeMoveUnlocked()?`<button id="resetBldBtn" title="${t("town.resetLayout")}" style="background:none;border-color:var(--line);color:var(--dim);">↩️ ${LANG==="en"?"Layout":"默认布局"}</button>`:""}
-      <button id="townSaveBtn" style="background:var(--gold);border-color:var(--gold);color:#1a1530;">💾 ${t("btn.save")}</button>
+      <button id="townSaveBtn" style="background:var(--gold);border-color:var(--gold);color:#1a1530;">${t("btn.save")}</button>
       <span class="compass">🧭 N</span>
     </div>`;
   }
