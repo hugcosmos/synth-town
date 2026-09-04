@@ -489,9 +489,9 @@
   .screenshot-mode .mapActions .compass{display:inline-flex !important;}
   .screenshot-mode .mapTopRow{flex-direction:row !important; align-items:center; justify-content:space-between;}
   .screenshot-mode .mapStats{display:none !important;}
-  .screenshot-mode .mapBadges{margin:0; flex-wrap:nowrap; gap:3px; align-items:center;}
-  .screenshot-mode .mapBadge img{width:14px !important; height:14px !important;}
-  .screenshot-mode .mapBadge b{font-size:10px !important;}
+  .screenshot-mode .mapBadges{margin:0; display:grid; grid-template-columns:repeat(4,auto); justify-content:center; align-content:center; gap:2px 6px; align-items:center; max-width:64%;}
+  .screenshot-mode .mapBadge img{width:13px !important; height:13px !important;}
+  .screenshot-mode .mapBadge b{font-size:9px !important; font-weight:600;}
   .screenshot-mode .pencilMark{display:none !important;}
   .screenshot-mode .tileFt{display:none !important;}
   .screenshot-mode .mapGrid{grid-template-columns:repeat(2,1fr) !important;}
@@ -3408,6 +3408,15 @@ function saveTownScreenshot(){
   if(mapStatsEl){ const od=mapStatsEl.style.display; mapStatsEl.style.display="none"; undos.push(()=>{ mapStatsEl.style.display=od; }); }
   if(signWrap&&signWrap!==outer.firstChild) _mv(signWrap, outer, outer.firstChild);
   if(badgesEl&&mapTop) _mv(badgesEl, mapTop, mapActionsEl);
+  // 截图时徽章显示 图标+类别名（两行小字）；正常展示为 图标+个数
+  if(badgesEl){
+    [...badgesEl.querySelectorAll(".mapBadge")].forEach(m=>{
+      const bid=m.getAttribute("data-bid");
+      const b=BUILDINGS.find(x=>x.id===bid);
+      const bn=m.querySelector("b");
+      if(bn&&b){ const orig=bn.innerHTML; const nm=LANG==="en"?b.en:b.n; if(nm!==orig){ bn.innerHTML=nm; undos.push(()=>{ bn.innerHTML=orig; }); } }
+    });
+  }
   // 指南针移到标题右侧，去掉 N 文字
   if(compassEl&&signWrap){
     const compassOrig=compassEl.innerHTML;
@@ -3688,8 +3697,8 @@ function renderPark(){
     div.dataset.slot=slotIdx;
     if(selectedParkSlot===slotIdx) div.classList.add("parkSlotSel");
     if(pet){
-      const defaultImg=`assets/pets/${pet.id}.png?v=20260904`;
-      const homeImg=`assets/pet-homes/${pet.id}.png?v=20260905`;
+      const defaultImg=`assets/pets/${pet.id}.png?v=20260907`;
+      const homeImg=`assets/pet-homes/${pet.id}.png?v=20260907`;
       // 宠物头像（放在窝前面）
       const petAvatar=pet.avatar
         ?`<img src="${pet.avatar}" style="width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35);">`
@@ -3697,11 +3706,11 @@ function renderPark(){
       const nameLabel=LANG==="en"?`${pet.name}'s Home`:`${pet.name}之家`;
       div.innerHTML=`
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;">
-          <div style="position:relative;width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+          <div style="position:relative;width:100%;aspect-ratio:100/72;display:flex;align-items:center;justify-content:center;">
             <img src="${homeImg}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));" onerror="this.style.display='none'">
-            <div style="position:relative;z-index:2;width:46%;">${petAvatar}</div>
+            <div style="position:relative;z-index:2;width:42%;">${petAvatar}</div>
           </div>
-          <span style="font-size:clamp(8px,2.2vw,12px);font-weight:700;color:#fff;background:linear-gradient(135deg,#8B4513,#A0522D);padding:1px 8px;border-radius:8px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);">${nameLabel}</span>
+          <span style="margin-top:-4px;font-size:clamp(8px,2.2vw,12px);font-weight:700;color:#fff;background:linear-gradient(135deg,#8B4513,#A0522D);padding:1px 8px;border-radius:8px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);">${nameLabel}</span>
         </div>`;
       div.title=pet.name;
       if(mobile){
@@ -3950,7 +3959,7 @@ function renderPets(){
     const sickTag=p.sick?`<span style="color:#ff7a7a">🤒</span>`:"";
     const cureCost=(p.maxHp-p.hp)*2;
     const packImg=assetCache.get("pets:"+p.id);
-    const defaultImg=packImg||`assets/pets/${p.id}.png?v=20260904`;
+    const defaultImg=packImg||`assets/pets/${p.id}.png?v=20260907`;
     const avatarSrc=p.avatar||defaultImg;
     const hpColor=p.sick?'#ff7a7a':'#4cd97b';
     card.innerHTML=`
@@ -4151,7 +4160,7 @@ function renderPetDetail(){
   const ibonus=intimacyBonus(p.intimacy);
   const value=petValue(p);
   const packImg=assetCache.get("pets:"+p.id);
-  const defaultImg=packImg||`assets/pets/${p.id}.png?v=20260904`;
+  const defaultImg=packImg||`assets/pets/${p.id}.png?v=20260907`;
   const avatarHtml=p.avatar?`<img src="${p.avatar}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">`:`<img src="${defaultImg}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);animation:petBounce 2.2s ease-in-out infinite;">`;
   const canUpload=lvl>=10;
   $("#petDetailContent").innerHTML=`
@@ -4881,7 +4890,7 @@ function renderMap(){
   });
   const bc={};
   Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
-  const badges=Object.entries(bc).map(([bid])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260906`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:15px;height:15px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${LANG==="en"?(b?b.en:"?"):(b?b.n:"?")}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
+  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260906`;return `<span class="mapBadge" data-bid="${bid}"><img src="${bldUrl}" style="width:15px;height:15px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
   let hint="";
   if(freeMove) hint=`<div style="background:#54d9ff22;border:1px solid #54d9ff;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#9fe8ff;">${t("town.freeMoveHint")} <button onclick="cancelFreeMove()" style="background:none;border:none;color:#54d9ff;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
@@ -4925,7 +4934,7 @@ function renderMap(){
     const defaultBg=`assets/regions/${r.id}.png?v=${r.id==="center"?"20260905":"20260902"}`;
     const plots=S.plots[r.id]||[];
     const _mobMap=window.innerWidth<=860||isTouchDevice();
-    const bldSize=Math.round(32*(_mobMap?1.5:2)); // 全区域统一图标显示大小：桌面2x/移动1.5x
+    const bldSize=Math.round(32*(_mobMap?1.2:2.5)); // 全区域统一图标显示大小：桌面2.5x/移动1.2x
     const emojiPx=Math.round(bldSize*0.7);
     const points=BUILDABLE_POINTS[r.id]||[];
     // 构建建筑槽（只渲染 r.plots 个；兼容 center 从 12 降到 8 的旧档）
