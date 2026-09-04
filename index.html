@@ -1047,13 +1047,13 @@
         <span style="font-size:30px;">🏛️</span>
       </div>
     </div>
-    <div style="text-align:center;font-size:30px;font-weight:900;letter-spacing:10px;color:#7a1f1f;text-shadow:0 1px 0 #fff6;margin-bottom:2px;font-family:'Kaiti SC','KaiTi','STKaiti','楷体',serif;">聘 书</div>
+    <div id="mysteryCertTitle" style="text-align:center;font-size:30px;font-weight:900;letter-spacing:10px;color:#7a1f1f;text-shadow:0 1px 0 #fff6;margin-bottom:2px;font-family:'Kaiti SC','KaiTi','STKaiti','楷体',serif;">聘 书</div>
     <div id="mysteryCertSub" style="text-align:center;font-size:11px;color:#a08030;letter-spacing:3px;margin-bottom:18px;">终身荣誉镇长 · HONORARY MAYOR</div>
     <div style="border-top:1px solid #c9a22788;border-bottom:1px solid #c9a22788;padding:12px 6px;background:linear-gradient(90deg,transparent,#fff8,transparent);">
       <div id="mysteryCertBody" style="font-size:14px;line-height:1.95;text-align:left;font-family:'Kaiti SC','KaiTi','STKaiti','楷体',serif;"></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;gap:10px;">
-      <div id="mysteryCertDate" style="font-size:11px;color:#7a5d1a;line-height:1.5;"></div>
+      <div id="mysteryCertDate" style="font-size:12px;color:#7a5d1a;line-height:1.5;white-space:nowrap;text-align:center;"></div>
       <div style="display:flex;gap:18px;flex-shrink:0;">
         <div id="mysterySeal1" style="width:108px;height:108px;position:relative;border-radius:50%;overflow:hidden;transform:rotate(-8deg);box-shadow:0 3px 12px rgba(120,20,20,.4);flex-shrink:0;background:#fff;">
           <img src="assets/seal.png?v=20260904" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
@@ -1065,12 +1065,11 @@
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap;">
+    <div id="mysteryCertActions" style="display:flex;justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap;">
       <button id="mysteryCertDownloadBtn" onclick="downloadMysteryCert()" style="background:linear-gradient(135deg,#d4a017,#b8860b);border:none;color:#fff;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">📥 下载</button>
-      <button id="mysteryCertShareBtn" onclick="shareMysteryCert()" style="background:linear-gradient(135deg,#54d9ff,#2f9fe0);border:none;color:#fff;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">📤 分享</button>
       <button id="mysteryCertCloseBtn" onclick="closeMystery()" style="background:transparent;border:1px solid #b8860b;color:#8a6d1f;border-radius:10px;padding:9px 18px;font-size:13px;cursor:pointer;font-weight:700;">✕ 关闭</button>
     </div>
-    <button onclick="closeMystery()" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:#8a6d1f;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+    <button class="cert-close-btn" onclick="closeMystery()" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:#8a6d1f;font-size:20px;cursor:pointer;line-height:1;">✕</button>
   </div>
 </div>
 
@@ -1081,31 +1080,7 @@
     <div id="offlineTitle" style="font-size:18px;font-weight:700;color:var(--gold);margin-bottom:12px;">离线收益</div>
     <div id="offlineDuration" style="font-size:13px;color:var(--dim);margin-bottom:8px;"></div>
     <div id="offlineAmount" style="font-size:24px;font-weight:800;color:var(--gold);margin-bottom:16px;"></div>
-    <button id="offlineClaimBtn" style="background:linear-gradient(135deg,#ffd75e,#e8a820);border:none;color:#3a2a00;border-radius:10px;padding:10px 32px;font-size:15px;font-weight:700;cursor:pointer;">领取</button>
-  </div>
-</div>
-
-<div id="shareOverlay" onclick="if(event.target.id==='shareOverlay')closeSharePreview()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;padding:16px;">
-  <div style="background:var(--panel);border-radius:16px;padding:18px;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;border:1px solid var(--line);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <span style="font-weight:800;font-size:16px;">📤 分享到小红书</span>
-      <button id="shareCloseBtn" onclick="closeSharePreview()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;">✕</button>
-    </div>
-    <div style="display:flex;justify-content:center;margin-bottom:12px;">
-      <img id="sharePreviewImg" style="max-width:240px;width:100%;border-radius:10px;border:2px solid var(--gold);" alt="share preview">
-    </div>
-    <div style="margin-bottom:10px;">
-      <label style="font-size:12px;color:var(--dim);font-weight:700;">标题（≤20字）</label>
-      <input id="shareTitleInput" type="text" maxlength="20" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:13px;box-sizing:border-box;">
-    </div>
-    <div style="margin-bottom:12px;">
-      <label style="font-size:12px;color:var(--dim);font-weight:700;">正文（≤1000字）</label>
-      <textarea id="shareContentInput" maxlength="1000" rows="4" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button id="shareSaveBtn" onclick="shareSaveToAlbum()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--panel2);color:var(--text);font-weight:700;cursor:pointer;font-size:13px;">📷 保存相册</button>
-      <button id="sharePostBtn" onclick="sharePostToXhs()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#ff2442;color:#fff;font-weight:700;cursor:pointer;font-size:13px;">📝 去发帖</button>
-    </div>
+    <button id="offlineClaimBtn" data-i18n="btn.claim" style="background:linear-gradient(135deg,#ffd75e,#e8a820);border:none;color:#3a2a00;border-radius:10px;padding:10px 32px;font-size:15px;font-weight:700;cursor:pointer;">领取</button>
   </div>
 </div>
 
@@ -1401,6 +1376,8 @@ const I18N = {
     "panel.craft":"🧪 合成台", "panel.build":"🏗️ 建造", "panel.pet":"🐾 宠物园", "panel.park":"🌳 游乐园", "park.free":"🖐️ 自由摆放",
     "badges.title":"🏆 成就殿堂", "btn.save":"📷 保存",
     "btn.craft":"✨ 合成", "btn.reset":"重置", "btn.settings":"⚙️ 设置", "btn.close":"关闭", "btn.recipe":"🔮 配方",
+    "btn.claim":"领取", "cert.title":"聘 书",
+    "share.title":"📤 分享到小红书", "share.titleLabel":"标题（≤20字）", "share.contentLabel":"正文（≤1000字）", "btn.saveAlbum":"📷 保存相册", "btn.postNote":"📝 去发帖",
     "btn.feed":"🍖 喂食", "btn.interact":"💕 互动", "btn.cure":"🏥 治疗", "btn.avatar":"📷 上传头像",
     "recipe.title":"📖 炼金配方书", "recipe.close":"关闭配方书", "recipe.basicTitle":"基础配方（1-3级）", "recipe.basicDesc":"输入密码解锁所有3级及以下配方", "recipe.advancedTitle":"高级配方（4级及以上）", "recipe.advancedDesc":"解锁基础配方后出现，输入密码解锁高级配方", "recipe.unlock":"解锁", "recipe.unlocked":"✅ 已解锁", "recipe.wrongPwd":"❌ 密码错误", "recipe.tier":"{0}级配方", "recipe.hoverHint":"去小红书找作者询问密码", "recipe.newLegendTitle":"新添加传说元素", "recipe.newLegendDesc":"输入密码解锁新传说元素配方",
     "btn.export":"📤 导出存档为文件", "btn.import":"📥 导入存档", "btn.resetSave":"🗑️ 重置存档",
@@ -1529,8 +1506,8 @@ const I18N = {
     "town.placeDone":"✅ 建筑已摆放",
     "town.nameTown":"✏️ 命名小镇",
     "town.nameRegion":"✏️ 命名区域",
-    "town.nameTownPrompt":"给小镇起个名字（最多12字）：",
-    "town.nameRegionPrompt":"给{0}起个名字（最多10字）：",
+    "town.nameTownPrompt":"给小镇起个名字（最多20字）：",
+    "town.nameRegionPrompt":"给{0}起个名字（最多20字）：",
     "town.regionLocked":"地皮买全后可命名区域",
     "town.buyLand":"买地💰{0}",
     "town.emptyLand":"空地-点击选中",
@@ -1589,6 +1566,8 @@ const I18N = {
     "panel.craft":"🧪 Craft Bench", "panel.build":"🏗️ Build", "panel.pet":"🐾 Pet Garden", "panel.park":"🌳 Playpark", "park.free":"🖐️ Free Arrange",
     "badges.title":"🏆 Achievement Hall", "btn.save":"📷 Save",
     "btn.craft":"✨ Craft", "btn.reset":"Reset", "btn.settings":"⚙️ Settings", "btn.close":"Close", "btn.recipe":"🔮 Recipe",
+    "btn.claim":"Claim", "cert.title":"CERTIFICATE",
+    "share.title":"📤 Share to XHS", "share.titleLabel":"Title (≤20 chars)", "share.contentLabel":"Content (≤1000 chars)", "btn.saveAlbum":"📷 Save to Album", "btn.postNote":"📝 Post to XHS",
     "btn.feed":"🍖 Feed", "btn.interact":"💕 Play", "btn.cure":"🏥 Heal", "btn.avatar":"📷 Avatar",
     "recipe.title":"📖 Alchemy Recipe Book", "recipe.close":"Close", "recipe.basicTitle":"Basic Recipes (Tier 1-3)", "recipe.basicDesc":"Enter password to unlock all tier 3 and below recipes", "recipe.advancedTitle":"Advanced Recipes (Tier 4+)", "recipe.advancedDesc":"Appears after unlocking basic recipes, enter password to unlock advanced", "recipe.unlock":"Unlock", "recipe.unlocked":"✅ Unlocked", "recipe.wrongPwd":"❌ Wrong password", "recipe.tier":"Tier {0} Recipes", "recipe.hoverHint":"Find the author on Xiaohongshu for the password", "recipe.newLegendTitle":"New Legendary Elements", "recipe.newLegendDesc":"Enter password to unlock new legendary element recipes",
     "btn.export":"📤 Export Save", "btn.import":"📥 Import Save", "btn.resetSave":"🗑️ Reset Save",
@@ -1691,6 +1670,13 @@ const I18N = {
     "town.mapStats.output":"💰 Output",
     "town.mapStats.land":"🗺️ Land",
     "town.noBuildings":"No buildings yet",
+    "town.freeArrange":"🖐️ Free arrange: tap a new map spot to place, or",
+    "town.freeArrangeHint":"🖐️ Free arrange: drag buildings or tap a new map spot to place",
+    "town.freeArrangeActive":"🖐️ Tap a new map spot to place the building (or Cancel)",
+    "town.placeTooClose":"⚠️ Too close to another building!",
+    "town.placeOutOfRange":"⚠️ Position out of safe range!",
+    "town.placeSameRegion":"⚠️ Building must stay in its own region!",
+    "town.freeArrangeLocked":"🔒 Unlocks free arrangement with the Real Estate Tycoon badge",
     "town.unlockMap":"🗺️ Build any 2 buildings to unlock town panorama (buy land, different regions have different costs/outputs)",
     "town.unlockMap2":"🗺️ Build any 2 buildings to unlock map mode (buy land, different regions have different costs/outputs)",
     "town.moveMode":"🏗️ Move mode: tap a 🟫 empty land to move, or",
@@ -1707,8 +1693,8 @@ const I18N = {
     "town.placeDone":"✅ Building placed",
     "town.nameTown":"✏️ Name Town",
     "town.nameRegion":"✏️ Name Region",
-    "town.nameTownPrompt":"Name your town (max 12 chars):",
-    "town.nameRegionPrompt":"Name {0} (max 10 chars):",
+    "town.nameTownPrompt":"Name your town (max 20 chars):",
+    "town.nameRegionPrompt":"Name {0} (max 20 chars):",
     "town.regionLocked":"Buy all plots to name this region",
     "town.buyLand":"Buy 💰{0}",
     "town.emptyLand":"Empty - tap to select",
@@ -3385,13 +3371,13 @@ function showMysteryCert(){
     ?`<p>Dear <b>${g.name}</b>,</p><p>Thank you for your dedication! Your town now has <b>${bldTypes}</b> building types, earning <b>${perMin}</b> coins per minute, and all animals are living happily.</p><p>You are hereby appointed as the <b>Honorary Mayor for Life</b> of <b>${townName}</b>.</p>`
     :`<p>尊敬的 <b>${g.name}</b>：</p><p>感谢你的辛勤付出！小镇目前已有 <b>${bldTypes}</b> 种建筑物类别，每分钟可赚取 <b>${perMin}</b> 金币，动物们生活得都很开心。</p><p>特此聘请你为 <b>${townName}</b> 的终身荣誉镇长。</p>`;
   $("#mysteryCertDate").textContent=LANG==="en"?`Issued: ${dateStr}`:`签发日期：${dateStr}`;
+  $("#mysteryCertTitle").textContent=t("cert.title");
   // 双钢印：众议院 / 参议院（图片印章底 + 文字叠加）
   const sealName=townName.length>6?townName.slice(0,6):townName;
   $("#mysterySealText1").innerHTML=`<div style="font-size:${sealName.length>4?9:11}px;">${sealName}</div><div style="font-size:9px;margin-top:1px;">${LANG==="en"?"House":"众议院"}</div>`;
   $("#mysterySealText2").innerHTML=`<div style="font-size:${sealName.length>4?9:11}px;">${sealName}</div><div style="font-size:9px;margin-top:1px;">${LANG==="en"?"Senate":"参议院"}</div>`;
   // 底部按钮双语
   $("#mysteryCertDownloadBtn").textContent=LANG==="en"?"📥 Download":"📥 下载";
-  $("#mysteryCertShareBtn").textContent=LANG==="en"?"📤 Share":"📤 分享";
   $("#mysteryCertCloseBtn").textContent=LANG==="en"?"✕ Close":"✕ 关闭";
   // 粒子特效：最隆重的成就
   playMysteryParticles();
@@ -3433,19 +3419,23 @@ function playMysteryParticles(){
 function closeMystery(){ const ov=$("#mysteryOverlay"); if(ov) ov.style.display="none"; if(_mysteryParticlesRAF){ cancelAnimationFrame(_mysteryParticlesRAF); _mysteryParticlesRAF=null; } }
 function mysteryCertDataUrl(cb){
   const el=$("#mysteryCertBox"); if(!el||typeof html2canvas==="undefined"){ toast(LANG==="en"?"❌ Image not available":"❌ 图片功能不可用"); return; }
+  const actions=$("#mysteryCertActions");
+  const closeBtns=el.querySelectorAll(".cert-close-btn");
+  if(actions) actions.style.display="none";
+  closeBtns.forEach(b=>b.style.display="none");
   toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
-  html2canvas(el,{useCORS:true,backgroundColor:"#f6e7c1",scale:2}).then(c=>{ cb(c.toDataURL("image/png")); }).catch(e=>{ console.error(e); toast(LANG==="en"?"❌ Failed":"❌ 生成失败"); });
+  html2canvas(el,{useCORS:true,backgroundColor:"#f6e7c1",scale:2}).then(c=>{
+    if(actions) actions.style.display="";
+    closeBtns.forEach(b=>b.style.display="");
+    cb(c.toDataURL("image/png"));
+  }).catch(e=>{
+    if(actions) actions.style.display="";
+    closeBtns.forEach(b=>b.style.display="");
+    console.error(e); toast(LANG==="en"?"❌ Failed":"❌ 生成失败");
+  });
 }
 function downloadMysteryCert(){
   mysteryCertDataUrl(d=>{ const a=document.createElement("a"); a.download="honorary-mayor.png"; a.href=d; a.click(); toast(LANG==="en"?"📥 Certificate saved!":"📥 聘书已保存！"); });
-}
-function shareMysteryCert(){
-  const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
-  mysteryCertDataUrl(d=>{
-    openSharePreview(d,
-      LANG==="en"?`${townName} · Honorary Mayor`:`${townName} · 终身荣誉镇长`,
-      LANG==="en"?`I've been appointed Honorary Mayor for Life of ${townName}! 🎉`:`我成为了 ${townName} 的终身荣誉镇长！🎉`);
-  });
 }
 let _currentBadgeId=null;
 function openBadgeDetail(id){
@@ -3640,142 +3630,6 @@ function saveTownScreenshot(){
       });
     },100);
   });
-}
-
-/* ============ 分享功能 ============ */
-let _shareDataUrl=null;
-function shareTownMap(){
-  const grid=document.querySelector(".mapGrid");
-  if(!grid||typeof html2canvas==="undefined"){ toast(LANG==="en"?"📷 Share not available":"📷 分享功能不可用"); return; }
-  toast(LANG==="en"?"📷 Generating share card...":"📷 正在生成分享图...");
-  html2canvas(grid,{useCORS:true,backgroundColor:null,scale:2}).then(canvas=>{
-    const card=buildShareCard(canvas);
-    _shareDataUrl=card.toDataURL("image/png");
-    const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
-    const totalBld=Object.values(S.buildings||{}).reduce((a,b)=>a+b,0);
-    const out=Math.round(totalIncome());
-    const bought=countBoughtPlots();
-    const pets=S.petList?S.petList.length:0;
-    const found=foundElementKinds(), total=totalElementKinds();
-    const tp=totalPlots();
-    const title=LANG==="en"?`${townName} - Element Craft Town!`:`${townName}太治愈了！`;
-    const content=LANG==="en"
-      ? `I built ${townName} in Element Craft Town!\n🏘️ ${totalBld} buildings · 💰 +${out}/10s\n🗺️ ${bought}/${tp} plots · 🐾 ${pets} pets\n🔬 ${found}/${total} elements discovered\nCome play with me!`
-      : `我在元素合成小镇建了「${townName}」！\n🏘️ ${totalBld}栋建筑 · 💰 +${out}/10s产出\n🗺️ ${bought}/${tp}块地皮 · 🐾 ${pets}只宠物\n🔬 发现${found}/${total}种元素\n快来和我一起玩吧～`;
-    openSharePreview(_shareDataUrl, title, content);
-  }).catch(err=>{ toast(LANG==="en"?"❌ Share failed":"❌ 分享失败"); console.error(err); });
-}
-
-function buildShareCard(sourceCanvas){
-  const W=900, H=1200; // 3:4
-  const c=document.createElement("canvas"); c.width=W; c.height=H;
-  const ctx=c.getContext("2d");
-  // 背景渐变
-  const grad=ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,"#ffd6e0"); grad.addColorStop(0.5,"#fff0e6"); grad.addColorStop(1,"#e0f0ff");
-  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-  // 装饰圆点
-  ctx.fillStyle="rgba(255,255,255,.3)";
-  for(let i=0;i<20;i++){ ctx.beginPath(); ctx.arc(Math.random()*W,Math.random()*H,8+Math.random()*20,0,Math.PI*2); ctx.fill(); }
-  // 顶部标题栏
-  ctx.fillStyle="rgba(255,255,255,.85)";
-  roundRect(ctx,40,40,W-80,100,20); ctx.fill();
-  ctx.fillStyle="#1a1530"; ctx.font="bold 36px sans-serif"; ctx.textAlign="center";
-  const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
-  ctx.fillText("🏷️ "+townName, W/2, 100);
-  // 中间主体（地图截图）
-  const imgY=170, imgH=680, imgMaxW=W-100;
-  const ratio=sourceCanvas.width/sourceCanvas.height;
-  let imgW=imgMaxW, drawH=imgW/ratio;
-  if(drawH>imgH){ drawH=imgH; imgW=drawH*ratio; }
-  const imgX=(W-imgW)/2, drawY=imgY+(imgH-drawH)/2;
-  // 白色卡片底
-  ctx.fillStyle="rgba(255,255,255,.9)";
-  roundRect(ctx,imgX-15,drawY-15,imgW+30,drawH+30,16); ctx.fill();
-  ctx.drawImage(sourceCanvas,imgX,drawY,imgW,drawH);
-  // 数据栏
-  const dataY=880;
-  ctx.fillStyle="rgba(255,255,255,.85)";
-  roundRect(ctx,40,dataY,W-80,100,20); ctx.fill();
-  const totalBld=Object.values(S.buildings||{}).reduce((a,b)=>a+b,0);
-  const out=Math.round(totalIncome());
-  const bought=countBoughtPlots();
-  const pets=S.petList?S.petList.length:0;
-  ctx.fillStyle="#1a1530"; ctx.font="bold 26px sans-serif"; ctx.textAlign="center";
-  const dataText=LANG==="en"
-    ? `🏘️ ${totalBld}  💰 +${out}/10s  🗺️ ${bought}/${totalPlots()}  🐾 ${pets}`
-    : `🏘️ ${totalBld}栋  💰 +${out}/10s  🗺️ ${bought}/${totalPlots()}  🐾 ${pets}只`;
-  ctx.fillText(dataText, W/2, dataY+62);
-  // 文案栏
-  const capY=1010;
-  ctx.fillStyle="rgba(255,255,255,.7)";
-  roundRect(ctx,40,capY,W-80,140,20); ctx.fill();
-  ctx.fillStyle="#555"; ctx.font="22px sans-serif"; ctx.textAlign="center";
-  const capText=LANG==="en"?"Come build your dream town! ✨":"来元素合成小镇，建你的梦想小镇吧～ ✨";
-  ctx.fillText(capText, W/2, capY+50);
-  ctx.fillStyle="#ff6b9d"; ctx.font="bold 20px sans-serif";
-  ctx.fillText(LANG==="en"?"#ElementCraft #TownGame":"#元素合成小镇 #治愈系游戏", W/2, capY+95);
-  return c;
-}
-
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
-  ctx.closePath();
-}
-
-function openSharePreview(dataUrl,title,content){
-  const ov=$("#shareOverlay"); if(!ov) return;
-  $("#sharePreviewImg").src=dataUrl;
-  $("#shareTitleInput").value=title;
-  $("#shareContentInput").value=content;
-  ov.style.display="flex";
-}
-function closeSharePreview(){ const ov=$("#shareOverlay"); if(ov) ov.style.display="none"; }
-
-function shareSaveToAlbum(){
-  if(!_shareDataUrl) return;
-  // 小红书环境用API，普通浏览器用下载
-  if(window.xhs&&window.xhs.miniTool&&window.xhs.miniTool.saveImageToPhotosAlbum){
-    window.xhs.miniTool.saveImageToPhotosAlbum({filePath:_shareDataUrl}).then(()=>{
-      toast(LANG==="en"?"📥 Saved to album!":"📥 已保存到相册！");
-    }).catch(()=>{ toast(LANG==="en"?"❌ Save failed":"❌ 保存失败"); });
-  } else {
-    const link=document.createElement("a");
-    link.download="share-town.png"; link.href=_shareDataUrl; link.click();
-    toast(LANG==="en"?"📥 Image saved!":"📥 图片已保存！");
-  }
-}
-
-function sharePostToXhs(){
-  const title=$("#shareTitleInput").value.trim();
-  const content=$("#shareContentInput").value.trim();
-  if(!_shareDataUrl){ toast(LANG==="en"?"❌ No image":"❌ 没有图片"); return; }
-  if(window.xhs&&window.xhs.miniTool&&window.xhs.miniTool.postNote){
-    // 先用writeTempFile转filePath（避免超长base64）
-    const base64=_shareDataUrl.split(",")[1];
-    const doPost=(filePath)=>{
-      window.xhs.miniTool.postNote({
-        title: title.slice(0,20),
-        content: content.slice(0,1000),
-        tags: LANG==="en"?["ElementCraft","TownGame"]:["元素合成小镇","治愈系游戏"],
-        mediaInfo:{ image_resources:[{url:filePath}] }
-      }).then(()=>{
-        toast(LANG==="en"?"📝 Opening note editor...":"📝 正在打开发帖页...");
-        closeSharePreview();
-      }).catch(err=>{ toast(LANG==="en"?"❌ Post failed":"❌ 发帖失败"); console.error(err); });
-    };
-    if(window.xhs.miniTool.writeTempFile){
-      window.xhs.miniTool.writeTempFile({data:base64}).then(res=>{
-        doPost(res.filePath||res.tempFilePath||_shareDataUrl);
-      }).catch(()=>{ doPost(_shareDataUrl); });
-    } else { doPost(_shareDataUrl); }
-  } else {
-    toast(LANG==="en"?"📝 Only available in Xiaohongshu":"📝 仅在小红书环境中可用");
-  }
 }
 
 /* ============ 建筑详情弹窗 ============ */
@@ -3986,9 +3840,11 @@ function saveParkScreenshot(){
   const el=$("#parkContainer");
   if(!el||typeof html2canvas==="undefined"){ toast(LANG==="en"?"📷 Image save not available":"📷 图片保存功能不可用"); return; }
   const title=document.createElement("div");
-  title.style.cssText="position:absolute;top:12px;left:0;right:0;text-align:center;font-size:20px;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);z-index:30;pointer-events:none;letter-spacing:1px;";
+  title.style.cssText="position:absolute;top:12px;left:0;right:0;text-align:center;font-size:20px;font-weight:700;z-index:30;pointer-events:none;letter-spacing:1px;";
   const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
-  title.textContent=`${townName} · ${LANG==="en"?"Animal Park":"动物乐园"}`;
+  const rainbow=["#ff6b6b","#ffb84d","#ffe066","#4cd97b","#54d9ff","#a78bfa","#ff6b9d"];
+  const titleText=`${townName} · ${LANG==="en"?"Playpark":"游乐园"}`;
+  title.innerHTML=[...titleText].map((ch,i)=>`<span style="color:${rainbow[i%rainbow.length]};text-shadow:0 2px 4px rgba(0,0,0,.6);">${ch}</span>`).join("");
   el.appendChild(title);
   toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
   requestAnimationFrame(()=>setTimeout(()=>{
@@ -5274,13 +5130,13 @@ function renderMap(){
   const townSign=outer.querySelector("#townSign");
   if(townSign) townSign.addEventListener("click",()=>{
     const nm=prompt(t("town.nameTownPrompt"), S.townName||"");
-    if(nm!==null&&nm.trim()){ S.townName=nm.trim().slice(0,12); toast(LANG==="en"?"✅ Town renamed!":"✅ 小镇已命名！"); renderMap(); save(); }
+    if(nm!==null&&nm.trim()){ S.townName=nm.trim().slice(0,20); toast(LANG==="en"?"✅ Town renamed!":"✅ 小镇已命名！"); renderMap(); save(); }
   });
   // 命名按钮事件绑定
   const townNameBtn=outer.querySelector("#townNameBtn");
   if(townNameBtn) townNameBtn.addEventListener("click",()=>{
     const nm=prompt(t("town.nameTownPrompt"), S.townName||"");
-    if(nm!==null&&nm.trim()){ S.townName=nm.trim().slice(0,12); toast(LANG==="en"?"✅ Town renamed!":"✅ 小镇已命名！"); renderMap(); save(); }
+    if(nm!==null&&nm.trim()){ S.townName=nm.trim().slice(0,20); toast(LANG==="en"?"✅ Town renamed!":"✅ 小镇已命名！"); renderMap(); save(); }
   });
   const townSaveBtn=outer.querySelector("#townSaveBtn");
   if(townSaveBtn) townSaveBtn.addEventListener("click",()=>saveTownScreenshot());
@@ -5295,7 +5151,7 @@ function renderMap(){
       const plots=S.plots[rid]||[];
       if(!plots.every(p=>p!==false)){ toast(t("town.regionLocked")); return; }
       const nm=prompt(t("town.nameRegionPrompt",regName(r)), (S.regionNames&&S.regionNames[rid])||"");
-      if(nm!==null&&nm.trim()){ if(!S.regionNames)S.regionNames={}; S.regionNames[rid]=nm.trim().slice(0,10); toast(LANG==="en"?"✅ Region renamed!":"✅ 区域已命名！"); renderMap(); save(); }
+      if(nm!==null&&nm.trim()){ if(!S.regionNames)S.regionNames={}; S.regionNames[rid]=nm.trim().slice(0,20); toast(LANG==="en"?"✅ Region renamed!":"✅ 区域已命名！"); renderMap(); save(); }
     });
   });
 }
@@ -5635,7 +5491,7 @@ function doReset(){
     localStorage.removeItem(SAVE_KEY);
     S=fresh(); clearSlots();
     // 关闭所有overlay（同时用class和style两种方式，确保都能关闭）
-    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
+    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
@@ -5912,7 +5768,7 @@ function showDraw(){
   ov.style.opacity="1";
   // 强制关闭所有其他overlay，确保抽奖页面显示时没有其他弹窗覆盖
   try{
-    ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","shareOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
+    ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
