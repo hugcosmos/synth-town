@@ -147,8 +147,8 @@
   .buildLockNote.ok{color:#4cd97b;border:1px solid #4cd97b55;background:#4cd97b14;}
   .buildLockNote.need{color:#ff6b6b;border:1px solid #ff6b6b55;background:#ff6b6b14;}
   .shopItem .ico{font-size:26px;}
-  .shopItem .nm{font-weight:600; font-size:14px;}
-  .shopItem .built{margin-left:auto; font-size:11px; color:var(--dim); text-align:right; line-height:1.3;}
+  .shopItem .nm{font-weight:600; font-size:14px; white-space:nowrap; flex-shrink:0;}
+  .shopItem .built{margin-left:auto; font-size:11px; color:var(--dim); text-align:right; line-height:1.3; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .cost{font-size:12px; color:var(--dim); margin-bottom:8px; line-height:1.6;}
   .cost span{margin-right:8px; white-space:nowrap;}
   .cost .lack{color:#ff7a7a;}
@@ -5665,12 +5665,120 @@ function npcCraftSmart(){
     if(LANG==="en") return `You have ${inputStr}, try crafting ${ELEMENTS[out].i}${elName(out)}!`;
     return `你有${inputStr}，试试合成${ELEMENTS[out].i}${elName(out)}！`;
   }
+  // 所有非传奇元素都已合成 → 提示去配方书看传奇配方
+  const nonLegendIds=Object.values(ELEMENTS).filter(e=>!NEW_LEGEND_OUTS.has(e.id)&&e.id!=="coin"&&e.id!=="chest").map(e=>e.id);
+  const allDone=nonLegendIds.every(id=>count(id)>0||(id in S.unlocked));
+  if(allDone){
+    if(LANG==="en") return "All basic/advanced/life elements discovered! Open the Recipe Book, enter the password to unlock legendary element recipes!";
+    return "所有基础/进阶/生命元素都已发现！打开配方书输入密码，解锁传奇元素配方吧~";
+  }
   return null;
+}
+function npcTownSmart(){
+  const bCount=Object.values(S.buildings||{}).reduce((a,b)=>a+b,0);
+  const mapOk=bCount>=2;
+  if(!mapOk){
+    return LANG==="en"?"Build any 2 buildings to unlock the town panorama map—Hut and Shop are the cheapest starters!":"建成任意2个建筑即可解锁小镇全景图，小屋和商店是最便宜的起步选择！";
+  }
+  if(!hasB("factory")){
+    return LANG==="en"?"🏭Factory District has ×3.5 output (highest in town)! Unlock with Hut+Shop, costs 100 coins+5 chests+10 bricks.":"🏭工厂区产出×3.5全小镇最高！需小屋+商店解锁，建造成本100金币+5宝箱+10砖。";
+  }
+  if(!hasB("hall")){
+    return LANG==="en"?"🏛️City Hall gives +10% global output! Build all building types (including Factory) to unlock it.":"🏛️市政厅全局+10%产出！集齐所有建筑类型（含工厂）即可建造。";
+  }
+  // 检查是否有区域地皮买全（可自由摆放）
+  const fullRegions=REGIONS.filter(r=>{const p=S.plots[r.id]||[]; return p.length>=r.plots&&p.slice(0,r.plots).every(x=>x!==false);});
+  if(fullRegions.length){
+    const names=fullRegions.map(r=>r.i+(LANG==="en"?r.en:r.n)).join(LANG==="en"?"/":"、");
+    return LANG==="en"?`${names} — all plots bought, drag buildings to freely arrange!`:`${names}等地皮已买全，可拖拽建筑自由摆放！`;
+  }
+  return null;
+}
+function npcShopSmart(){
+  // 检查分栏解锁状态
+  const hasAdvanced=Object.values(ELEMENTS).some(e=>e.lv>=4&&e.lv<=7&&(e.id in S.unlocked||count(e.id)>0));
+  const hasLife=Object.values(ELEMENTS).some(e=>e.id==="life"&&(e.id in S.unlocked||count(e.id)>0))||Object.keys(S.unlocked||{}).some(k=>k.startsWith("life"));
+  if(!hasAdvanced){
+    return LANG==="en"?"Craft any advanced element (Lv.4~7) to unlock the Advanced shop tab—try Mud+Fire=Brick, then Brick+Brick!":"合成任一进阶元素(Lv.4~7)即可解锁进阶商店分栏——试试泥+火=砖，砖+砖继续合成！";
+  }
+  if(!hasLife){
+    return LANG==="en"?"Craft any 🧬Life (Energy + any material) to unlock the Life shop tab—higher HP = rarer pets!":"合成任一🧬生命（能量+任意材料）即可解锁生命商店分栏——HP越高出稀有宠物概率越大！";
+  }
+  if(S.badges&&S.badges.elementMaster){
+    return LANG==="en"?"🏆Element Master unlocked! The Building Bundle tab is now available—buy all materials for any building in one click!":"🏆元素之王已解锁！建筑套餐栏开放，一键购买任意建筑所需全部材料！";
+  }
+  // 检查是否有3级以上元素可置换
+  const sellable=Object.values(ELEMENTS).filter(e=>e.lv>=3&&count(e.id)>0&&!NEW_LEGEND_OUTS.has(e.id)).length;
+  if(sellable>0){
+    return LANG==="en"?`You have ${sellable} types of Lv.3+ elements to trade in for coins (80% buyback)! Go to the ♻️Trade tab!`:`你有${sellable}种3级以上元素可置换金币（8折回收）！去♻️置换分栏看看吧！`;
+  }
+  return null;
+}
+function npcParkSmart(){
+  const pets=S.petList||[];
+  const hasPanda=pets.some(p=>p.id==="panda");
+  const nonPanda=pets.filter(p=>p.id!=="panda");
+  if(!hasPanda){
+    if(nonPanda.length>=9){
+      const allMax=nonPanda.every(p=>p.hp>=p.maxHp&&p.sat>=100&&p.intimacy>=100);
+      if(allMax){
+        return LANG==="en"?"🎉All 9 non-panda pets are maxed! Claim your free 🐼Panda reward in the Pets tab!":"🎉9只非熊猫宠物全部满配！去宠物页领取免费🐼熊猫奖励！";
+      }
+      return LANG==="en"?"9 non-panda pets! Max all HP/satiety/intimacy to get a free 🐼Panda!":"已有9只非熊猫宠物！把HP/饱食/亲密度全养满，系统免费送🐼熊猫！";
+    }
+    return LANG==="en"?`You have ${pets.length}/10 pets. Breed 9 non-panda pets and max them all for a free 🐼Panda!`:`你有${pets.length}/10只宠物。孕育9只非熊猫并全部满配，系统免费送🐼熊猫！`;
+  }
+  if(pets.length<10){
+    return LANG==="en"?`🐼Panda is here! You have ${pets.length}/10 pets—room for more! Drag nests to rearrange.`:`🐼熊猫来啦！你有${pets.length}/10只宠物，还能再养几只！拖拽窝位自由摆放。`;
+  }
+  return LANG==="en"?"Park is full with 10 pets including 🐼Panda! Drag nests to rearrange, or trade extra pets for coins in the shop.":"乐园已满10只宠物含🐼熊猫！拖拽窝位自由摆放，多余宠物可在商店置换金币。";
+}
+function npcBadgesSmart(){
+  const b=S.badges||{};
+  const total=BADGES.length;
+  const unlocked=Object.keys(b).length;
+  // 找未解锁的徽章，按接近程度提示
+  if(!b.elementMaster){
+    const discovered=Object.keys(S.unlocked||{}).length;
+    return LANG==="en"?`🏆Element Master: discover all elements! You have ${discovered}—keep crafting! (No legendary elements needed)`:`🏆元素之王：发现全部元素！你已有${discovered}种，继续合成吧！（不需要传奇元素）`;
+  }
+  if(!b.animalKing){
+    const types=new Set((S.petList||[]).map(p=>p.id)).size;
+    return LANG==="en"?`🏆Animal King: collect all 6 pet species! You have ${types}/6—Panda needs 9 maxed non-panda pets.`:`🏆动物大王：集齐6种动物！你已有${types}/6种，熊猫需要9只非熊猫满配奖励。`;
+  }
+  if(!b.realEstateTycoon){
+    const built=REGIONS.reduce((sum,r)=>sum+(S.plots[r.id]||[]).filter(x=>x&&x!==null&&x!==false).length,0);
+    return LANG==="en"?`🏆Real Estate Tycoon: build on all ${totalPlots()} plots! You have ${built}—keep buying land and building!`:`🏆地产大亨：${totalPlots()}块地皮全部建成！你已有${built}块，继续买地建造吧！`;
+  }
+  if(!b.tenThousandaire){
+    return LANG==="en"?"🏆Ten-Thousandaire: net worth reaches 10,000! Build more Shops for passive income, craft Metal+Fire for coins.":"🏆万元户：资产达到10000！多建商铺被动收入，金属+火合成金币。";
+  }
+  if(!b.millionaire){
+    return LANG==="en"?"🏆Millionaire: net worth reaches 1,000,000! Unlocks unlimited batch buy/craft—only coins matter!":"🏆百万富翁：资产达到1000000！解锁无上限批量购买/合成，只要金币够！";
+  }
+  if(S.mysteryGift){
+    return LANG==="en"?"🎁Mystery Gift claimed! You are the Honorary Mayor for Life—view your certificate here!":"🎁神秘礼物已签收！你是终身荣誉镇长，在这里查看聘书！";
+  }
+  return LANG==="en"?`All ${unlocked}/${total} badges unlocked! 🎁Mystery Gift is ready—claim your Honorary Mayor certificate!`:`全部${unlocked}/${total}枚徽章已解锁！🎁神秘礼物已就绪，签收终身荣誉镇长聘书！`;
 }
 function npcPetBonusText(){
   if(!S.petList.length){
     if(LANG==="en") return "No pets yet—build 🏠Hut first then breed one with 🧬Life! Max 10 pets, all 9 non-panda at max stats rewards a 🐼Panda!";
     return "还没有宠物，先建🏠小屋再用🧬生命孕育一只吧！最多10只，9只非熊猫全满配系统奖励🐼熊猫！";
+  }
+  // 生病/饥饿优先提醒
+  const sickPets=S.petList.filter(p=>p.sick);
+  if(sickPets.length){
+    const names=sickPets.map(p=>p.name).join(LANG==="en"?"/":"、");
+    if(hasB("hospital")){
+      return LANG==="en"?`⚠️ ${names} is sick! Tap the pet and use 🏥Hospital to heal (or use matching-HP Elixir).`:`⚠️ ${names}生病了！点击宠物用🏥宠物医院治疗（或用对应HP的万能药）。`;
+    }
+    return LANG==="en"?`⚠️ ${names} is sick! Build 🏥Pet Hospital, or buy a matching-HP 💊Elixir in the shop to heal!`:`⚠️ ${names}生病了！建🏥宠物医院，或在商店买对应HP的💊万能药治疗！`;
+  }
+  const hungryPets=S.petList.filter(p=>(p.sat||0)<=50);
+  if(hungryPets.length){
+    const names=hungryPets.map(p=>p.name).join(LANG==="en"?"/":"、");
+    return LANG==="en"?`⚠️ ${names} is hungry (satiety≤50)! Feed them 🍖—pets don't work when hungry!`:`⚠️ ${names}饿了（饱食度≤50）！快喂🍖食物——饿了的宠物不生效！`;
   }
   const byType={};
   S.petList.forEach(p=>{ byType[p.id]=(byType[p.id]||0)+1; });
@@ -5701,8 +5809,24 @@ function npcHint(){
       if(pool.length>1){ while(pool[idx]===_lastNpcHint){ idx=Math.floor(Math.random()*pool.length); } }
       line=pool[idx];
     }
+  }else if(tab==="town"){
+    line=npcTownSmart();
+    if(!line){
+      const pool=NPC_LINES.town[LANG];
+      let idx=Math.floor(Math.random()*pool.length);
+      if(pool.length>1){ while(pool[idx]===_lastNpcHint){ idx=Math.floor(Math.random()*pool.length); } }
+      line=pool[idx];
+    }
+  }else if(tab==="shop"){
+    line=npcShopSmart();
+    if(!line){
+      const pool=NPC_LINES.shop[LANG];
+      let idx=Math.floor(Math.random()*pool.length);
+      if(pool.length>1){ while(pool[idx]===_lastNpcHint){ idx=Math.floor(Math.random()*pool.length); } }
+      line=pool[idx];
+    }
   }else if(tab==="pet"){
-    if(Math.random()<0.5) line=npcPetBonusText();
+    line=npcPetBonusText();
     if(!line){
       const pool=NPC_LINES.pet[LANG];
       let idx=Math.floor(Math.random()*pool.length);
@@ -5710,9 +5834,11 @@ function npcHint(){
       line=pool[idx];
     }
   }else if(tab==="park"){
-    line=npcParkLine();
+    line=npcParkSmart();
+    if(!line) line=npcParkLine();
   }else if(tab==="badges"){
-    line=npcBadgesLine();
+    line=npcBadgesSmart();
+    if(!line) line=npcBadgesLine();
   }else{
     const pool=NPC_LINES[tab]?NPC_LINES[tab][LANG]:NPC_LINES.craft[LANG];
     let idx=Math.floor(Math.random()*pool.length);
