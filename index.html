@@ -1939,6 +1939,8 @@ function ensureLifePoolSync(){
   while(S.lifePool.length<n) S.lifePool.push(tierOf("life"));
   if(S.lifePool.length>n) S.lifePool.length=n;
 }
+// 玩家当前拥有的最高生命 HP（无则 0）
+function bestLifeHp(){ return S.lifePool&&S.lifePool.length ? Math.max(...S.lifePool) : 0; }
 // 保证 elixirPool 与 S.unlocked.elixir 一致（万能药按HP值存储，旧档兜底按默认HP补齐）
 function ensureElixirPoolSync(){
   if(!S.elixirPool) S.elixirPool=[];
