@@ -420,8 +420,10 @@
   .shopBundleCard .bundleItems{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px;}
   .shopBundleCard .bundlePrice{font-size:13px;color:var(--gold);font-weight:700;}
   .shopBundleCard .bundleFoot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);}
-  .shopBundleCard .bundlePlus{font-size:12px;color:var(--text);background:var(--accent);border-radius:8px;padding:2px 8px;font-weight:700;}
-  .shopBundleCard.disabled .bundlePlus{background:transparent;color:var(--dim);}
+  .shopBundleCard .bundleStepper{display:inline-flex;gap:6px;align-items:center;}
+  .shopBundleCard .bundleStep{width:24px;height:24px;background:var(--gold);color:#1a1530;border:none;border-radius:50%;font-size:15px;font-weight:700;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+  .shopBundleCard .bundleStep:disabled{background:var(--panel2);color:var(--dim);cursor:not-allowed;}
+  .shopBundleCard.disabled .bundleStep{filter:grayscale(85%);opacity:.5;}
   .shopBundleCard.disabled{filter:grayscale(85%);opacity:.5;cursor:not-allowed;}
   .shopBundleCard.disabled:hover{border-color:var(--line);}
   .shopBundleLock{display:flex;flex-direction:column;align-items:center;gap:10px;padding:40px 10px;color:var(--dim);text-align:center;}
@@ -2766,6 +2768,20 @@ function addBundle(b){
   }
   renderElShop();
 }
+function decBundle(bid){
+  const b=BUNDLES.find(x=>x.id===bid); if(!b) return;
+  if(!S.shopCart) S.shopCart={};
+  if(!S.bundleQty) S.bundleQty={};
+  const cur=S.bundleQty[bid]||0;
+  if(cur<=0){ toast(LANG==="en"?"No bundle in cart":"购物车里没有该套餐"); return; }
+  S.bundleQty[bid]=cur-1;
+  Object.entries(b.items).forEach(([id,n])=>{
+    S.shopCart[id]=Math.max(0,(S.shopCart[id]||0)-n);
+    if(S.shopCart[id]===0) delete S.shopCart[id];
+  });
+  toast(LANG==="en"?`🛒 Removed 1 ${LANG==="en"?b.en:b.n} bundle`:`🛒 已移除1份${LANG==="en"?b.en:b.n}套餐`);
+  renderElShop(); save();
+}
 if(!S.shopCart) S.shopCart={};
 function shopItemName(id){
   if(id.startsWith("elixir_HP")) return `${elName("elixir")} HP${id.split("_HP")[1]}`;
@@ -3004,7 +3020,10 @@ function renderElShop(){
         gridHtml+=`<div class="shopBundleCard${bldOk?"":" disabled"}" onclick="addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${hint}">
           <div class="bundleHead">${bld.i} ${bname}</div>
           <div class="bundleItems">${itemsHtml}</div>
-          <div class="bundleFoot"><span class="bundlePrice">💰${price}</span><span class="bundlePlus">＋ <b>${bqty}/${bmax}</b></span></div>
+          <div class="bundleFoot"><span class="bundlePrice">💰${price}</span><span class="bundleStepper">
+            <button class="bundleStep" onclick="event.stopPropagation();decBundle('${b.id}')" ${bqty>0?"":"disabled"} title="${LANG==="en"?"Remove 1":"移除1份"}">−</button>
+            <button class="bundleStep" onclick="event.stopPropagation();addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${LANG==="en"?"Add 1":"添加1份"}">＋</button>
+          </span></div>
         </div>`;
       });
       gridHtml+=`</div>`;
@@ -3230,7 +3249,7 @@ function renderBadges(){
     html+=`<div class="badgeCard ${unlocked?"":"locked"}" ${clickable}>
       <img class="badgeIcon" src="${b.img}" alt="${b.name}" onerror="this.style.background='var(--panel)';this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>'">
       <div class="badgeInfo">
-        <div class="badgeName">${unlocked?"✅ ":"🔒 "}${LANG==="en"?b.en:b.name}${unlocked?` <span style="font-size:11px;color:var(--gold)">🔍</span>`:""}</div>
+        <div class="badgeName">${unlocked?"✅ ":"🔒 "}${LANG==="en"?b.en:b.name}</div>
         <div class="badgeDesc">${LANG==="en"?b.descEn:b.descZh}</div>
         <div class="badgeProgress"><div class="badgeProgressBar" style="width:${pct}%"></div></div>
         <div style="font-size:11px;color:var(--dim);margin-top:3px;">${cur}/${total} (${pct}%)</div>
@@ -3533,7 +3552,7 @@ function renderBuildingDetail(){
   const hallBonusVal=bid==="hall"?10:0;
   box.innerHTML=`
     <div class="bldDetailHeader">
-      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260905`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
+      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260906`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
       <div>
         <div class="bldDetailName">${customName}</div>
         <div class="bldDetailType">${bldName(b)} ${b.passive?`· ${LANG==="en"?b.passiveEn:b.passive}`:`· 💰+${Math.round(income)}/${INCOME_INTERVAL}s`}</div>
@@ -3765,23 +3784,23 @@ function buildingUnlocked(b){
 function buildingLockHint(b){
   const has=id=>(S.buildings[id]||0)>0;
   const _lockIconStyle="width:16px;height:16px;vertical-align:middle;object-fit:contain;background:transparent;";
-  const hutImg=`<img src="assets/buildings/hut.png?v=20260905" style="${_lockIconStyle}">`;
-  const shopImg=`<img src="assets/buildings/shop.png?v=20260905" style="${_lockIconStyle}">`;
-  const gardenImg=`<img src="assets/buildings/garden.png?v=20260905" style="${_lockIconStyle}">`;
-  const manorImg=`<img src="assets/buildings/manor.png?v=20260905" style="${_lockIconStyle}">`;
-  const stationImg=`<img src="assets/buildings/station.png?v=20260905" style="${_lockIconStyle}">`;
-  const hospitalImg=`<img src="assets/buildings/hospital.png?v=20260905" style="${_lockIconStyle}">`;
-  const factoryImg=`<img src="assets/buildings/factory.png?v=20260905" style="${_lockIconStyle}">`;
-  if(b.id==="garden"||b.id==="manor") return LANG==="en"?`Need ${hutImg}Hut + ${shopImg}Shop`:`需要${hutImg}小屋+${shopImg}商店`;
-  if(b.id==="station"||b.id==="hospital") return LANG==="en"?`Need ${hutImg}Hut or ${shopImg}Shop`:`需要${hutImg}小屋或${shopImg}商店`;
-  if(b.id==="factory") return LANG==="en"?`Need ${hutImg}Hut + ${shopImg}Shop`:`需要${hutImg}小屋+${shopImg}商店`;
+  const hutImg=`<img src="assets/buildings/hut.png?v=20260906" style="${_lockIconStyle}">`;
+  const shopImg=`<img src="assets/buildings/shop.png?v=20260906" style="${_lockIconStyle}">`;
+  const gardenImg=`<img src="assets/buildings/garden.png?v=20260906" style="${_lockIconStyle}">`;
+  const manorImg=`<img src="assets/buildings/manor.png?v=20260906" style="${_lockIconStyle}">`;
+  const stationImg=`<img src="assets/buildings/station.png?v=20260906" style="${_lockIconStyle}">`;
+  const hospitalImg=`<img src="assets/buildings/hospital.png?v=20260906" style="${_lockIconStyle}">`;
+  const factoryImg=`<img src="assets/buildings/factory.png?v=20260906" style="${_lockIconStyle}">`;
+  if(b.id==="garden"||b.id==="manor") return LANG==="en"?`${hutImg} + ${shopImg}`:`${hutImg} + ${shopImg}`;
+  if(b.id==="station"||b.id==="hospital") return LANG==="en"?`${hutImg} ${shopImg}`:`${hutImg} ${shopImg}`;
+  if(b.id==="factory") return LANG==="en"?`${hutImg} + ${shopImg}`:`${hutImg} + ${shopImg}`;
   if(b.id==="hall"){
     const need=[];
     if(!has("hut")) need.push(hutImg); if(!has("shop")) need.push(shopImg);
     if(!has("garden")) need.push(gardenImg); if(!has("manor")) need.push(manorImg);
     if(!has("station")) need.push(stationImg); if(!has("hospital")) need.push(hospitalImg);
     if(!has("factory")) need.push(factoryImg);
-    return (LANG==="en"?"Need all: ":"需要全部建成：")+need.join(" ");
+    return need.join(" ");
   }
   return "";
 }
@@ -4768,7 +4787,7 @@ function renderMap(){
   });
   const bc={};
   Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
-  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260905`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
+  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260906`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
   let hint="";
   if(freeMove) hint=`<div style="background:#54d9ff22;border:1px solid #54d9ff;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#9fe8ff;">${t("town.freeMoveHint")} <button onclick="cancelFreeMove()" style="background:none;border:none;color:#54d9ff;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
@@ -4834,7 +4853,7 @@ function renderMap(){
         const b=BUILDINGS.find(x=>x.id===p);
         const key=r.id+"_"+i;
         tip=b?((S.buildingNames&&S.buildingNames[key])||bldName(b)):"";
-        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260905`;
+        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260906`;
         const em=b?b.i:"❓";
         inner=`<img src="${bldUrl}" width="${bldSize}" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));transform:rotate(${rot}deg)" onerror="bldImgError(this,'${em}',${emojiPx})" alt="${b?b.n:''}">`;
       }
@@ -4993,12 +5012,12 @@ function renderShop(){
       ?(LANG==="en"?`🔒 ${regName(r)} only allows 🏭Factory`:`🔒 ${regName(r)}只能建造🏭工厂`)
       :(LANG==="en"?`🔒 ${b.i}${bldName(b)} can only be built in ${r.i}${regName(r)}`:`🔒 ${b.i}${bldName(b)}只能建在${r.i}${regName(r)}`)):"";
     const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked())&&!hallFull&&unlocked&&placeOk;
-    const lockNote=`<div class="buildLockNote ${unlocked?'ok':'need'}">${unlocked
+    const lockNote=`<div class="buildLockNote ${unlocked?'ok':'need'}" ${unlocked?"":`title="${buildingLockHintText(b).replace(/"/g,'&quot;')}"`}>${unlocked
       ? (b.id==="hut"||b.id==="shop" ? t("town.noPrereq") : t("town.prereqMet"))
       : `🔒 ${buildingLockHint(b)}`}</div>`;
     const placeLockNote=!placeOk?`<div class="buildLockNote">${placeNote}</div>`:"";
     const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
-    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260905`;
+    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260906`;
     div.innerHTML=`<div class="top"><span class="ico"><img src="${bldImg}" width="32" height="32" style="object-fit:contain;vertical-align:middle" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}${placeLockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
