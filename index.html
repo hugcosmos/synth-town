@@ -494,6 +494,7 @@
   .screenshot-mode .mapBadge b{font-size:8px !important; font-weight:600; color:#fff !important;}
   .screenshot-mode .mapBadge{color:#fff !important;}
   .screenshot-mode .tile .rn{font-size:11px !important; color:#fff !important; text-shadow:0 1px 3px rgba(0,0,0,.7) !important;}
+  .screenshot-mode .tile .rn .rainbowText{color:#fff !important; background:none !important; -webkit-background-clip:initial !important; background-clip:initial !important;}
   .screenshot-mode .pencilMark{display:none !important;}
   .screenshot-mode .tileFt{display:none !important;}
   .screenshot-mode .mapGrid{grid-template-columns:repeat(2,1fr) !important;}
@@ -4242,7 +4243,7 @@ function petLevelUpToast(p){
 function renamePet(idx){
   const p=S.petList[idx]; if(!p) return;
   const name=prompt(t("pet.renamePrompt",p.name), p.name);
-  if(name&&name.trim()){ p.name=name.trim().slice(0,15); toast(t("pet.renamed",p.name)); renderAll(); save(); }
+  if(name&&name.trim()){ p.name=name.trim().slice(0,15); toast(t("pet.renamed",p.name)); renderAll(); if(selectedPetIdx!==null) renderPetDetail(); save(); }
 }
 let selectedPetIdx=null;
 function openPetDetail(idx){ selectedPetIdx=idx; renderPetDetail(); $("#petDetailOverlay").classList.add("show"); }
