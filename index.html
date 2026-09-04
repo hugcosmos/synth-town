@@ -486,6 +486,7 @@
   /* 截图模式：隐藏按钮，移动端2列排版 */
   .screenshot-mode .mapActions{display:none !important;}
   .screenshot-mode .pencilMark{display:none !important;}
+  .screenshot-mode .tileFt{display:none !important;}
   .screenshot-mode .mapGrid{grid-template-columns:repeat(2,1fr) !important;}
   .screenshot-mode .mapGrid .tile{grid-area:auto !important;}
   .tile{
@@ -2886,6 +2887,7 @@ function checkoutCart(){
   });
   toast(LANG==="en"?`🛒 Bought ${Object.values(S.shopCart).reduce((a,b)=>a+b,0)} items for -💰${total}`:`🛒 购买了 ${Object.values(S.shopCart).reduce((a,b)=>a+b,0)} 个元素，-💰${total}`);
   S.shopCart={};
+  if(S.bundleQty) S.bundleQty={}; // 一次购买上限：结算后套餐份数计数归零
   renderAll(); save();
 }
 function renderShopElementTabs(){
@@ -3017,12 +3019,12 @@ function renderElShop(){
         const hint = bld && !bldOk ? buildingLockHintText(bld) : (LANG==="en"?`One bundle = full materials for ${bname}`:`一份套餐=${bname}所需全部元素材料`);
         const bqty=(S.bundleQty&&S.bundleQty[b.id])||0;
         const bmax=b.id==="hall"?1:5;
-        gridHtml+=`<div class="shopBundleCard${bldOk?"":" disabled"}" onclick="addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${hint}">
+        gridHtml+=`<div class="shopBundleCard${bldOk?"":" disabled"}" title="${hint}">
           <div class="bundleHead">${bld.i} ${bname}</div>
           <div class="bundleItems">${itemsHtml}</div>
           <div class="bundleFoot"><span class="bundlePrice">💰${price}</span><span class="bundleStepper">
-            <button class="bundleStep" onclick="event.stopPropagation();decBundle('${b.id}')" ${bqty>0?"":"disabled"} title="${LANG==="en"?"Remove 1":"移除1份"}">−</button>
-            <button class="bundleStep" onclick="event.stopPropagation();addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${LANG==="en"?"Add 1":"添加1份"}">＋</button>
+            <button class="bundleStep" onclick="decBundle('${b.id}')" title="${LANG==="en"?"Remove 1":"移除1份"}">−</button>
+            <button class="bundleStep" onclick="addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${LANG==="en"?"Add 1":"添加1份"}">＋</button>
           </span></div>
         </div>`;
       });
@@ -3375,6 +3377,13 @@ function saveTownScreenshot(){
   if(bgImg&&bgImg!=="none") outer.style.background=`${bgColor} ${bgImg} center/cover no-repeat`;
   else outer.style.background=bgColor;
   outer.classList.add("screenshot-mode");
+  // 截图时路牌改为标题样式：小镇名 · 手绘地图（去掉"欢迎来到"与装饰，建筑统计/指南针仍显示）
+  const sign=$("#townSign");
+  const signOrig=sign?sign.innerHTML:null;
+  if(sign){
+    const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
+    sign.innerHTML=`<div class="signBoard" style="padding:10px 26px;">${townName} · ${LANG==="en"?"Hand-Drawn Map":"手绘地图"}</div><div class="signPost"></div>`;
+  }
   toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
   // 等待浏览器重排后再截图
   requestAnimationFrame(()=>{
@@ -3382,6 +3391,7 @@ function saveTownScreenshot(){
       html2canvas(outer,{useCORS:true,backgroundColor:bgColor,scale:2}).then(canvas=>{
         outer.classList.remove("screenshot-mode");
         outer.style.background=prevBg;
+        if(sign&&signOrig) sign.innerHTML=signOrig;
         const link=document.createElement("a");
         link.download="town-map.png";
         link.href=canvas.toDataURL("image/png");
@@ -3390,6 +3400,7 @@ function saveTownScreenshot(){
       }).catch(err=>{
         outer.classList.remove("screenshot-mode");
         outer.style.background=prevBg;
+        if(sign&&signOrig) sign.innerHTML=signOrig;
         toast(LANG==="en"?"❌ Save failed":"❌ 保存失败"); console.error(err);
       });
     },100);
@@ -4831,7 +4842,7 @@ function renderMap(){
     const defaultBg=`assets/regions/${r.id}.png?v=${r.id==="center"?"20260905":"20260902"}`;
     const plots=S.plots[r.id]||[];
     const _mobMap=window.innerWidth<=860||isTouchDevice();
-    const bldSize=Math.round((r.plots<=6?42:r.plots<=8?38:32)*(_mobMap?1.5:2));
+    const bldSize=Math.round(32*(_mobMap?1.5:2)); // 全区域统一图标显示大小：桌面2x/移动1.5x
     const emojiPx=Math.round(bldSize*0.7);
     const points=BUILDABLE_POINTS[r.id]||[];
     // 构建建筑槽（只渲染 r.plots 个；兼容 center 从 12 降到 8 的旧档）
@@ -4996,7 +5007,8 @@ function renderShop(){
       const hallCount=S.buildings.hall||0;
       if(hallCount>=2){ /* 满2个，下面会禁用 */ }
       else if(hallCount===1){
-        const c2={}; Object.entries(cost).forEach(([k,v])=>{c2[k]=Math.ceil(v*1.5);}); cost=c2;
+        // 第二个市政厅：元素数不变，只把金币差额 ×1.5（金币部分 ×1.5 向上取整）
+        cost={...cost, coin:Math.ceil((cost.coin||0)*1.5)};
       }
     }
     const div=document.createElement("div");
