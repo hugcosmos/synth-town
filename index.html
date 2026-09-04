@@ -3622,9 +3622,7 @@ function saveTownScreenshot(){
       html2canvas(outer,{useCORS:true,backgroundColor:bgColor,scale:2}).then(canvas=>{
         outer.classList.remove("screenshot-mode");
         outer.style.background=prevBg;
-        if(sign&&signOrig) sign.innerHTML=signOrig;
-        slotImgs.forEach((i,idx)=>{ if(iconOrig[idx]){ i.setAttribute("width",iconOrig[idx].w); i.style.transform=iconOrig[idx].tr; } });
-        undos.forEach(f=>{ try{f();}catch(e){} });
+        renderAll(); // 重新渲染,所有截图临时修改(图标缩小/路牌替换/badges移动等)自动归零
         const link=document.createElement("a");
         link.download="town-map.png";
         link.href=canvas.toDataURL("image/png");
@@ -3633,9 +3631,7 @@ function saveTownScreenshot(){
       }).catch(err=>{
         outer.classList.remove("screenshot-mode");
         outer.style.background=prevBg;
-        if(sign&&signOrig) sign.innerHTML=signOrig;
-        slotImgs.forEach((i,idx)=>{ if(iconOrig[idx]){ i.setAttribute("width",iconOrig[idx].w); i.style.transform=iconOrig[idx].tr; } });
-        undos.forEach(f=>{ try{f();}catch(e){} });
+        renderAll();
         toast(LANG==="en"?"❌ Save failed":"❌ 保存失败"); console.error(err);
       });
     },100);
