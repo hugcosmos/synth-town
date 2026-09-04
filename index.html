@@ -1049,17 +1049,17 @@
     </div>
     <div id="mysteryCertTitle" style="text-align:center;font-size:30px;font-weight:900;letter-spacing:10px;color:#7a1f1f;text-shadow:0 1px 0 #fff6;margin-bottom:2px;font-family:'Kaiti SC','KaiTi','STKaiti','楷体',serif;">聘 书</div>
     <div id="mysteryCertSub" style="text-align:center;font-size:11px;color:#a08030;letter-spacing:3px;margin-bottom:18px;">终身荣誉镇长 · HONORARY MAYOR</div>
-    <div style="border-top:1px solid #c9a22788;border-bottom:1px solid #c9a22788;padding:12px 6px;background:linear-gradient(90deg,transparent,#fff8,transparent);">
+    <div style="padding:12px 6px;">
       <div id="mysteryCertBody" style="font-size:14px;line-height:1.95;text-align:left;font-family:'Kaiti SC','KaiTi','STKaiti','楷体',serif;"></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;gap:10px;">
-      <div id="mysteryCertDate" style="font-size:12px;color:#7a5d1a;line-height:1.5;white-space:nowrap;text-align:center;"></div>
-      <div style="display:flex;gap:18px;flex-shrink:0;">
-        <div id="mysterySeal1" style="width:108px;height:108px;position:relative;border-radius:50%;overflow:hidden;transform:rotate(-8deg);box-shadow:0 3px 12px rgba(120,20,20,.4);flex-shrink:0;background:#fff;">
+      <div id="mysteryCertDate" style="font-size:10px;color:#7a5d1a;line-height:1.4;white-space:nowrap;text-align:left;flex-shrink:0;"></div>
+      <div style="display:flex;gap:12px;flex-shrink:0;">
+        <div id="mysterySeal1" style="width:108px;height:108px;position:relative;border-radius:50%;overflow:hidden;transform:rotate(-8deg);box-shadow:0 3px 12px rgba(120,20,20,.4);flex-shrink:0;">
           <img src="assets/seal.png?v=20260904" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
           <div id="mysterySealText1" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:rgba(180,25,25,.95);font-weight:800;line-height:1.5;letter-spacing:1px;padding:0 8px;"></div>
         </div>
-        <div id="mysterySeal2" style="width:108px;height:108px;position:relative;border-radius:50%;overflow:hidden;transform:rotate(8deg);box-shadow:0 3px 12px rgba(120,20,20,.4);flex-shrink:0;background:#fff;">
+        <div id="mysterySeal2" style="width:108px;height:108px;position:relative;border-radius:50%;overflow:hidden;transform:rotate(8deg);box-shadow:0 3px 12px rgba(120,20,20,.4);flex-shrink:0;">
           <img src="assets/seal.png?v=20260904" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
           <div id="mysterySealText2" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:rgba(180,25,25,.95);font-weight:800;line-height:1.5;letter-spacing:1px;padding:0 8px;"></div>
         </div>
@@ -4988,7 +4988,7 @@ function renderMap(){
   if(mapUnlocked()){
     html+=`<div class="mapActions">
       <button id="townNameBtn" title="${t("town.nameTown")}">✏️ ${LANG==="en"?"Rename":"改名"}</button>
-      ${freeMoveUnlocked()?`<button id="resetBldBtn" title="${t("town.resetLayout")}" style="background:none;border-color:var(--line);color:var(--dim);">↩️ ${LANG==="en"?"Layout":"默认布局"}</button>`:""}
+      ${(S.bldFree&&Object.keys(S.bldFree).length>0)?`<button id="resetBldBtn" title="${t("town.resetLayout")}" style="background:none;border-color:var(--line);color:var(--dim);">↩️ ${LANG==="en"?"Layout":"默认布局"}</button>`:""}
       <button id="townSaveBtn" style="background:var(--gold);border-color:var(--gold);color:#1a1530;">${t("btn.save")}</button>
       <span class="compass">🧭 N</span>
     </div>`;
@@ -5059,16 +5059,30 @@ function renderMap(){
     const costLabel=LANG==="en"?`Cost×${r.cm} Out×${r.im} 💰${r.land}`:`成本×${r.cm} 产出×${r.im} 地价💰${r.land}`;
     tile.innerHTML=`<div class="tileHd"><span class="rn regionNameLabel" data-region="${r.id}" style="${allBought?'cursor:pointer;':''}" title="${allBought?t("town.nameRegion"):t("town.regionLocked")}">${r.i} ${regionDisplayName}${allBought?' <span class="pencilMark">✏️</span>':''}</span></div>
 <div class="mapCanvas" style="background-image:url(${ti||defaultBg})">${decoHtml}${slotsHtml}</div>
-<div class="tileFt"><span class="rm">${costLabel}</span><span class="bcnt">🏗️ ${bc2}/${r.plots}</span></div>`;
+<div class="tileFt"><span class="rm">${costLabel}</span><span class="bcnt">🏗️ ${bc2}/${r.plots}</span>${allBought?`<span class="freeHint" style="color:#4cd97b;font-size:10px;font-weight:700;">✋ ${LANG==="en"?"Drag to move":"可自由摆放"}</span>`:""}</div>`;
     tile.querySelectorAll("[data-r]").forEach(cell=>{
       cell.addEventListener("click",ev=>{
         ev.stopPropagation();
         const rid=cell.dataset.r,idx=+cell.dataset.i,p=S.plots[rid][idx];
-        if(freeMove){ if(p&&p!==null){ openBuildingDetail(rid,idx); } return; }
+        if(freeMove){
+          if(p===null){ const pos=bldDisplayPos(rid,idx); placeFreeMove(rid,pos.x,pos.y); }
+          else if(p&&p!==null){
+            if(freeMove.fromRegion===rid&&freeMove.fromIndex===idx){ openBuildingDetail(rid,idx); }
+            else { freeMove={fromRegion:rid,fromIndex:idx,bid:p}; renderAll(); }
+          }
+          return;
+        }
         if(moveMode){if(p===null)completeMove(rid,idx);else toast(t("town.onlyEmpty"));return;}
         if(p===false)buyPlot(rid,idx);
         else if(p===null)selectPlot(rid,idx);
-        else{openBuildingDetail(rid,idx);}
+        else{
+          // 移动端+区域解锁 → 进入自由摆放模式（桌面端直接拖拽，点击仍查看详情）
+          if(isTouchDevice()&&freeMoveUnlocked(rid)){
+            freeMove={fromRegion:rid,fromIndex:idx,bid:p};
+            renderAll();
+            toast(LANG==="en"?"🖐️ Tap new spot to place (tap building again for details)":"🖐️ 点击新位置放置（再点建筑查看详情）");
+          } else { openBuildingDetail(rid,idx); }
+        }
       });
     });
     // 自由摆放：点击地图空白处放置（桌面拖拽由 bldSlot 拖拽处理）
@@ -5089,7 +5103,7 @@ function renderMap(){
         const ghost=document.createElement("img");
         ghost.style.cssText="position:fixed;pointer-events:none;z-index:999;opacity:.85;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));";
         img.addEventListener("pointerdown",e=>{
-          if(!freeMoveUnlocked()) return;
+          if(!freeMoveUnlocked(slot.dataset.r)) return;
           dragging=true;moved=false;startX=e.clientX;startY=e.clientY;
           img.setPointerCapture(e.pointerId);
         });
@@ -5221,8 +5235,12 @@ let selectedPlot=null;   // {region,index} 选中的空地
 let moveMode=null;       // {fromRegion,fromIndex,bid} 移动模式
 let freeMove=null;       // {fromRegion,fromIndex,bid} 自由摆放模式（地产大亨解锁）
 
-// 地产大亨解锁 → 自由摆放
-function freeMoveUnlocked(){ return !!(S.badges&&S.badges.realEstateTycoon); }
+// 自由摆放解锁：地产大亨徽章(全局) 或 该区域地皮全部买全
+function freeMoveUnlocked(region){
+  if(S.badges&&S.badges.realEstateTycoon) return true;
+  if(region){ const plots=S.plots[region]||[]; return plots.length>0 && plots.every(p=>p!==false); }
+  return false;
+}
 // 建筑显示位置（自定义优先，否则默认放置点）
 function bldDisplayPos(region,index){
   if(S.bldFree&&S.bldFree[region+"_"+index]) return S.bldFree[region+"_"+index];
@@ -5230,21 +5248,9 @@ function bldDisplayPos(region,index){
   const pt=pts[index]||[50,50,0];
   return {x:pt[0],y:pt[1],rot:pt[2]};
 }
-// 自由摆放校验：安全范围 + 相邻最小间距（同区域）
+// 自由摆放校验：仅安全范围（允许建筑重叠，用户可自行调整）
 function validateFreePos(region,x,y){
   if(x<10||x>90||y<12||y>88) return "out";
-  const r=regionOf(region); if(!r) return "out";
-  const tileEl=document.querySelector(`.regionNameLabel[data-region="${region}"]`)?.closest(".tile");
-  const canvas=tileEl?tileEl.querySelector(".mapCanvas"):null;
-  const W=canvas?canvas.clientWidth:500, H=canvas?canvas.clientHeight:250;
-  const minGap=Math.min(46,Math.max(34,Math.round(W*0.07)));
-  const plots=S.plots[region]||[];
-  for(let i=0;i<plots.length;i++){
-    if(plots[i]===null||plots[i]===false) continue;
-    const pos=bldDisplayPos(region,i);
-    const dx=(x-pos.x)/100*W, dy=(y-pos.y)/100*H;
-    if(Math.sqrt(dx*dx+dy*dy)<minGap) return "close";
-  }
   return "ok";
 }
 // 点击/拖拽放置
