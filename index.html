@@ -3880,8 +3880,8 @@ function renderPark(){
       const homeImg=`assets/pet-homes/${pet.id}.png?v=20260907`;
       // 宠物头像（放在窝前面）
       const petAvatar=pet.avatar
-        ?`<img src="${pet.avatar}" style="width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35);">`
-        :`<img src="${defaultImg}" style="width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35);animation:petBounce 2.2s ease-in-out infinite;" onerror="this.outerHTML='<span style=\\'font-size:clamp(20px,5vw,40px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:petBounce 2.2s ease-in-out infinite;\\'>${d?d.i:'🐾'}</span>'">`;
+        ?`<img src="${pet.avatar}" style="width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 3px 8px rgba(0,0,0,.28), 0 1px 3px rgba(0,0,0,.22);">`
+        :`<img src="${defaultImg}" style="width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 3px 8px rgba(0,0,0,.28), 0 1px 3px rgba(0,0,0,.22);animation:petBounce 2.2s ease-in-out infinite;" onerror="this.outerHTML='<span style=\\'font-size:clamp(20px,5vw,40px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:petBounce 2.2s ease-in-out infinite;\\'>${d?d.i:'🐾'}</span>'">`;
       const nameLabel=LANG==="en"?`${pet.name}'s Home`:`${pet.name}之家`;
       div.innerHTML=`
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;">
