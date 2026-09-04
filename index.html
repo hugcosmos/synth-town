@@ -488,6 +488,10 @@
   .screenshot-mode .mapActions button{display:none !important;}
   .screenshot-mode .mapActions .compass{display:inline-flex !important;}
   .screenshot-mode .mapTopRow{flex-direction:row !important; align-items:center; justify-content:space-between;}
+  .screenshot-mode .mapStats{display:none !important;}
+  .screenshot-mode .mapBadges{margin:0; flex-wrap:nowrap; gap:3px; align-items:center;}
+  .screenshot-mode .mapBadge img{width:14px !important; height:14px !important;}
+  .screenshot-mode .mapBadge b{font-size:10px !important;}
   .screenshot-mode .pencilMark{display:none !important;}
   .screenshot-mode .tileFt{display:none !important;}
   .screenshot-mode .mapGrid{grid-template-columns:repeat(2,1fr) !important;}
@@ -3383,6 +3387,17 @@ function saveTownScreenshot(){
   if(bgImg&&bgImg!=="none") outer.style.background=`${bgColor} ${bgImg} center/cover no-repeat`;
   else outer.style.background=bgColor;
   outer.classList.add("screenshot-mode");
+  // 截图布局调整：标题置顶 → 左=建筑数(icon缩小) 右=指南针 → 下边区域
+  const undos=[];
+  const _mv=(el,newParent,ref)=>{ if(!el||!newParent) return; const pp=el.parentNode, nx=el.nextSibling; if(pp){ newParent.insertBefore(el,ref||null); undos.push(()=>{ if(pp&&pp.contains&&pp.contains(el)) pp.insertBefore(el,nx); }); } };
+  const mapTop=outer.querySelector(".mapTopRow");
+  const mapStatsEl=mapTop?mapTop.querySelector(".mapStats"):null;
+  const mapActionsEl=mapTop?mapTop.querySelector(".mapActions"):null;
+  const badgesEl=outer.querySelector(".mapBadges");
+  const signWrap=$("#townSign")?$("#townSign").parentNode:null;
+  if(mapStatsEl){ const od=mapStatsEl.style.display; mapStatsEl.style.display="none"; undos.push(()=>{ mapStatsEl.style.display=od; }); }
+  if(signWrap&&signWrap!==outer.firstChild) _mv(signWrap, outer, outer.firstChild);
+  if(badgesEl&&mapTop) _mv(badgesEl, mapTop, mapActionsEl);
   // 截图时路牌改为顶部纯文字标题（不加地标/路牌杆）
   const sign=$("#townSign");
   const signOrig=sign?sign.innerHTML:null;
@@ -3403,6 +3418,7 @@ function saveTownScreenshot(){
         outer.style.background=prevBg;
         if(sign&&signOrig) sign.innerHTML=signOrig;
         slotImgs.forEach((i,idx)=>{ if(iconOrig[idx]){ i.setAttribute("width",iconOrig[idx].w); i.style.transform=iconOrig[idx].tr; } });
+        undos.forEach(f=>{ try{f();}catch(e){} });
         const link=document.createElement("a");
         link.download="town-map.png";
         link.href=canvas.toDataURL("image/png");
@@ -3413,6 +3429,7 @@ function saveTownScreenshot(){
         outer.style.background=prevBg;
         if(sign&&signOrig) sign.innerHTML=signOrig;
         slotImgs.forEach((i,idx)=>{ if(iconOrig[idx]){ i.setAttribute("width",iconOrig[idx].w); i.style.transform=iconOrig[idx].tr; } });
+        undos.forEach(f=>{ try{f();}catch(e){} });
         toast(LANG==="en"?"❌ Save failed":"❌ 保存失败"); console.error(err);
       });
     },100);
@@ -3665,12 +3682,13 @@ function renderPark(){
         </div>`;
       div.title=pet.name;
       if(mobile){
-        // 移动端：点击选中/交换，长按查看资料
-        let _lpTimer=null;
+        // 移动端：点击选中/交换，长按查看资料（位移>8px视为滑动不触发）
+        let _lpTimer=null, _lpX=0, _lpY=0;
         div.addEventListener("pointerdown",e=>{
-          _lpTimer=setTimeout(()=>{ _lpTimer=null; openPetDetail(petIdx); },500);
+          _lpX=e.clientX; _lpY=e.clientY;
+          _lpTimer=setTimeout(()=>{ _lpTimer=null; openPetDetail(petIdx); },450);
         });
-        div.addEventListener("pointermove",()=>{ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} });
+        div.addEventListener("pointermove",e=>{ if(_lpTimer && (Math.abs(e.clientX-_lpX)>8||Math.abs(e.clientY-_lpY)>8)){ clearTimeout(_lpTimer); _lpTimer=null; } });
         div.addEventListener("pointerup",e=>{
           if(_lpTimer){ clearTimeout(_lpTimer); _lpTimer=null; handleParkSlotClick(slotIdx); }
         });
@@ -4028,7 +4046,7 @@ function checkPandaReward(){
     S.pandaRewardClaimed=true;
     const pandaName=randomPetName("panda");
     S.petList.push({id:"panda", hp:11, maxHp:11, sat:100, sick:false, name:pandaName, bornAt:Date.now(), intimacy:0, avatar:null});
-    setTimeout(()=>{ toast(LANG==="en"?`🎊 System reward: 🐼${pandaName} joins your town! (all 9 non-panda pets maxed!)`:`🎊 系统奖励：🐼${pandaName}加入小镇！（9只非熊猫全部满配）`,5000); updateTabLockState(); },500);
+    setTimeout(()=>{ toast(LANG==="en"?`🎊 System reward: 🐼${pandaName} joins your town! (all 9 non-panda pets maxed!)`:`🎊 系统奖励：🐼${pandaName}加入小镇！（9只非熊猫全部满配）`,5000); renderAll(); save(); updateTabLockState(); },500);
     return;
   }
   // 满10只非熊猫且全满配：提示腾位置（不自动奖励，因为没位置）
@@ -5682,6 +5700,7 @@ $("#introBtn").addEventListener("click", function(){
   showDraw();
 });
 try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
+try{ checkPandaReward(); }catch(e){ console.error("checkPandaReward error:",e); } // 加载后立即检查熊猫保底（宠物已养满但不再喂食/互动时也能触发）
 try{ applyLang(); }catch(e){ console.error("applyLang error:",e); }
 try{ updateIntroLang(); }catch(e){ console.error("updateIntroLang error:",e); }
 try{ updateDrawLang(); }catch(e){ console.error("updateDrawLang error:",e); }
