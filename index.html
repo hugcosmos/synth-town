@@ -144,6 +144,8 @@
   .shopItem:hover{border-color:var(--accent); transform:translateY(-1px);}
   .shopItem .top{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
   .buildLockNote{color:var(--dim);font-size:11px;margin-bottom:6px;padding:4px 8px;background:var(--panel);border-radius:6px;line-height:1.4;}
+  .buildLockNote.ok{color:#4cd97b;border:1px solid #4cd97b55;background:#4cd97b14;}
+  .buildLockNote.need{color:#ff6b6b;border:1px solid #ff6b6b55;background:#ff6b6b14;}
   .shopItem .ico{font-size:26px;}
   .shopItem .nm{font-weight:600; font-size:14px;}
   .shopItem .built{margin-left:auto; font-size:11px; color:var(--dim); text-align:right; line-height:1.3;}
@@ -1223,10 +1225,19 @@ const totalBuildings = () => Object.values(S.buildings||{}).reduce((a,b)=>a+(b||
 const mapUnlocked = () => totalBuildings()>=2;
 let curRegion = "plain";
 // 区域化成本：单项向上取整
+// 基准金币：元素成本固定，金币随区域系数变化；无金币建筑给基准值
+const BASE_COIN = {hut:10, manor:40, hospital:15};
 function regionCost(b, region){
   const r=regionOf(region);
   const c={};
-  Object.entries(b.cost).forEach(([k,v])=>{ c[k]=Math.ceil(v*r.cm); });
+  // 元素部分：固定标准值（不随区域变化）
+  Object.entries(b.cost).forEach(([k,v])=>{
+    if(k==="coin") return;
+    c[k]=v;
+  });
+  // 金币部分：基准金币 × 区域系数
+  const baseCoin = b.cost.coin || BASE_COIN[b.id] || 0;
+  if(baseCoin>0) c.coin = Math.round(baseCoin*r.cm);
   return c;
 }
 // 某建筑总产出/10s（跨区域汇总；无分区记录的旧建筑按系数 1 计）
@@ -1439,6 +1450,8 @@ const I18N = {
     "town.placeDone":"✅ 建筑已摆放！",
     "town.freeArrangeLocked":"🔒 获得「地产大亨」徽章后可自由摆放建筑",
     "town.mapTitle":"小镇",
+    "town.noPrereq":"✓ 无需前置",
+    "town.prereqMet":"✓ 前置已满足",
     "town.freeMoveMode":"🖐️ 自由摆放：点地图新位置放置，或",
     "town.freeMoveHint":"🖐️ 自由摆放：点击地图新位置放置建筑",
     "town.resetLayout":"↩️ 恢复默认布局",
@@ -1613,6 +1626,8 @@ const I18N = {
     "town.moveMode":"🏗️ Move mode: tap a 🟫 empty land to move, or",
     "town.selectedPlot":"📍 Selected {0}{1} empty land, choose building below, or",
     "town.mapTitle":"My Town",
+    "town.noPrereq":"✓ No prerequisite",
+    "town.prereqMet":"✓ Prerequisite met",
     "town.freeMoveMode":"🖐️ Free arrange: tap a map spot to place, or",
     "town.freeMoveHint":"🖐️ Free arrange: tap a map spot to place the building",
     "town.resetLayout":"↩️ Reset layout",
@@ -4731,7 +4746,7 @@ function renderMap(){
     tile.className="tile";
     tile.style.cssText=`grid-area:${r.area};`;
     const ti=assetCache.get("regions:"+r.id);
-    const defaultBg=`assets/regions/${r.id}.png?v=${r.id==="center"?"20260904":"20260902"}`;
+    const defaultBg=`assets/regions/${r.id}.png?v=${r.id==="center"?"20260905":"20260902"}`;
     const plots=S.plots[r.id]||[];
     const _mobMap=window.innerWidth<=860||isTouchDevice();
     const bldSize=Math.round((r.plots<=6?42:r.plots<=8?38:32)*(_mobMap?1.5:2));
@@ -4915,7 +4930,9 @@ function renderShop(){
       ?(LANG==="en"?`🔒 ${regName(r)} only allows 🏭Factory`:`🔒 ${regName(r)}只能建造🏭工厂`)
       :(LANG==="en"?`🔒 ${b.i}${bldName(b)} can only be built in ${r.i}${regName(r)}`:`🔒 ${b.i}${bldName(b)}只能建在${r.i}${regName(r)}`)):"";
     const canBuild=canAfford(cost)&&(selectedPlot||!mapUnlocked())&&!hallFull&&unlocked&&placeOk;
-    const lockNote=!unlocked?`<div class="buildLockNote">🔒 ${buildingLockHint(b)}</div>`:"";
+    const lockNote=`<div class="buildLockNote ${unlocked?'ok':'need'}">${unlocked
+      ? (b.id==="hut"||b.id==="shop" ? t("town.noPrereq") : t("town.prereqMet"))
+      : `🔒 ${buildingLockHint(b)}`}</div>`;
     const placeLockNote=!placeOk?`<div class="buildLockNote">${placeNote}</div>`:"";
     const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
     const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260904`;
