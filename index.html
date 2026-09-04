@@ -1054,9 +1054,15 @@
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;gap:10px;">
       <div id="mysteryCertDate" style="font-size:11px;color:#7a5d1a;line-height:1.5;"></div>
-      <div style="display:flex;gap:16px;flex-shrink:0;">
-        <div id="mysterySeal1" style="width:84px;height:84px;border-radius:50%;border:2px solid rgba(190,30,30,.85);display:flex;align-items:center;justify-content:center;text-align:center;color:rgba(190,30,30,.92);box-shadow:inset 0 0 14px rgba(190,30,30,.28), 0 0 3px rgba(190,30,30,.3);transform:rotate(-10deg);background:radial-gradient(circle,rgba(190,30,30,.05),rgba(190,30,30,.16));"></div>
-        <div id="mysterySeal2" style="width:84px;height:84px;border-radius:50%;border:2px solid rgba(190,30,30,.85);display:flex;align-items:center;justify-content:center;text-align:center;color:rgba(190,30,30,.92);box-shadow:inset 0 0 14px rgba(190,30,30,.28), 0 0 3px rgba(190,30,30,.3);transform:rotate(10deg);background:radial-gradient(circle,rgba(190,30,30,.05),rgba(190,30,30,.16));"></div>
+      <div style="display:flex;gap:18px;flex-shrink:0;">
+        <div id="mysterySeal1" style="width:108px;height:108px;position:relative;border-radius:50%;overflow:hidden;transform:rotate(-8deg);box-shadow:0 3px 12px rgba(120,20,20,.4);flex-shrink:0;background:#fff;">
+          <img src="assets/seal.png?v=20260904" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
+          <div id="mysterySealText1" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:rgba(180,25,25,.95);font-weight:800;line-height:1.5;letter-spacing:1px;padding:0 8px;"></div>
+        </div>
+        <div id="mysterySeal2" style="width:108px;height:108px;position:relative;border-radius:50%;overflow:hidden;transform:rotate(8deg);box-shadow:0 3px 12px rgba(120,20,20,.4);flex-shrink:0;background:#fff;">
+          <img src="assets/seal.png?v=20260904" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
+          <div id="mysterySealText2" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:rgba(180,25,25,.95);font-weight:800;line-height:1.5;letter-spacing:1px;padding:0 8px;"></div>
+        </div>
       </div>
     </div>
     <button onclick="closeMystery()" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:#8a6d1f;font-size:20px;cursor:pointer;line-height:1;">✕</button>
@@ -3374,10 +3380,10 @@ function showMysteryCert(){
     ?`<p>Dear <b>${g.name}</b>,</p><p>Thank you for your dedication! Your town now has <b>${bldTypes}</b> building types, earning <b>${perMin}</b> coins per minute, and all animals are living happily.</p><p>You are hereby appointed as the <b>Honorary Mayor for Life</b> of <b>${townName}</b>.</p>`
     :`<p>尊敬的 <b>${g.name}</b>：</p><p>感谢你的辛勤付出！小镇目前已有 <b>${bldTypes}</b> 种建筑物类别，每分钟可赚取 <b>${perMin}</b> 金币，动物们生活得都很开心。</p><p>特此聘请你为 <b>${townName}</b> 的终身荣誉镇长。</p>`;
   $("#mysteryCertDate").textContent=LANG==="en"?`Issued: ${dateStr}`:`签发日期：${dateStr}`;
-  // 双钢印：众议院 / 参议院
-  const sealStyle="font-size:9px;font-weight:800;letter-spacing:1px;line-height:1.5;";
-  $("#mysterySeal1").innerHTML=`<div style="${sealStyle}">${townName}<br>${LANG==="en"?"House":"众议院"}</div>`;
-  $("#mysterySeal2").innerHTML=`<div style="${sealStyle}">${townName}<br>${LANG==="en"?"Senate":"参议院"}</div>`;
+  // 双钢印：众议院 / 参议院（图片印章底 + 文字叠加）
+  const sealName=townName.length>6?townName.slice(0,6):townName;
+  $("#mysterySealText1").innerHTML=`<div style="font-size:${sealName.length>4?9:11}px;">${sealName}</div><div style="font-size:9px;margin-top:1px;">${LANG==="en"?"House":"众议院"}</div>`;
+  $("#mysterySealText2").innerHTML=`<div style="font-size:${sealName.length>4?9:11}px;">${sealName}</div><div style="font-size:9px;margin-top:1px;">${LANG==="en"?"Senate":"参议院"}</div>`;
   // 粒子特效：最隆重的成就
   playMysteryParticles();
 }
@@ -3446,7 +3452,7 @@ function checkBadges(){
   // 三枚大师徽章集齐 → 神秘礼物解锁，NPC 提示
   if(isMysteryUnlocked()&&!S.mysteryGift){
     setTimeout(()=>{
-      const msg=LANG==="en"?"🎁 Mystery Gift unlocked! Collect your Honorary Mayor certificate in the Achievement Hall!":"🎁 神秘礼物已解锁！去成就殿堂签收你的终身荣誉镇长聘书吧！";
+      const msg=LANG==="en"?"🎁 Mystery Gift unlocked! Claim it in Achievements!":"🎁 神秘礼物已解锁，去成就里签收吧！";
       toast(`🧙‍♂️「${msg}」`,5200);
     },400);
   }
