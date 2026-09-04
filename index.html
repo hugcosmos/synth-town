@@ -514,6 +514,11 @@
   .tile .rn .rainbowText{background:linear-gradient(90deg,#ff6b6b,#ffb84d,#ffe066,#4cd97b,#54d9ff,#a78bfa,#ff6b9d); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:800;}
   .rainbowText{background:linear-gradient(90deg,#ff6b6b,#ffb84d,#ffe066,#4cd97b,#54d9ff,#a78bfa,#ff6b9d); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:800;}
   .tabBtn .tabEmoji{filter:brightness(1.35) saturate(1.25) drop-shadow(0 0 2px rgba(255,255,255,.15));}
+  .tabBtn[data-tab="shop"] .tabEmoji,
+  .tabBtn[data-tab="pet"] .tabEmoji{
+    background:linear-gradient(90deg,#ff6b6b,#ffb84d,#ffe066,#4cd97b,#54d9ff,#a78bfa,#ff6b9d);
+    -webkit-background-clip:text; background-clip:text; color:transparent; filter:none;
+  }
   .tileFt{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:2px;}
   .tileFt .rm{font-size:9px; opacity:.95; background:rgba(0,0,0,.4); padding:2px 8px; border-radius:10px; white-space:nowrap;}
   .tileFt .bcnt{font-size:10px;color:var(--dim);font-weight:600;}
@@ -848,8 +853,8 @@
     <section class="panel">
       <h2 data-i18n="panel.shop">💰 元素商店</h2>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button id="shopBuyTab" class="subTab active" style="flex:1;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);cursor:pointer;font-weight:700;font-size:13px;" onclick="switchShopSub('buy')">🛒 <span data-i18n="shop.buy">购买</span></button>
-        <button id="shopTradeTab" class="subTab" style="flex:1;padding:6px;border:1px solid var(--line);border-radius:8px;background:transparent;cursor:pointer;font-weight:700;font-size:13px;" onclick="switchShopSub('trade')">♻️ <span data-i18n="shop.trade">置换</span></button>
+        <button id="shopBuyTab" class="subTab active" style="flex:1;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);cursor:pointer;font-weight:700;font-size:13px;" onclick="switchShopSub('buy')">🛒 <span class="rainbowText" data-i18n="shop.buy">购买</span></button>
+        <button id="shopTradeTab" class="subTab" style="flex:1;padding:6px;border:1px solid var(--line);border-radius:8px;background:transparent;cursor:pointer;font-weight:700;font-size:13px;" onclick="switchShopSub('trade')">♻️ <span class="rainbowText" data-i18n="shop.trade">置换</span></button>
       </div>
       <div id="shopElementTabs" class="elementTabBar" style="margin-bottom:8px;"></div>
       <div id="elShop"></div>
