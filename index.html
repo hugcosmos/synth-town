@@ -866,7 +866,7 @@
   <section id="view-park" class="view">
     <section class="panel" style="padding:0;overflow:hidden;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);">
-        <h2 style="margin:0;font-size:15px;" data-i18n="panel.park">🌳 动物乐园</h2>
+        <h2 style="margin:0;font-size:15px;font-weight:800;background:linear-gradient(90deg,#ff6b6b,#ffb84d,#ffe066,#4cd97b,#54d9ff,#a78bfa,#ff6b9d);-webkit-background-clip:text;background-clip:text;color:transparent;" data-i18n="panel.park">🌳 动物乐园</h2>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
           <button id="parkFreeBtn" onclick="toggleParkFree()" style="background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;" data-i18n="park.free">🖐️ 自由摆放</button>
           <button onclick="document.getElementById('parkBgFile').click()" style="background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;" title="更换乐园背景">🖼️</button>
@@ -1047,10 +1047,10 @@
         <span style="font-size:30px;">🏛️</span>
       </div>
     </div>
-    <div style="text-align:center;font-size:30px;font-weight:900;letter-spacing:10px;color:#7a1f1f;text-shadow:0 1px 0 #fff6;margin-bottom:2px;">聘 书</div>
+    <div style="text-align:center;font-size:30px;font-weight:900;letter-spacing:10px;color:#7a1f1f;text-shadow:0 1px 0 #fff6;margin-bottom:2px;font-family:'Kaiti SC','KaiTi','STKaiti','楷体',serif;">聘 书</div>
     <div id="mysteryCertSub" style="text-align:center;font-size:11px;color:#a08030;letter-spacing:3px;margin-bottom:18px;">终身荣誉镇长 · HONORARY MAYOR</div>
     <div style="border-top:1px solid #c9a22788;border-bottom:1px solid #c9a22788;padding:12px 6px;background:linear-gradient(90deg,transparent,#fff8,transparent);">
-      <div id="mysteryCertBody" style="font-size:14px;line-height:1.95;text-align:left;"></div>
+      <div id="mysteryCertBody" style="font-size:14px;line-height:1.95;text-align:left;font-family:'Kaiti SC','KaiTi','STKaiti','楷体',serif;"></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;gap:10px;">
       <div id="mysteryCertDate" style="font-size:11px;color:#7a5d1a;line-height:1.5;"></div>
@@ -1064,6 +1064,11 @@
           <div id="mysterySealText2" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:rgba(180,25,25,.95);font-weight:800;line-height:1.5;letter-spacing:1px;padding:0 8px;"></div>
         </div>
       </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap;">
+      <button id="mysteryCertDownloadBtn" onclick="downloadMysteryCert()" style="background:linear-gradient(135deg,#d4a017,#b8860b);border:none;color:#fff;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">📥 下载</button>
+      <button id="mysteryCertShareBtn" onclick="shareMysteryCert()" style="background:linear-gradient(135deg,#54d9ff,#2f9fe0);border:none;color:#fff;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">📤 分享</button>
+      <button id="mysteryCertCloseBtn" onclick="closeMystery()" style="background:transparent;border:1px solid #b8860b;color:#8a6d1f;border-radius:10px;padding:9px 18px;font-size:13px;cursor:pointer;font-weight:700;">✕ 关闭</button>
     </div>
     <button onclick="closeMystery()" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:#8a6d1f;font-size:20px;cursor:pointer;line-height:1;">✕</button>
   </div>
@@ -3384,6 +3389,10 @@ function showMysteryCert(){
   const sealName=townName.length>6?townName.slice(0,6):townName;
   $("#mysterySealText1").innerHTML=`<div style="font-size:${sealName.length>4?9:11}px;">${sealName}</div><div style="font-size:9px;margin-top:1px;">${LANG==="en"?"House":"众议院"}</div>`;
   $("#mysterySealText2").innerHTML=`<div style="font-size:${sealName.length>4?9:11}px;">${sealName}</div><div style="font-size:9px;margin-top:1px;">${LANG==="en"?"Senate":"参议院"}</div>`;
+  // 底部按钮双语
+  $("#mysteryCertDownloadBtn").textContent=LANG==="en"?"📥 Download":"📥 下载";
+  $("#mysteryCertShareBtn").textContent=LANG==="en"?"📤 Share":"📤 分享";
+  $("#mysteryCertCloseBtn").textContent=LANG==="en"?"✕ Close":"✕ 关闭";
   // 粒子特效：最隆重的成就
   playMysteryParticles();
 }
@@ -3422,6 +3431,22 @@ function playMysteryParticles(){
   frame();
 }
 function closeMystery(){ const ov=$("#mysteryOverlay"); if(ov) ov.style.display="none"; if(_mysteryParticlesRAF){ cancelAnimationFrame(_mysteryParticlesRAF); _mysteryParticlesRAF=null; } }
+function mysteryCertDataUrl(cb){
+  const el=$("#mysteryCertBox"); if(!el||typeof html2canvas==="undefined"){ toast(LANG==="en"?"❌ Image not available":"❌ 图片功能不可用"); return; }
+  toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
+  html2canvas(el,{useCORS:true,backgroundColor:"#f6e7c1",scale:2}).then(c=>{ cb(c.toDataURL("image/png")); }).catch(e=>{ console.error(e); toast(LANG==="en"?"❌ Failed":"❌ 生成失败"); });
+}
+function downloadMysteryCert(){
+  mysteryCertDataUrl(d=>{ const a=document.createElement("a"); a.download="honorary-mayor.png"; a.href=d; a.click(); toast(LANG==="en"?"📥 Certificate saved!":"📥 聘书已保存！"); });
+}
+function shareMysteryCert(){
+  const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
+  mysteryCertDataUrl(d=>{
+    openSharePreview(d,
+      LANG==="en"?`${townName} · Honorary Mayor`:`${townName} · 终身荣誉镇长`,
+      LANG==="en"?`I've been appointed Honorary Mayor for Life of ${townName}! 🎉`:`我成为了 ${townName} 的终身荣誉镇长！🎉`);
+  });
+}
 let _currentBadgeId=null;
 function openBadgeDetail(id){
   const b=BADGES.find(x=>x.id===id); if(!b) return;
@@ -4132,7 +4157,7 @@ function renderPets(){
   Object.entries(FOODS).forEach(([fid,f])=>{
     const own=S.food[fid]||0;
     html+=`<div style="text-align:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;">
-      <div>${f.i}${foodName(f)} <b style="color:var(--gold)">×${own}</b></div>
+      <div style="white-space:nowrap;">${f.i}${foodName(f)} <b style="color:var(--gold)">×${own}</b></div>
       <button data-buyfood="${fid}" ${hasB("station")&&S.coin>=f.price?"":"disabled style='opacity:.4'"} style="margin-top:4px;background:var(--gold);border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:700;">💰${f.price}</button>
     </div>`;
   });
