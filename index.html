@@ -867,8 +867,13 @@
     <section class="panel" style="padding:0;overflow:hidden;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);">
         <h2 style="margin:0;font-size:15px;" data-i18n="panel.park">🌳 动物乐园</h2>
-        <button onclick="saveElementAsImage(document.getElementById('parkContainer'),'animal-park.png')" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:700;" data-i18n="btn.save">📷 保存</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="document.getElementById('parkBgFile').click()" style="background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;" title="更换乐园背景">🖼️</button>
+          <button id="parkBgResetBtn" style="display:none;background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;" title="恢复默认背景" onclick="resetParkBg()">↩️</button>
+          <button onclick="saveElementAsImage(document.getElementById('parkContainer'),'animal-park.png')" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:700;" data-i18n="btn.save">📷 保存</button>
+        </div>
       </div>
+      <input type="file" id="parkBgFile" accept="image/*" style="display:none">
       <div id="parkContainer" style="position:relative;width:100%;aspect-ratio:3/4;background:url('assets/park-bg.png') center/cover no-repeat;border-radius:0 0 12px 12px;overflow:hidden;">
         <div id="parkSlots"></div>
       </div>
@@ -958,12 +963,6 @@
     <button class="setBtn" id="bgUploadBtn" data-i18n="btn.bgUpload">📷 上传背景图片</button>
     <button class="setBtn" id="bgResetBtn" style="display:none" data-i18n="btn.bgReset">↩️ 移除自定义背景</button>
     <input type="file" id="bgFile" accept="image/*" style="display:none">
-
-    <h3 data-i18n="settings.parkBg">🎪 乐园背景</h3>
-    <div data-i18n="settings.parkBg.desc" style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">上传一张图片作为动物乐园背景（自动压缩到 ≤1920px，存本地 IndexedDB，不占存档空间）。</div>
-    <button class="setBtn" id="parkBgUploadBtn" data-i18n="btn.parkBgUpload">📷 上传乐园背景</button>
-    <button class="setBtn" id="parkBgResetBtn" style="display:none" data-i18n="btn.parkBgReset">↩️ 恢复默认乐园背景</button>
-    <input type="file" id="parkBgFile" accept="image/*" style="display:none">
 
     <h3 data-i18n="settings.pack">🖼️ 自定义素材包（高级）</h3>
     <div data-i18n="settings.pack.desc" style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:8px">上传 theme.json：{ "pets":{…}, "elements":{…}, "regions":{…} }，值为 data:image/png;base64 图片。<br>规格：宠物/元素 128×128、地块 512×256、单张 ≤200KB（自动压缩到规格内）。图片存 IndexedDB，不占存档空间；未替换的回落 emoji。</div>
@@ -3405,15 +3404,28 @@ function saveTownScreenshot(){
   const mapActionsEl=mapTop?mapTop.querySelector(".mapActions"):null;
   const badgesEl=outer.querySelector(".mapBadges");
   const signWrap=$("#townSign")?$("#townSign").parentNode:null;
+  const compassEl=mapActionsEl?mapActionsEl.querySelector(".compass"):null;
   if(mapStatsEl){ const od=mapStatsEl.style.display; mapStatsEl.style.display="none"; undos.push(()=>{ mapStatsEl.style.display=od; }); }
   if(signWrap&&signWrap!==outer.firstChild) _mv(signWrap, outer, outer.firstChild);
   if(badgesEl&&mapTop) _mv(badgesEl, mapTop, mapActionsEl);
+  // 指南针移到标题右侧，去掉 N 文字
+  if(compassEl&&signWrap){
+    const compassOrig=compassEl.innerHTML;
+    signWrap.style.flexDirection="row";
+    signWrap.style.alignItems="center";
+    signWrap.style.justifyContent="center";
+    signWrap.style.gap="10px";
+    _mv(compassEl, signWrap, null);
+    compassEl.innerHTML="🧭";
+    compassEl.style.cssText="font-size:18px;line-height:1;margin:0;";
+    undos.push(()=>{ if(compassOrig) compassEl.innerHTML=compassOrig; });
+  }
   // 截图时路牌改为顶部纯文字标题（不加地标/路牌杆）
   const sign=$("#townSign");
   const signOrig=sign?sign.innerHTML:null;
   if(sign){
     const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
-    sign.innerHTML=`<div style="font-size:20px;font-weight:700;letter-spacing:1px;padding:4px 0;text-shadow:0 1px 3px rgba(0,0,0,.4);">${townName} · ${LANG==="en"?"Hand-Drawn Map":"手绘地图"}</div>`;
+    sign.innerHTML=`<div style="font-size:16px;font-weight:700;letter-spacing:1px;padding:2px 0;text-shadow:0 1px 3px rgba(0,0,0,.4);">${townName} · ${LANG==="en"?"Hand-Drawn Map":"手绘地图"}</div>`;
   }
   // 截图时建筑图标缩小（避免遮挡）
   const slotImgs=[...outer.querySelectorAll(".bldSlot img")];
@@ -4820,7 +4832,6 @@ function applyParkBg(){
   el.style.background=url?`url("${url}") center/cover no-repeat`:"url('assets/park-bg.png') center/cover no-repeat";
   const rb=$("#parkBgResetBtn"); if(rb) rb.style.display=url?"":"none";
 }
-$("#parkBgUploadBtn").addEventListener("click",()=>$("#parkBgFile").click());
 $("#parkBgFile").addEventListener("change",async e=>{
   const f=e.target.files[0]; e.target.value="";
   if(!f) return;
@@ -4837,12 +4848,12 @@ $("#parkBgFile").addEventListener("change",async e=>{
   reader.onerror=()=>toast("❌ 文件读取失败");
   reader.readAsDataURL(f);
 });
-$("#parkBgResetBtn").addEventListener("click",async ()=>{
+async function resetParkBg(){
   if(!confirm(t("settings.parkBgResetConfirm"))) return;
   await assetDelete("bg:park");
   applyParkBg();
   toast("↩️ 已恢复默认乐园背景");
-});
+}
 /* ============ 页面切换 ============ */
 let currentTab="craft";
 function switchTab(tab){
