@@ -90,7 +90,7 @@
     background:var(--panel2); border:1px solid var(--line); border-radius:10px;
     padding:8px 2px; text-align:center; cursor:grab; user-select:none;
     -webkit-user-select:none; -webkit-user-drag:none; -webkit-touch-callout:none;
-    touch-action:none; /* 告诉浏览器：这个元素的手势归游戏管，别拿来滚动/刷新 */
+    touch-action:pan-y; /* 允许垂直滚动，点击合成模式不再需要禁用触摸手势 */
     transition:transform .12s, box-shadow .12s;
   }
   .el *{pointer-events:none;}
