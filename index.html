@@ -419,6 +419,9 @@
   .shopBundleCard .bundleHead{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
   .shopBundleCard .bundleItems{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px;}
   .shopBundleCard .bundlePrice{font-size:13px;color:var(--gold);font-weight:700;}
+  .shopBundleCard .bundleFoot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);}
+  .shopBundleCard .bundlePlus{font-size:12px;color:var(--text);background:var(--accent);border-radius:8px;padding:2px 8px;font-weight:700;}
+  .shopBundleCard.disabled .bundlePlus{background:transparent;color:var(--dim);}
   .shopBundleCard.disabled{filter:grayscale(85%);opacity:.5;cursor:not-allowed;}
   .shopBundleCard.disabled:hover{border-color:var(--line);}
   .shopBundleLock{display:flex;flex-direction:column;align-items:center;gap:10px;padding:40px 10px;color:var(--dim);text-align:center;}
@@ -480,6 +483,7 @@
   }
   /* 截图模式：隐藏按钮，移动端2列排版 */
   .screenshot-mode .mapActions{display:none !important;}
+  .screenshot-mode .pencilMark{display:none !important;}
   .screenshot-mode .mapGrid{grid-template-columns:repeat(2,1fr) !important;}
   .screenshot-mode .mapGrid .tile{grid-area:auto !important;}
   .tile{
@@ -1161,14 +1165,14 @@ window.tierOf=tierOf; // 供控制台调试
 const BUY_RATE = 5; // 商店购买价 = 层级 × 5 金币
 
 const BUILDINGS = [
-  {id:"hut",  n:"小屋",  en:"Hut",  i:"🏠", cost:{brick:4, wood:2},                 income:2},
-  {id:"shop", n:"商铺",  en:"Shop", i:"🏪", cost:{brick:8, wood:4, coin:20},         income:6},
-  {id:"garden",n:"花园", en:"Garden",i:"🌸", cost:{flower:14, coin:10},               income:4},
-  {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:20, jade:4, flower:10, chest:2}, income:10},
-  {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:10, flower:4},          income:0},
-  {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:4, coin:20},              income:0},
-  {id:"factory",n:"工厂",en:"Factory",i:"🏭", cost:{brick:10, coin:100, chest:5},      income:10, regions:["factory"]},
-  {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:50, jade:20, coin:100, chest:4}, income:0, passive:"全镇产出+10%", passiveEn:"Town Output +10%"},
+  {id:"hut",  n:"小屋",  en:"Hut",  i:"🏠", cost:{brick:2, wood:1},                 income:2},
+  {id:"shop", n:"商铺",  en:"Shop", i:"🏪", cost:{brick:4, wood:2, coin:20},         income:6},
+  {id:"garden",n:"花园", en:"Garden",i:"🌸", cost:{flower:7, coin:10},               income:4},
+  {id:"manor",n:"豪宅",  en:"Manor",i:"🏯", cost:{brick:10, jade:2, flower:5, chest:1}, income:10},
+  {id:"hospital",n:"宠物医院",en:"Pet Hospital",i:"🏥", cost:{brick:5, flower:2},          income:0},
+  {id:"station",n:"宠物驿站",en:"Pet Station",i:"🛖", cost:{wood:2, coin:20},              income:0},
+  {id:"factory",n:"工厂",en:"Factory",i:"🏭", cost:{brick:5, coin:100, chest:3},      income:10, regions:["factory"]},
+  {id:"hall", n:"市政厅",en:"City Hall",i:"🏛️", cost:{brick:25, jade:10, coin:100, chest:2}, income:0, passive:"全镇产出+10%", passiveEn:"Town Output +10%"},
 ];
 const INCOME_INTERVAL = 10;   // 秒：金币产出周期
 const DECAY_INTERVAL = 300;   // 秒：饱食度 -10 / HP -1 周期
@@ -1178,18 +1182,18 @@ const OFFLINE_CAP = 1800;     // 秒：离线结算封顶 30 分钟（收入与�
 // 地图布局（3列×2行网格）：第1行山脚/林间/市中心，第2行郊外/河岸/工厂区
 const REGIONS = [
   {id:"hill",   n:"山脚",    en:"Foothill",   i:"⛰️", cm:1.0, im:1.0, area:"1/1/2/2",      bg:"#5f6b52", desc:"标准均衡", descEn:"Standard, balanced", plots:6,  land:10},
-  {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.5, im:2.0, area:"1/2/2/3",      bg:"#3e5c3a", desc:"产出略高", descEn:"Slightly higher output", plots:8,  land:80},
-  {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.5, im:3.0, area:"1/3/2/4",      bg:"#6e5a7e", desc:"最贵最高产", descEn:"Most expensive, highest output", plots:12, land:300},
-  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.5, im:1.0, area:"2/1/3/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:20},
-  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:2.0, im:2.5, area:"2/2/3/3",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:150},
-  {id:"factory",n:"工厂区",  en:"Factory",    i:"🏭", cm:1.0, im:3.5, area:"2/3/3/4",      bg:"#7a6a5a", desc:"高产出", descEn:"High output", plots:5, land:100, only:"factory"},
+  {id:"forest", n:"林间",    en:"Forest",     i:"🌲", cm:1.5, im:2.0, area:"1/2/2/3",      bg:"#3e5c3a", desc:"产出略高", descEn:"Slightly higher output", plots:8,  land:15},
+  {id:"center", n:"市中心",  en:"Downtown",   i:"🏙️", cm:2.5, im:3.0, area:"1/3/2/4",      bg:"#6e5a7e", desc:"最贵最高产", descEn:"Most expensive, highest output", plots:8, land:25},
+  {id:"plain",  n:"郊外平原",en:"Countryside",i:"🌾", cm:0.5, im:1.0, area:"2/1/3/2",      bg:"#8a7a4a", desc:"省钱低产", descEn:"Cheap, low output", plots:8,  land:5},
+  {id:"river",  n:"河岸",    en:"Riverside",  i:"🏞️", cm:2.0, im:2.5, area:"2/2/3/3",      bg:"#3a5f7a", desc:"贵但高产", descEn:"Expensive, high output", plots:8,  land:20},
+  {id:"factory",n:"工厂区",  en:"Factory",    i:"🏭", cm:1.0, im:3.5, area:"2/3/3/4",      bg:"#7a6a5a", desc:"高产出", descEn:"High output", plots:5, land:10, only:"factory"},
 ];
 // 可建造点坐标 [left%, top%, rotation°]，每个区域错落分布
 const BUILDABLE_POINTS = {
   plain:  [[74,54,5],[40,19,-5],[29,72,-2],[13,15,-3],[53,77,-5],[91,20,3],[9,69,-5],[61,15,2]],
   hill:   [[76,65,5],[36,48,4],[9,60,2],[63,17,5],[87,19,-5],[55,75,-5]],
   forest: [[68,56,5],[32,36,-4],[85,76,5],[15,24,5],[50,78,-5],[82,22,4],[50,24,-5],[18,76,-4]],
-  center: [[22,20,-3],[42,18,-3],[58,20,4],[78,18,-2],[24,50,5],[42,48,-3],[58,52,5],[76,50,5],[22,80,4],[42,82,3],[58,80,-5],[78,82,3]],
+  center: [[22,58,-3],[78,58,3],[14,72,-2],[42,72,-4],[58,72,4],[84,72,2],[30,84,0],[66,84,0]],
   river:  [[8,40,5],[26,40,-4],[44,40,4],[60,42,-3],[16,78,-5],[34,78,4],[76,44,3],[92,46,-4]],
   factory:[[12,86,3],[32,83,-2],[52,84,3],[72,87,-2],[90,85,3]],
 };
@@ -1810,8 +1814,53 @@ function load(){
       });
       s.plotsVersion=1;
     }
+    migratePlotSystem(s);
     return s;
   }catch(e){ return fresh(); }
+}
+// 地块迁移（本地加载 & 导入共用）：建数组 + 市中心12→8 + 地皮降价 landCost 记录
+function migratePlotSystem(s){
+  if(!s.plots) s.plots={};
+  REGIONS.forEach(r=>{ if(!Array.isArray(s.plots[r.id])) s.plots[r.id]=new Array(r.plots).fill(false); });
+  // 市中心 12→8（多余建筑转移到其他区域空置已购地；无空位则保留末尾但不再渲染）
+  if(Array.isArray(s.plots.center)&&s.plots.center.length>8){
+    const extra=s.plots.center.slice(8);
+    const keep=s.plots.center.slice(0,8);
+    const leftover=[];
+    extra.forEach((b,oi)=>{
+      if(b===null||b===false) return;
+      const oldKey="center_"+(8+oi);
+      let moved=false;
+      for(const rr of REGIONS){
+        if(rr.id==="center") continue;
+        const arr=s.plots[rr.id];
+        if(!Array.isArray(arr)) continue;
+        for(let j=0;j<arr.length;j++){
+          if(arr[j]===null){
+            if(rr.id==="plain"&&(j===0||j===1)) continue; // 跳过免费地
+            arr[j]=b;
+            if(s.buildingNames&&s.buildingNames[oldKey]){ s.buildingNames[rr.id+"_"+j]=s.buildingNames[oldKey]; delete s.buildingNames[oldKey]; }
+            if(s.landCost&&s.landCost[oldKey]){ s.landCost[rr.id+"_"+j]=s.landCost[oldKey]; delete s.landCost[oldKey]; }
+            moved=true; break;
+          }
+        }
+        if(moved) break;
+      }
+      if(!moved) leftover.push(b);
+    });
+    s.plots.center=keep.concat(leftover);
+  }
+  // 地皮降价迁移：已购地按"旧地皮价"记入 landCost，保护老玩家净资产（新购地按新低价）
+  if(!s.landCost) s.landCost={};
+  const OLD_LAND={plain:20,hill:10,forest:80,center:300,river:150,factory:100};
+  Object.entries(s.plots||{}).forEach(([rid,arr])=>{
+    const r=regionOf(rid);
+    arr.forEach((p,i)=>{
+      if(p===false) return;
+      if(rid==="plain"&&(i===0||i===1)) return; // 免费地不记地价
+      if(!s.landCost[rid+"_"+i]) s.landCost[rid+"_"+i]=OLD_LAND[rid]||r.land;
+    });
+  });
 }
 function save(){
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }
@@ -2272,7 +2321,7 @@ function netWorth(){
     plots.forEach((p,i)=>{
       if(p===false) return; // 未购买的地：不算
       const isFree=rid==="plain"&&(i===0||i===1); // 郊外前两块免费地（不管有没有建建筑都不算地价）
-      if(!isFree) v+=r.land; // 地皮（空地或建筑地块都算地价，免费地除外）
+      if(!isFree) v+=(S.landCost&&S.landCost[rid+"_"+i])||r.land; // 地皮：已购地按支付价，新地按现价；免费地除外
       if(p===null) return; // 空置已购地：只算地价
       const b=BUILDINGS.find(x=>x.id===p);
       if(!b) return;
@@ -2676,14 +2725,14 @@ const shopSellable = id => tierOf(id)<=SHOP_MAX_TIER && id!=="life" && !LEGENDAR
 /* ============ 套餐栏（建筑材料包） ============ */
 // 套餐 = 建造各建筑所需的完整元素材料（不含金币；金币是货币非元素）
 const BUNDLES = [
-  {id:"hut",      n:"小屋",   en:"Hut",        i:"🏠", items:{brick:4,  wood:2}},
-  {id:"shop",     n:"商铺",   en:"Shop",       i:"🏪", items:{brick:8,  wood:4}},
-  {id:"garden",   n:"花园",   en:"Garden",     i:"🌸", items:{flower:14}},
-  {id:"manor",    n:"豪宅",   en:"Manor",      i:"🏯", items:{brick:20, jade:4, flower:10, chest:2}},
-  {id:"hospital", n:"宠物医院",en:"Pet Hospital",i:"🏥", items:{brick:10, flower:4}},
-  {id:"station",  n:"宠物驿站",en:"Pet Station", i:"🛖", items:{wood:4}},
-  {id:"factory",  n:"工厂",   en:"Factory",    i:"🏭", items:{brick:10, chest:5}},
-  {id:"hall",     n:"市政厅", en:"City Hall",  i:"🏛️", items:{brick:50, jade:20, chest:4}},
+  {id:"hut",      n:"小屋",   en:"Hut",        i:"🏠", items:{brick:2,  wood:1}},
+  {id:"shop",     n:"商铺",   en:"Shop",       i:"🏪", items:{brick:4,  wood:2}},
+  {id:"garden",   n:"花园",   en:"Garden",     i:"🌸", items:{flower:7}},
+  {id:"manor",    n:"豪宅",   en:"Manor",      i:"🏯", items:{brick:10, jade:2, flower:5, chest:1}},
+  {id:"hospital", n:"宠物医院",en:"Pet Hospital",i:"🏥", items:{brick:5, flower:2}},
+  {id:"station",  n:"宠物驿站",en:"Pet Station", i:"🛖", items:{wood:2}},
+  {id:"factory",  n:"工厂",   en:"Factory",    i:"🏭", items:{brick:5, chest:3}},
+  {id:"hall",     n:"市政厅", en:"City Hall",  i:"🏛️", items:{brick:25, jade:10, chest:2}},
 ];
 // 套餐栏是否解锁：获得「元素之王」徽章
 function bundleUnlocked(){ return !!(S.badges && S.badges.elementMaster); }
@@ -2698,18 +2747,20 @@ function addBundle(b){
   const bld=BUILDINGS.find(x=>x.id===b.id);
   if(bld && !buildingUnlocked(bld)){ toast(buildingLockHintText(bld)); return; }
   if(!S.shopCart) S.shopCart={};
-  const max=batchMax()||5;
-  let added=0; const skipped=[];
+  if(!S.bundleQty) S.bundleQty={};
+  // 套餐份数上限：市政厅 1 份，其他 5 份
+  const max = b.id==="hall" ? 1 : 5;
+  const cur = S.bundleQty[b.id]||0;
+  if(cur>=max){ toast(LANG==="en"?`🛒 ${LANG==="en"?b.en:b.n}: max ${max} bundle(s)`:`🛒 ${LANG==="en"?b.en:b.n}套餐：最多${max}份`); return; }
+  const added=[]; const skipped=[];
   Object.entries(b.items).forEach(([id,n])=>{
     if(!shopCanBuy(id)){ skipped.push(LANG==="en"?`${elName(id)}: craft first`:`${elName(id)}需先合成`); return; }
-    const cur=S.shopCart[id]||0;
-    const add=Math.min(n, Math.max(0,max-cur));
-    if(add>0){ S.shopCart[id]=cur+add; added+=add; }
-    if(add<n) skipped.push(LANG==="en"?`${elName(id)} max ${max}`:`${elName(id)}达上限${max}`);
+    S.shopCart[id]=(S.shopCart[id]||0)+n; added.push(`${elName(id)}×${n}`);
   });
   const bname = LANG==="en"?b.en:b.n;
-  if(added>0){
-    toast(LANG==="en"?`🛒 ${bname} Bundle: +${added} materials${skipped.length?` (${skipped.join(", ")})`:""}`:`🛒 ${bname}套餐：加入${added}个材料${skipped.length?`（${skipped.join("，")}）`:""}`);
+  if(added.length>0){
+    S.bundleQty[b.id]=cur+1;
+    toast(LANG==="en"?`🛒 ${bname} ×${S.bundleQty[b.id]}: +${added.join(", ")}${skipped.length?` (${skipped.join("; ")})`:""}`:`🛒 ${bname}套餐 ×${S.bundleQty[b.id]}：+${added.join("，")}${skipped.length?`（${skipped.join("；")}）`:""}`);
   } else if(skipped.length){
     toast(skipped.join("；"));
   }
@@ -2948,10 +2999,12 @@ function renderElShop(){
         const bname=LANG==="en"?b.en:b.n;
         const itemsHtml=Object.entries(b.items).map(([id,n])=>`<span style="margin:0 3px;">${ELEMENTS[id].i}×${n}</span>`).join("");
         const hint = bld && !bldOk ? buildingLockHintText(bld) : (LANG==="en"?`One bundle = full materials for ${bname}`:`一份套餐=${bname}所需全部元素材料`);
+        const bqty=(S.bundleQty&&S.bundleQty[b.id])||0;
+        const bmax=b.id==="hall"?1:5;
         gridHtml+=`<div class="shopBundleCard${bldOk?"":" disabled"}" onclick="addBundle(BUNDLES.find(x=>x.id==='${b.id}'))" title="${hint}">
           <div class="bundleHead">${bld.i} ${bname}</div>
           <div class="bundleItems">${itemsHtml}</div>
-          <div class="bundlePrice">💰${price}</div>
+          <div class="bundleFoot"><span class="bundlePrice">💰${price}</span><span class="bundlePlus">＋ <b>${bqty}/${bmax}</b></span></div>
         </div>`;
       });
       gridHtml+=`</div>`;
@@ -3296,13 +3349,20 @@ function saveTownScreenshot(){
   if(!outer || typeof html2canvas==="undefined"){ toast(LANG==="en"?"📷 Image save not available":"📷 图片保存功能不可用"); return; }
   // 截图前取消选中状态，避免hint出现在截图中
   if(selectedPlot||moveMode||freeMove){ cancelSelection(); freeMove=null; }
+  // 截图前补上当前主题背景（避免 tile 间隙透明显灰）
+  const bgImg=getComputedStyle(document.body).backgroundImage;
+  const bgColor=getComputedStyle(document.body).backgroundColor;
+  const prevBg=outer.style.background;
+  if(bgImg&&bgImg!=="none") outer.style.background=`${bgColor} ${bgImg} center/cover no-repeat`;
+  else outer.style.background=bgColor;
   outer.classList.add("screenshot-mode");
   toast(LANG==="en"?"📷 Generating image...":"📷 正在生成图片...");
   // 等待浏览器重排后再截图
   requestAnimationFrame(()=>{
     setTimeout(()=>{
-      html2canvas(outer,{useCORS:true,backgroundColor:null,scale:2}).then(canvas=>{
+      html2canvas(outer,{useCORS:true,backgroundColor:bgColor,scale:2}).then(canvas=>{
         outer.classList.remove("screenshot-mode");
+        outer.style.background=prevBg;
         const link=document.createElement("a");
         link.download="town-map.png";
         link.href=canvas.toDataURL("image/png");
@@ -3310,6 +3370,7 @@ function saveTownScreenshot(){
         toast(LANG==="en"?"📥 Image saved!":"📥 图片已保存！");
       }).catch(err=>{
         outer.classList.remove("screenshot-mode");
+        outer.style.background=prevBg;
         toast(LANG==="en"?"❌ Save failed":"❌ 保存失败"); console.error(err);
       });
     },100);
@@ -3472,7 +3533,7 @@ function renderBuildingDetail(){
   const hallBonusVal=bid==="hall"?10:0;
   box.innerHTML=`
     <div class="bldDetailHeader">
-      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260904`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
+      <div class="bldDetailIcon"><img src="${assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260905`}" width="48" height="48" style="object-fit:contain" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></div>
       <div>
         <div class="bldDetailName">${customName}</div>
         <div class="bldDetailType">${bldName(b)} ${b.passive?`· ${LANG==="en"?b.passiveEn:b.passive}`:`· 💰+${Math.round(income)}/${INCOME_INTERVAL}s`}</div>
@@ -3704,13 +3765,13 @@ function buildingUnlocked(b){
 function buildingLockHint(b){
   const has=id=>(S.buildings[id]||0)>0;
   const _lockIconStyle="width:16px;height:16px;vertical-align:middle;object-fit:contain;background:transparent;";
-  const hutImg=`<img src="assets/buildings/hut.png?v=20260904" style="${_lockIconStyle}">`;
-  const shopImg=`<img src="assets/buildings/shop.png?v=20260904" style="${_lockIconStyle}">`;
-  const gardenImg=`<img src="assets/buildings/garden.png?v=20260904" style="${_lockIconStyle}">`;
-  const manorImg=`<img src="assets/buildings/manor.png?v=20260904" style="${_lockIconStyle}">`;
-  const stationImg=`<img src="assets/buildings/station.png?v=20260904" style="${_lockIconStyle}">`;
-  const hospitalImg=`<img src="assets/buildings/hospital.png?v=20260904" style="${_lockIconStyle}">`;
-  const factoryImg=`<img src="assets/buildings/factory.png?v=20260904" style="${_lockIconStyle}">`;
+  const hutImg=`<img src="assets/buildings/hut.png?v=20260905" style="${_lockIconStyle}">`;
+  const shopImg=`<img src="assets/buildings/shop.png?v=20260905" style="${_lockIconStyle}">`;
+  const gardenImg=`<img src="assets/buildings/garden.png?v=20260905" style="${_lockIconStyle}">`;
+  const manorImg=`<img src="assets/buildings/manor.png?v=20260905" style="${_lockIconStyle}">`;
+  const stationImg=`<img src="assets/buildings/station.png?v=20260905" style="${_lockIconStyle}">`;
+  const hospitalImg=`<img src="assets/buildings/hospital.png?v=20260905" style="${_lockIconStyle}">`;
+  const factoryImg=`<img src="assets/buildings/factory.png?v=20260905" style="${_lockIconStyle}">`;
   if(b.id==="garden"||b.id==="manor") return LANG==="en"?`Need ${hutImg}Hut + ${shopImg}Shop`:`需要${hutImg}小屋+${shopImg}商店`;
   if(b.id==="station"||b.id==="hospital") return LANG==="en"?`Need ${hutImg}Hut or ${shopImg}Shop`:`需要${hutImg}小屋或${shopImg}商店`;
   if(b.id==="factory") return LANG==="en"?`Need ${hutImg}Hut + ${shopImg}Shop`:`需要${hutImg}小屋+${shopImg}商店`;
@@ -4602,6 +4663,7 @@ $("#importFile").addEventListener("change", async e=>{
     // 导入后校验+重建：确保plots/buildings一致，关键字段存在
     if(!S.plots) S.plots={};
     REGIONS.forEach(r=>{ if(!Array.isArray(S.plots[r.id])) S.plots[r.id]=new Array(r.plots).fill(false); });
+    migratePlotSystem(S);
     if(!S.petList) S.petList=[];
     if(!S.food) S.food={};
     if(!S.lifePool) S.lifePool=[];
@@ -4614,6 +4676,7 @@ $("#importFile").addEventListener("change", async e=>{
     if(!S.buildingNames) S.buildingNames={};
     if(typeof S._pandaSlotWarned!=="boolean") S._pandaSlotWarned=false;
     if(!S.shopCart) S.shopCart={};
+    if(!S.bundleQty) S.bundleQty={};
     applyTheme(); clearSlots(); renderAll(); save();
     checkPandaReward(); // 老用户兼容：导入后检查是否满足熊猫保底
     $("#settingsOverlay").classList.remove("show");
@@ -4705,7 +4768,7 @@ function renderMap(){
   });
   const bc={};
   Object.values(S.plots).flat().forEach(p=>{if(p&&p!==null)bc[p]=(bc[p]||0)+1;});
-  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260904`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
+  const badges=Object.entries(bc).map(([bid,n])=>{const b=BUILDINGS.find(x=>x.id===bid);const bldUrl=assetCache.get("buildings:"+bid)||`assets/buildings/${bid}.png?v=20260905`;return `<span class="mapBadge"><img src="${bldUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;background:transparent;" onerror="this.outerHTML='${b?b.i:"❓"}'" alt="${b?b.n:""}"><b>${n}</b></span>`;}).join("")||`<span style="font-size:11px;color:var(--dim)">${t("town.noBuildings")}</span>`;
   let hint="";
   if(freeMove) hint=`<div style="background:#54d9ff22;border:1px solid #54d9ff;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#9fe8ff;">${t("town.freeMoveHint")} <button onclick="cancelFreeMove()" style="background:none;border:none;color:#54d9ff;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
   else if(moveMode) hint=`<div style="background:#4cd97b22;border:1px solid #4cd97b;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;">${t("town.moveMode")} <button onclick="cancelSelection()" style="background:none;border:none;color:#4cd97b;cursor:pointer;text-decoration:underline;font-size:12px;">${t("town.cancel")}</button></div>`;
@@ -4752,9 +4815,9 @@ function renderMap(){
     const bldSize=Math.round((r.plots<=6?42:r.plots<=8?38:32)*(_mobMap?1.5:2));
     const emojiPx=Math.round(bldSize*0.7);
     const points=BUILDABLE_POINTS[r.id]||[];
-    // 构建建筑槽
+    // 构建建筑槽（只渲染 r.plots 个；兼容 center 从 12 降到 8 的旧档）
     let slotsHtml="";
-    plots.forEach((p,i)=>{
+    plots.slice(0,r.plots).forEach((p,i)=>{
       const pos=bldDisplayPos(r.id,i);
       const left=pos.x, top=pos.y, rot=pos.rot||0;
       const sel=selectedPlot&&selectedPlot.region===r.id&&selectedPlot.index===i;
@@ -4771,7 +4834,7 @@ function renderMap(){
         const b=BUILDINGS.find(x=>x.id===p);
         const key=r.id+"_"+i;
         tip=b?((S.buildingNames&&S.buildingNames[key])||bldName(b)):"";
-        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260904`;
+        const bldUrl=assetCache.get("buildings:"+p)||`assets/buildings/${p}.png?v=20260905`;
         const em=b?b.i:"❓";
         inner=`<img src="${bldUrl}" width="${bldSize}" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));transform:rotate(${rot}deg)" onerror="bldImgError(this,'${em}',${emojiPx})" alt="${b?b.n:''}">`;
       }
@@ -4784,7 +4847,7 @@ function renderMap(){
     const regionDisplayName=(S.regionNames&&S.regionNames[r.id])||regName(r);
     const allBought=plots.every(p=>p!==false);
     const costLabel=LANG==="en"?`Cost×${r.cm} Out×${r.im} 💰${r.land}`:`成本×${r.cm} 产出×${r.im} 地价💰${r.land}`;
-    tile.innerHTML=`<div class="tileHd"><span class="rn regionNameLabel" data-region="${r.id}" style="${allBought?'cursor:pointer;':''}" title="${allBought?t("town.nameRegion"):t("town.regionLocked")}">${r.i} ${regionDisplayName}${allBought?' ✏️':''}</span></div>
+    tile.innerHTML=`<div class="tileHd"><span class="rn regionNameLabel" data-region="${r.id}" style="${allBought?'cursor:pointer;':''}" title="${allBought?t("town.nameRegion"):t("town.regionLocked")}">${r.i} ${regionDisplayName}${allBought?' <span class="pencilMark">✏️</span>':''}</span></div>
 <div class="mapCanvas" style="background-image:url(${ti||defaultBg})">${decoHtml}${slotsHtml}</div>
 <div class="tileFt"><span class="rm">${costLabel}</span><span class="bcnt">🏗️ ${bc2}/${r.plots}</span></div>`;
     tile.querySelectorAll("[data-r]").forEach(cell=>{
@@ -4935,7 +4998,7 @@ function renderShop(){
       : `🔒 ${buildingLockHint(b)}`}</div>`;
     const placeLockNote=!placeOk?`<div class="buildLockNote">${placeNote}</div>`:"";
     const hallNote=hallFull?`<span style="color:var(--dim);font-size:11px">${LANG==="en"?"(Max 2 City Halls)":"(最多2个市政厅)"}</span>`:b.id==="hall"&&(S.buildings.hall||0)===1?`<span style="color:var(--gold);font-size:11px">${LANG==="en"?"(2nd: ×1.5 cost)":"(第二个成本×1.5)"}</span>`:"";
-    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260904`;
+    const bldImg=assetCache.get("buildings:"+b.id)||`assets/buildings/${b.id}.png?v=20260905`;
     div.innerHTML=`<div class="top"><span class="ico"><img src="${bldImg}" width="32" height="32" style="object-fit:contain;vertical-align:middle" onerror="this.outerHTML='${b.i}'" alt="${b.n}"></span><span class="nm">${bldName(b)}</span><span class="built">${t("town.built",built)} · ${b.passive?`🏛️ ${LANG==="en"?b.passiveEn:b.passive}`:`💰+${Math.round(incPer)}/${INCOME_INTERVAL}s`}</span>${hallNote}</div>${lockNote}${placeLockNote}<div class="cost">${costHtml}</div><button class="buildBtn" ${canBuild?"":"disabled"}>${t("town.buildBtn")}</button>`;
     div.querySelector(".buildBtn").addEventListener("click",()=>build(b,cost));
     box.appendChild(div);
@@ -5005,6 +5068,8 @@ function buyPlot(region,index){
   if(!plots||plots[index]!==false) return;
   if(S.coin<r.land){ toast(t("town.buyLandNeed",r.land)); return; }
   S.coin-=r.land; plots[index]=null;
+  if(!S.landCost) S.landCost={};
+  S.landCost[region+"_"+index]=r.land; // 记录实际支付地价（净资产按此计）
   toast(t("town.boughtLand",r.i,regName(r),r.land));
   renderAll(); save();
 }
