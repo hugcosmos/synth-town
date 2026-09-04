@@ -489,9 +489,9 @@
   .screenshot-mode .mapActions .compass{display:inline-flex !important;}
   .screenshot-mode .mapTopRow{flex-direction:row !important; align-items:center; justify-content:space-between;}
   .screenshot-mode .mapStats{display:none !important;}
-  .screenshot-mode .mapBadges{margin:0; display:grid; grid-template-columns:repeat(4,auto); justify-content:center; align-content:center; gap:2px 6px; align-items:center; max-width:64%;}
-  .screenshot-mode .mapBadge img{width:13px !important; height:13px !important;}
-  .screenshot-mode .mapBadge b{font-size:8px !important; font-weight:600; color:#fff !important;}
+  .screenshot-mode .mapBadges{margin:6px 0 10px; display:grid; grid-template-columns:repeat(4,1fr); justify-content:stretch; align-content:center; gap:4px 8px; align-items:center; max-width:100%;}
+  .screenshot-mode .mapBadge img{width:14px !important; height:14px !important;}
+  .screenshot-mode .mapBadge b{font-size:10px !important; font-weight:600; color:#fff !important; white-space:nowrap;}
   .screenshot-mode .mapBadge{color:#fff !important;}
   .screenshot-mode .tile .rn{font-size:11px !important; color:#fff !important; text-shadow:0 1px 3px rgba(0,0,0,.7) !important;}
   .screenshot-mode .tile .rn .rainbowText{color:#fff !important; background:none !important; -webkit-background-clip:initial !important; background-clip:initial !important;}
@@ -3583,7 +3583,7 @@ function saveTownScreenshot(){
   const compassEl=mapActionsEl?mapActionsEl.querySelector(".compass"):null;
   if(mapStatsEl){ const od=mapStatsEl.style.display; mapStatsEl.style.display="none"; undos.push(()=>{ mapStatsEl.style.display=od; }); }
   if(signWrap&&signWrap!==outer.firstChild) _mv(signWrap, outer, outer.firstChild);
-  if(badgesEl&&mapTop) _mv(badgesEl, mapTop, mapActionsEl);
+  // badges 保持在原位(标题下方单独一行),全宽4列确保长名称一行展示
   // 截图时徽章显示 图标+类别名（两行小字）；正常展示为 图标+个数
   if(badgesEl){
     [...badgesEl.querySelectorAll(".mapBadge")].forEach(m=>{
