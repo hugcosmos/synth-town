@@ -3614,7 +3614,7 @@ function openBadgeDetail(id){
   $("#badgeDetailImg").src=b.img;
   $("#badgeDetailName").textContent=LANG==="en"?b.en:b.name;
   $("#badgeDetailDesc").textContent=LANG==="en"?b.descEn:b.descZh;
-  $("#badgeDetailOverlay").classList.add("show");
+  const _bdo=$("#badgeDetailOverlay"); _bdo.style.display=""; _bdo.classList.add("show");
 }
 function closeBadgeDetail(){ $("#badgeDetailOverlay").classList.remove("show"); _currentBadgeId=null; }
 function downloadBadge(){
@@ -3672,7 +3672,7 @@ function _showNextBadge(){
   $("#badgeUnlockText").textContent=(LANG==="en"?"🏆 Unlocked: ":"🏆 解锁成就：")+(LANG==="en"?b.en:b.name);
   $("#badgeUnlockDesc").textContent=LANG==="en"?b.descEn:b.descZh;
   $("#badgeUnlockHint").textContent=LANG==="en"?"Tap anywhere to continue":"点击任意位置继续";
-  ov.classList.add("show");
+  ov.style.display=""; ov.classList.add("show");
   // 清理旧粒子
   ov.querySelectorAll(".badgeParticle").forEach(p=>p.remove());
   // 金光粒子
@@ -3803,7 +3803,7 @@ let _bldDetailRegion=null,_bldDetailIndex=null;
 function openBuildingDetail(region,index){
   _bldDetailRegion=region; _bldDetailIndex=index;
   renderBuildingDetail();
-  $("#buildingDetailOverlay").classList.add("show");
+  const _bldo=$("#buildingDetailOverlay"); _bldo.style.display=""; _bldo.classList.add("show");
 }
 function closeBuildingDetail(){ $("#buildingDetailOverlay").classList.remove("show"); _bldDetailRegion=null; _bldDetailIndex=null; }
 function renderBuildingDetail(){
@@ -4411,7 +4411,7 @@ function renamePet(idx){
   if(name&&name.trim()){ p.name=name.trim().slice(0,15); toast(t("pet.renamed",p.name)); renderAll(); if(selectedPetIdx!==null) renderPetDetail(); save(); }
 }
 let selectedPetIdx=null;
-function openPetDetail(idx){ selectedPetIdx=idx; renderPetDetail(); $("#petDetailOverlay").classList.add("show"); }
+function openPetDetail(idx){ selectedPetIdx=idx; renderPetDetail(); const _pdo=$("#petDetailOverlay"); _pdo.style.display=""; _pdo.classList.add("show"); }
 function closePetDetail(){ $("#petDetailOverlay").classList.remove("show"); selectedPetIdx=null; }
 function renderPetDetail(){
   const p=S.petList[selectedPetIdx]; if(!p) return;
@@ -5670,7 +5670,7 @@ function showOfflineEarnings(elapsed, earn){
   $("#offlineTitle").textContent=LANG==="en"?"Offline Earnings":"离线收益";
   $("#offlineDuration").textContent=(LANG==="en"?"Away for ":"离开")+timeStr;
   $("#offlineAmount").textContent=`+💰${earn}`;
-  ov.classList.add("show");
+  ov.style.display=""; ov.classList.add("show");
 }
 $("#offlineClaimBtn").addEventListener("click",()=>{
   const ov=$("#offlineOverlay"); if(ov) ov.classList.remove("show");
@@ -5689,7 +5689,7 @@ function doReset(){
     if(npcBtn){ npcBtn.style.left=""; npcBtn.style.top=""; npcBtn.style.right=""; npcBtn.style.bottom=""; }
     S=fresh(); clearSlots();
     // 关闭所有overlay：移除show类 + 设置内联display:none（确保关闭；打开时会先清除内联样式）
-    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay","npcChatOverlay","mysteryOverlay","offlineOverlay"].forEach(id=>{
+    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","npcChatOverlay","mysteryOverlay","offlineOverlay"].forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
@@ -6243,7 +6243,7 @@ function showDraw(){
   ov.style.opacity="1";
   // 强制关闭所有其他overlay，确保抽奖页面显示时没有其他弹窗覆盖
   try{
-    ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
+    ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","npcChatOverlay","mysteryOverlay","offlineOverlay"].forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
