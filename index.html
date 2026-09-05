@@ -3374,14 +3374,16 @@ function showMysteryCert(){
   $("#mysteryFormBox").style.display="none";
   $("#mysteryCertBox").style.display="";
   const bldTypes=Object.keys(S.buildings||{}).filter(id=>(S.buildings[id]||0)>0).length;
+  const bldTotal=Object.values(S.buildings||{}).reduce((a,b)=>a+(b||0),0);
+  const petTotal=(S.petList||[]).length;
   const perMin=Math.round(townTotalOut()*6);
   const townName=S.townName||(LANG==="en"?"My Town":"我的小镇");
   const d=new Date(g.date);
   const dateStr=LANG==="en"?d.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}):`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
   $("#mysteryCertSub").textContent=LANG==="en"?"Honorary Mayor · 终身荣誉镇长":"终身荣誉镇长 · HONORARY MAYOR";
   $("#mysteryCertBody").innerHTML=LANG==="en"
-    ?`<p>Dear <b>${g.name}</b>,</p><p>Thank you for your dedication! Your town now has <b>${bldTypes}</b> building types, earning <b>${perMin}</b> coins per minute, and all animals are living happily.</p><p>You are hereby appointed as the <b>Honorary Mayor for Life</b> of <b>${townName}</b>.</p>`
-    :`<p>尊敬的 <b>${g.name}</b>：</p><p>感谢你的辛勤付出！小镇目前已有 <b>${bldTypes}</b> 种建筑物类别，每分钟可赚取 <b>${perMin}</b> 金币，动物们生活得都很开心。</p><p>特此聘请你为 <b>${townName}</b> 的终身荣誉镇长。</p>`;
+    ?`<p>Dear <b>${g.name}</b>,</p><p>Thank you for your dedication! Your town now has <b>${bldTotal}</b> buildings and <b>${petTotal}</b> animals, earning <b>${perMin}</b> coins per minute, and all animals are living happily.</p><p>You are hereby appointed as the <b>Honorary Mayor for Life</b> of <b>${townName}</b>.</p>`
+    :`<p>尊敬的 <b>${g.name}</b>：</p><p>感谢你的辛勤付出！小镇目前已有 <b>${bldTotal}</b> 座建筑、<b>${petTotal}</b> 只动物，每分钟可赚取 <b>${perMin}</b> 金币，动物们生活得都很开心。</p><p>特此聘请你为 <b>${townName}</b> 的终身荣誉镇长。</p>`;
   $("#mysteryCertDate").textContent=LANG==="en"?`Issued: ${dateStr}`:`签发日期：${dateStr}`;
   $("#mysteryCertTitle").textContent=t("cert.title");
   // 双钢印：众议院 / 参议院（图片印章底 + 文字叠加）
