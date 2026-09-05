@@ -5621,6 +5621,7 @@ const SPRITE_KEYWORDS = [
   { k:["亲密度","intimacy","好感","头像"], zh:"喂食🍖和互动❤️提升亲密度，亲密度满级（100）解锁宠物自定义头像，给你的宠物拍张照吧~", en:"Feed 🍖 and play ❤️ to raise intimacy. Max intimacy (100) unlocks custom pet avatars, take a photo of your pet!" },
   { k:["置换","卖","trade","exchange","回收"], zh:"♻️置换商店可以把3级以上元素8折卖成金币，多余宠物也能置换金币~", en:"♻️Exchange shop sells Lv.3+ elements for 80% coins, extra pets can also be traded for coins~" },
   { k:["配方","recipe","合成表","怎么合"], zh:"📖打开右上角配方书，输入密码解锁传奇元素配方（魔法水晶/万能药/彩虹）！基础配方合成过就自动显示~", en:"📖Open the Recipe Book top-right, enter passwords to unlock legendary recipes (Magic Crystal/Elixir/Rainbow)! Basic recipes auto-show once crafted~" },
+  { k:["密码","password","暗号","密码是什么","解锁密码"], zh:"🔐配方密码需要去小红书找作者询问哦～搜索作者 @hug_cosmos，私信或评论区获取密码！", en:"🔐Recipe passwords can be obtained from the author on Xiaohongshu~ Search for @hug_cosmos, DM or comment to get the password!" },
   { k:["徽章","成就","badge","achievement"], zh:"🏆徽章有：元素之王（集齐所有元素）、动物大王（集齐6种宠物）、地产大亨（所有地皮建成）、万元户（资产1万）、百万富翁（资产100万）~", en:"🏆Badges: Element Master (all elements), Animal King (6 pet species), Real Estate Tycoon (all plots built), Ten-Thousandaire (10k net worth), Millionaire (1M net worth)~" },
   { k:["地图","map","全景","地皮"], zh:"🗺️建成任意2个建筑解锁小镇全景图！地皮买全的区域可以自由拖拽摆放建筑位置~", en:"🗺️Build any 2 buildings to unlock the town panorama! Regions with all plots bought can freely drag and arrange building positions~" },
   { k:["套餐","bundle","一键购买"], zh:"📦建筑套餐栏需要元素之王徽章解锁，一键购买任意建筑所需全部材料，省得一个个买~", en:"📦Building Bundle tab unlocks with the Element Master badge. Buy all materials for any building in one click, no need to buy one by one~" },
@@ -5939,7 +5940,7 @@ function npcHint(){
   const icon=currentNPC==="elder"?"🧙‍♂️":"🧚";
   toast(`${icon}「${line}」`,5200);
 }
-/* NPC 点击：长老讲故事 / 小精灵智能提示 */
+/* NPC 点击：长老讲故事 / 小精灵打开对话面板 */
 $("#npcBtn").addEventListener("click", function(){
   if(currentNPC==="elder"){
     const pool=ELDER_STORIES[LANG]||ELDER_STORIES.zh;
@@ -5948,7 +5949,7 @@ $("#npcBtn").addEventListener("click", function(){
     _lastNpcHint=line;
     toast(`🧙‍♂️「${line}」`,6500);
   }else{
-    npcHint();
+    openNpcChat();
   }
 });
 
@@ -6018,8 +6019,8 @@ function sendNpcChat(){
   }
   if(!reply){
     reply=replyLang==="en"
-      ?"Hmm, I don't quite understand that... Try asking about coins, panda, life, buildings, factory, pets, recipes, badges, or click the quick keywords below~"
-      :"嗯...这个我不太懂呢...试试问金币、熊猫、生命、建筑、工厂、宠物、配方、徽章，或者点下面的快捷关键词~";
+      ?"Hmm, I don't quite understand that~ Please enter a keyword to ask, e.g. coins, panda, life, buildings, factory, pets, recipes, badges, password, sick, etc. You can also click the quick keywords below~"
+      :"嗯...这个我不太懂呢～请输入关键词提问，比如：金币、熊猫、生命、建筑、工厂、宠物、配方、徽章、密码、生病等，也可以点下面的快捷关键词哦～";
   }
   // 小精灵回复（延迟一点更自然）
   setTimeout(()=>{
