@@ -112,8 +112,8 @@
   .slot .lbl{font-size:11px; color:var(--dim); margin-top:4px; text-align:center; width:100%;}
   .slot.hover{border-color:var(--gold); background:var(--panel2);}
   .plus-sign{font-size:30px; color:var(--dim);}
-  .elementTabs{display:flex; overflow-x:auto; white-space:nowrap; gap:4px; margin-bottom:8px; padding-bottom:4px;}
-  .elementTab{padding:4px 10px; font-size:12px; border-radius:6px; cursor:pointer; border:1px solid var(--line); background:transparent; color:var(--dim); white-space:nowrap; flex-shrink:0;}
+  .elementTabs{display:flex; overflow-x:auto; white-space:nowrap; gap:3px; margin-bottom:8px; padding-bottom:4px;}
+  .elementTab{padding:3px 7px; font-size:10px; border-radius:6px; cursor:pointer; border:1px solid var(--line); background:transparent; color:var(--dim); white-space:nowrap; flex-shrink:0;}
   .elementTab.active{background:var(--gold); color:#1a1530; border-color:var(--gold); font-weight:700;}
   .elementTab.locked{opacity:.6;}
   .legendInfoCard{cursor:pointer;}
@@ -1819,7 +1819,7 @@ function updateChatPanelLang(){
   // 重新生成快捷关键词按钮
   const quick=$("#npcChatQuick");
   if(quick){
-    const keywords=LANG==="en"?["coins","panda","life","recipe","badge","factory","sick","crystal"]:["金币","熊猫","生命","配方","徽章","工厂","生病","魔法水晶"];
+    const keywords=LANG==="en"?["coins","panda","life","recipe","badge","factory","sick","crystal","elixir","rainbow","buildings","pets","trade","password"]:["金币","熊猫","生命","配方","徽章","工厂","生病","魔法水晶","万能药","彩虹","建筑","宠物","置换","密码"];
     quick.innerHTML=keywords.map(k=>`<button onclick="document.getElementById('npcChatInput').value='${k}';sendNpcChat();" style="background:var(--panel2);border:1px solid var(--line);color:var(--dim);border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;">${k}</button>`).join("");
   }
 }
@@ -6051,7 +6051,7 @@ function openNpcChat(){
   ov.style.display="flex";
   // 快捷关键词按钮
   const quick=$("#npcChatQuick");
-  const keywords=LANG==="en"?["coins","panda","life","recipe","badge","factory","sick","crystal"]:["金币","熊猫","生命","配方","徽章","工厂","生病","魔法水晶"];
+  const keywords=LANG==="en"?["coins","panda","life","recipe","badge","factory","sick","crystal","elixir","rainbow","buildings","pets","trade","password"]:["金币","熊猫","生命","配方","徽章","工厂","生病","魔法水晶","万能药","彩虹","建筑","宠物","置换","密码"];
   quick.innerHTML=keywords.map(k=>`<button onclick="document.getElementById('npcChatInput').value='${k}';sendNpcChat();" style="background:var(--panel2);border:1px solid var(--line);color:var(--dim);border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;">${k}</button>`).join("");
   // 欢迎语
   $("#npcChatWelcome").textContent=LANG==="en"
@@ -6106,12 +6106,24 @@ document.addEventListener("keydown", function(e){
 /* ============ NPC按钮可拖拽移动 ============ */
 (function(){
   const btn=$("#npcBtn");
+  const chatBtn=$("#npcChatBtn");
   const POS_KEY="synth-town-npc-pos";
+  // 同步对话按钮位置到NPC右上方
+  function syncChatBtnPos(){
+    if(!chatBtn||chatBtn.style.display==="none") return;
+    const rect=btn.getBoundingClientRect();
+    chatBtn.style.left=(rect.left+44)+"px";
+    chatBtn.style.top=(rect.top-4)+"px";
+    chatBtn.style.right="auto";
+    chatBtn.style.bottom="auto";
+  }
   // 恢复位置
   try{
     const pos=JSON.parse(localStorage.getItem(POS_KEY));
     if(pos&&pos.x&&pos.y){ btn.style.left=pos.x+"px"; btn.style.top=pos.y+"px"; btn.style.right="auto"; btn.style.bottom="auto"; }
   }catch(e){}
+  // 初始同步对话按钮位置
+  setTimeout(syncChatBtnPos, 100);
   let dragging=false, moved=false, startX=0, startY=0, origX=0, origY=0;
   btn.addEventListener("pointerdown", e=>{
     dragging=true; moved=false;
@@ -6130,6 +6142,7 @@ document.addEventListener("keydown", function(e){
       const ny=Math.max(4,Math.min(window.innerHeight-60,origY+dy));
       btn.style.left=nx+"px"; btn.style.top=ny+"px";
       btn.style.right="auto"; btn.style.bottom="auto";
+      syncChatBtnPos();
     }
   });
   btn.addEventListener("pointerup", e=>{
@@ -6140,8 +6153,11 @@ document.addEventListener("keydown", function(e){
     if(moved){
       const rect=btn.getBoundingClientRect();
       localStorage.setItem(POS_KEY,JSON.stringify({x:rect.left,y:rect.top}));
+      syncChatBtnPos();
     }
   });
+  // 窗口大小变化时同步对话按钮位置
+  window.addEventListener("resize", syncChatBtnPos);
   // 拖拽时阻止click触发npcHint
   btn.addEventListener("click", e=>{ if(moved){ e.stopImmediatePropagation(); moved=false; } }, true);
 })();
