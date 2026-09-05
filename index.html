@@ -2737,7 +2737,7 @@ $("#craftBtn").addEventListener("click", ()=>{
         S.unlocked[inp.id]=Math.max(0,(S.unlocked[inp.id]||0)-1);
       }
     });
-    if(out==="coin"){S.coin+=5;coinGain+=5;S.coinVisited=true;}
+    if(out==="coin"){S.coin+=25;coinGain+=25;S.coinVisited=true;}
     else if(out==="chest"){S.chest+=1;S.coin+=10;chestGain++;S.chestVisited=true;}
     else if(out==="life"){
       S.unlocked.life=(S.unlocked.life||0)+1;
