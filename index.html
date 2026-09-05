@@ -2016,11 +2016,11 @@ window.onerror = function(msg, url, line, col, err){
 function bindCriticalButtons(){
   // 1. 配方按钮
   try{
-    $("#recipeBtn").onclick = ()=>{ renderRecipeBook(); $("#recipeOverlay").classList.add("show"); };
+    $("#recipeBtn").onclick = ()=>{ renderRecipeBook(); const ov=$("#recipeOverlay"); ov.style.display=""; ov.classList.add("show"); };
   }catch(e){ console.error("bind recipeBtn error:",e); }
   // 2. 设置按钮
   try{
-    $("#settingsBtn").onclick = ()=>{ renderThemeChips(); $("#settingsOverlay").classList.add("show"); };
+    $("#settingsBtn").onclick = ()=>{ renderThemeChips(); const ov=$("#settingsOverlay"); ov.style.display=""; ov.classList.add("show"); };
   }catch(e){ console.error("bind settingsBtn error:",e); }
   // 3. 重置按钮
   try{
@@ -5688,14 +5688,14 @@ function doReset(){
     const npcBtn=$("#npcBtn");
     if(npcBtn){ npcBtn.style.left=""; npcBtn.style.top=""; npcBtn.style.right=""; npcBtn.style.bottom=""; }
     S=fresh(); clearSlots();
-    // 关闭所有overlay：移除show类 + 清除内联display样式（防止内联样式覆盖.show类导致后续打不开）
+    // 关闭所有overlay：移除show类 + 设置内联display:none（确保关闭；打开时会先清除内联样式）
     ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay","npcChatOverlay","mysteryOverlay","offlineOverlay"].forEach(id=>{
       const el=document.getElementById(id);
-      if(el){ el.classList.remove("show"); el.style.display=""; }
+      if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
-    // 强制关闭所有内联style显示的overlay（清除内联样式，让默认CSS生效）
+    // 强制关闭所有内联style显示的overlay
     document.querySelectorAll('[style*="display:flex"][style*="position:fixed"], [style*="display:block"][style*="position:fixed"]').forEach(el=>{
-      if(el.id!=="introOverlay"){ el.style.display=""; }
+      if(el.id!=="introOverlay"){ el.style.display="none"; }
     });
     // 先显示欢迎界面，再渲染（防止renderAll抛异常导致欢迎页不显示）
     $("#introOverlay").classList.add("show");
@@ -6241,11 +6241,11 @@ function showDraw(){
   ov.style.display="flex";
   ov.style.visibility="visible";
   ov.style.opacity="1";
-  // 强制关闭所有其他overlay，确保抽奖页面显示时没有其他弹窗覆盖（清除内联样式，防止覆盖.show类）
+  // 强制关闭所有其他overlay，确保抽奖页面显示时没有其他弹窗覆盖
   try{
     ["settingsOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
       const el=document.getElementById(id);
-      if(el){ el.classList.remove("show"); el.style.display=""; }
+      if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
   }catch(e){ console.error("close overlays error:",e); }
   const cards=$("#drawCards");
