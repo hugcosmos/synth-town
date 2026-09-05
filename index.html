@@ -1123,7 +1123,7 @@
 
 <div id="introOverlay">
   <div style="display:flex;align-items:center;gap:20px;">
-    <div class="npc">🧙‍♂️</div>
+    <div class="npc" id="introNpcAvatar">🧙‍♂️</div>
     <button id="introLangBtn" style="background:none;border:1px solid var(--line);color:var(--dim);border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;">🌐 EN</button>
   </div>
   <div class="bubble" id="introBubble">
@@ -1452,8 +1452,9 @@ const I18N = {
     "npc.chestHint":"宝箱：🔩金属+🔩金属合成，豪宅/市政厅的建造材料",
     "reset.confirm":"确定重置全部进度吗？不可恢复。",
     "craft.usedUp":"{0} 已用完，再去合成一些吧",
-    "craft.invalid":"❌ 无效组合，换个思路试试",
+    "craft.invalid":"❌ 无效组合。支持2个或3个元素合成：3个元素时，先合成前两个，再用结果和第三个合成（如：土+水+火 = 泥土+火 = 砖）",
     "craft.legendOrder":"⚠️ 传说元素有固定配方顺序，请按配方书顺序放置（如彩虹：水+气+火）",
+    "craft.hoverHint":"支持2个或3个元素合成。3个元素时：先合成前两个，再用结果和第三个合成（如：土+水+火=砖）",
     "craft.notEnough":"{0} 或 {1} 数量不够",
     "craft.newElement":"🎉 发现新元素：{0} {1}",
     "craft.newBadge":"🎉 新元素！",
@@ -1571,7 +1572,7 @@ const I18N = {
     "save.migrateToast":"📥 旧版存档已迁移到 v{0}，继续冒险！",
     "save.importToast":"📥 副本已导入，继续冒险！",
     "save.importFail":"❌ 导入失败：",
-    "save.oldVersion":"检测到旧版本存档，导入后将自动迁移到 v",    "save.importConfirm":"导入存档（v{0}{1}）将覆盖当前进度，确定？{2}",
+    "save.oldVersion":"检测到旧版本存档，导入后将自动迁移到 v",    "save.importConfirm":"导入存档（v{0}{1}）将覆盖当前进度，且导入存在失败风险（建议先导出当前进度备份），确定？{2}",
     "pack.applied":"🖼️ 素材包生效：替换了 {0} 张图",
     "theme.night":"紫夜", "theme.forest":"森绿", "theme.sand":"暖沙", "theme.snow":"雪境", "theme.custom":"自定义",
     "save.error":"⚠️ 存档写入失败（存储空间不足），进度可能无法保存！",
@@ -1642,8 +1643,9 @@ const I18N = {
     "npc.chestHint":"Treasure Chest: 🔩Metal+🔩Metal, building material for Manor & City Hall",
     "reset.confirm":"Reset all progress? This cannot be undone.",
     "craft.usedUp":"{0} is used up, craft some more",
-    "craft.invalid":"❌ Invalid combination, try another approach",
+    "craft.invalid":"❌ Invalid combination. Supports 2 or 3 elements: for 3 elements, craft the first two first, then combine the result with the third (e.g. Earth+Water+Fire = Mud+Fire = Brick)",
     "craft.legendOrder":"⚠️ Legendary elements have a fixed recipe order — follow the recipe book (e.g. Rainbow: Water+Air+Fire)",
+    "craft.hoverHint":"Supports 2 or 3 elements. For 3 elements: craft the first two first, then combine the result with the third (e.g. Earth+Water+Fire=Brick)",
     "craft.notEnough":"Not enough {0} or {1}",
     "craft.newElement":"🎉 Discovered new element: {0} {1}",
     "craft.newBadge":"🎉 New Element!",
@@ -1758,7 +1760,7 @@ const I18N = {
     "save.migrateToast":"📥 Old save migrated to v{0}, continue!",
     "save.importToast":"📥 Save imported, continue!",
     "save.importFail":"❌ Import failed: ",
-    "save.oldVersion":"Old version save detected, will auto-migrate to v",    "save.importConfirm":"Import save (v{0}{1}) will overwrite current progress, OK?{2}",
+    "save.oldVersion":"Old version save detected, will auto-migrate to v",    "save.importConfirm":"Import save (v{0}{1}) will overwrite current progress, and import may fail (recommend exporting current progress first as backup), OK?{2}",
     "pack.applied":"🖼️ Asset pack applied: replaced {0} images",
     "theme.night":"Purple Night", "theme.forest":"Forest Green", "theme.sand":"Warm Sand", "theme.snow":"Snow Realm", "theme.custom":"Custom",
     "save.error":"⚠️ Save failed (insufficient storage), progress may not be saved!",
@@ -1801,7 +1803,26 @@ function applyLang(){
   });
   document.title = t("app.title");
 }
-function toggleLang(){ LANG = LANG==="zh"?"en":"zh"; localStorage.setItem("synth-town-lang",LANG); applyLang(); renderAll(); updateIntroLang(); updateDrawLang(); }
+function toggleLang(){ LANG = LANG==="zh"?"en":"zh"; localStorage.setItem("synth-town-lang",LANG); applyLang(); renderAll(); updateIntroLang(); updateDrawLang(); updateChatPanelLang(); }
+/* 对话面板语言切换（面板打开时切换语言也能更新） */
+function updateChatPanelLang(){
+  const ov=$("#npcChatOverlay");
+  if(!ov||ov.style.display!=="flex") return; // 面板没打开就不更新
+  const welcome=$("#npcChatWelcome");
+  const title=$("#npcChatTitle");
+  const input=$("#npcChatInput");
+  if(welcome) welcome.textContent=LANG==="en"
+    ?"Hi traveler! Ask me anything~ like coins, chest, life, panda, buildings, factory, pets, recipes, badges, map, bundle, sick, magic crystal, elixir, rainbow~"
+    :"你好呀旅行者！有什么想问的吗？比如金币、宝箱、生命、熊猫、建筑、工厂、宠物、配方、徽章、地图、套餐、生病、魔法水晶、万能药、彩虹~";
+  if(title) title.textContent=LANG==="en"?"Chat with Sprite":"小精灵对话";
+  if(input) input.placeholder=LANG==="en"?"Enter keyword, e.g. coins / panda / recipe":"输入关键词，比如：金币 / 熊猫 / 配方";
+  // 重新生成快捷关键词按钮
+  const quick=$("#npcChatQuick");
+  if(quick){
+    const keywords=LANG==="en"?["coins","panda","life","recipe","badge","factory","sick","crystal"]:["金币","熊猫","生命","配方","徽章","工厂","生病","魔法水晶"];
+    quick.innerHTML=keywords.map(k=>`<button onclick="document.getElementById('npcChatInput').value='${k}';sendNpcChat();" style="background:var(--panel2);border:1px solid var(--line);color:var(--dim);border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;">${k}</button>`).join("");
+  }
+}
 function elName(id){ const e=ELEMENTS[id]; if(!e) return id; return LANG==="en"?(e.en||e.n):e.n; }
 function bldName(b){ if(!b) return ""; return LANG==="en"?(b.en||b.n):b.n; }
 function updateIntroLang(){
@@ -1815,6 +1836,9 @@ function updateIntroLang(){
   }
   const npcIcon=currentNPC==="elder"?"🧙‍♂️":"🧚";
   const npcName=currentNPC==="elder"?(LANG==="en"?"Elder":"长老"):(LANG==="en"?"Sprite":"小精灵");
+  // 更新欢迎页头像（硬编码的长老头像需要随NPC类型切换）
+  const introAvatar=$("#introNpcAvatar");
+  if(introAvatar) introAvatar.textContent=npcIcon;
   // 长老：沉稳讲故事的语气；小精灵：活泼对话的语气
   const npcGreeting=currentNPC==="elder"
     ?(LANG==="en"?`${npcIcon}「Greetings, traveler. I have watched this town grow for a hundred years. Listen well, and I shall teach you three things——」`:`${npcIcon}「远道而来的旅行者啊，老朽在这镇上守了百年。听好了，记住三件事——」`)
@@ -2392,6 +2416,9 @@ function clearSlots(){
 function updateCraftBtn(){
   const btn=$("#craftBtn");
   btn.disabled = !(selA&&selB);
+  // 合成台hover提示：支持2个或3个元素合成
+  const slots=$("#slots");
+  if(slots) slots.title=t("craft.hoverHint");
 }
 function updateBatchInput(){
   const wrap=$("#batchWrap"),input=$("#batchInput");
@@ -3797,7 +3824,10 @@ function renderPark(){
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;">
           <div style="position:relative;width:100%;aspect-ratio:100/72;display:flex;align-items:center;justify-content:center;">
             <img src="${homeImg}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));" onerror="this.style.display='none'">
-            <div style="position:relative;z-index:2;width:42%;">${petAvatar}</div>
+            <div style="position:relative;z-index:2;width:42%;">
+              ${petAvatar}
+              ${pet.sick?`<span style="position:absolute;top:-6px;right:-6px;font-size:clamp(10px,2.5vw,16px);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));z-index:3;">🤒</span>`:""}
+            </div>
           </div>
           <span style="margin-top:-4px;font-size:clamp(8px,2.2vw,12px);font-weight:700;color:#fff;background:linear-gradient(135deg,#8B4513,#A0522D);padding:1px 8px;border-radius:8px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);">${nameLabel}</span>
         </div>`;
@@ -4108,7 +4138,10 @@ function renderPets(){
     const hpColor=p.sick?'#ff7a7a':'#4cd97b';
     card.innerHTML=`
       <div class="petCardHead">
-        <img class="petCardAvatar" src="${avatarSrc}" alt="${petName(d)}">
+        <div style="position:relative;flex-shrink:0;">
+          <img class="petCardAvatar" src="${avatarSrc}" alt="${petName(d)}">
+          ${p.sick?`<span style="position:absolute;top:-4px;right:-4px;font-size:16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));z-index:3;">🤒</span>`:""}
+        </div>
         <div class="petCardInfo">
           <div class="petCardName">${p.name} ${sickTag}<span style="background:#ff7eb333;color:#ff7eb3;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700;">💕Lv.${lvl}</span><small style="color:var(--gold)">💰${value}</small></div>
           <div class="petCardSub">${d.i}${petName(d)}｜${formatBornTime(p.bornAt)}｜${LANG==="en"?"Eats":"吃"}${f.i}${foodName(f)}</div>
@@ -4847,7 +4880,16 @@ $("#exportBtn").addEventListener("click", ()=>{
     (saveData.petList||[]).forEach(p=>{ p.avatar = null; });
     suffix = t("save.lightVersion");
   }
-  const data=JSON.stringify({game:"synth-town", version:SAVE_VERSION, exportedAt:new Date().toISOString(), exportType:lightweight?"lightweight":"full", save:saveData}, null, 2);
+  const data=JSON.stringify({
+    game:"synth-town",
+    version:SAVE_VERSION,
+    exportedAt:new Date().toISOString(),
+    exportType:lightweight?"lightweight":"full",
+    save:saveData,
+    // 导出配方解锁状态和NPC选择（这些存在独立localStorage，不随存档导出）
+    recipeUnlock:getRecipeUnlock(),
+    npc:currentNPC
+  }, null, 2);
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));
   a.download=`synth-town-${suffix}-${new Date().toISOString().slice(0,10)}.json`;
@@ -4913,6 +4955,15 @@ $("#importFile").addEventListener("change", async e=>{
     if(typeof S._pandaSlotWarned!=="boolean") S._pandaSlotWarned=false;
     if(!S.shopCart) S.shopCart={};
     if(!S.bundleQty) S.bundleQty={};
+    // 恢复配方解锁状态和NPC选择（如果导出文件里有）
+    if(data.recipeUnlock){
+      setRecipeUnlock(data.recipeUnlock);
+    }
+    if(data.npc){
+      currentNPC=data.npc;
+      localStorage.setItem("synth-town-npc",data.npc);
+      updateNPCAppearance();
+    }
     applyTheme(); clearSlots(); renderAll(); save();
     checkPandaReward(); // 老用户兼容：导入后检查是否满足熊猫保底
     $("#settingsOverlay").classList.remove("show");
@@ -5552,9 +5603,16 @@ $("#offlineClaimBtn").addEventListener("click",()=>{
 function doReset(){
   if(confirm(t("reset.confirm"))){
     localStorage.removeItem(SAVE_KEY);
+    // 重置NPC选择和位置（但保留配方密码解锁状态，方便用户玩得爽）
+    localStorage.removeItem("synth-town-npc");
+    localStorage.removeItem("synth-town-npc-pos");
+    currentNPC=null;
+    // 重置NPC按钮位置
+    const npcBtn=$("#npcBtn");
+    if(npcBtn){ npcBtn.style.left=""; npcBtn.style.top=""; npcBtn.style.right=""; npcBtn.style.bottom=""; }
     S=fresh(); clearSlots();
     // 关闭所有overlay（同时用class和style两种方式，确保都能关闭）
-    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay"].forEach(id=>{
+    ["settingsOverlay","drawOverlay","recipeOverlay","badgeDetailOverlay","buildingDetailOverlay","petDetailOverlay","badgeUnlockOverlay","imgSaveOverlay","badgesOverlay","npcChatOverlay","mysteryOverlay","offlineOverlay"].forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove("show"); el.style.display="none"; }
     });
