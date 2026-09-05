@@ -1783,6 +1783,12 @@ const I18N = {
   }
 };
 let LANG = localStorage.getItem("synth-town-lang") || "zh";
+/* NPC 类型定义（提前定义，避免欢迎页调用时TDZ） */
+const NPC_TYPES = {
+  elder:  { zh:"长老",   en:"Elder",  icon:"🧙‍♂️" },
+  sprite: { zh:"小精灵", en:"Sprite", icon:"🧚" }
+};
+let currentNPC = localStorage.getItem("synth-town-npc") || null;
 function t(key,...args){ let s=(I18N[LANG]&&I18N[LANG][key])||key; args.forEach((a,i)=>{s=s.replace(new RegExp("\\{"+i+"\\}","g"),a);}); return s; }
 function applyLang(){
   document.querySelectorAll("[data-i18n]").forEach(el=>{
@@ -1809,12 +1815,16 @@ function updateIntroLang(){
   }
   const npcIcon=currentNPC==="elder"?"🧙‍♂️":"🧚";
   const npcName=currentNPC==="elder"?(LANG==="en"?"Elder":"长老"):(LANG==="en"?"Sprite":"小精灵");
+  // 长老：沉稳讲故事的语气；小精灵：活泼对话的语气
+  const npcGreeting=currentNPC==="elder"
+    ?(LANG==="en"?`${npcIcon}「Greetings, traveler. I have watched this town grow for a hundred years. Listen well, and I shall teach you three things——」`:`${npcIcon}「远道而来的旅行者啊，老朽在这镇上守了百年。听好了，记住三件事——」`)
+    :(LANG==="en"?`${npcIcon}「Hey hey, new traveler! This place is super fun~ Let me, your favorite Sprite, show you around! Remember three things——」`:`${npcIcon}「嘿嘿，新来的旅行者！这地方可好玩啦～让本精灵带你逛逛！记住三件事——」`);
   const npcHint=currentNPC==="elder"
-    ?(LANG==="en"?`Tap <b>${npcIcon}${npcName}</b> at bottom-right anytime, I'll tell you an interesting story about crafting~`:`随时点右下角 <b>${npcIcon}${npcName}</b>，我会给你讲一个关于合成的有趣故事~`)
-    :(LANG==="en"?`Tap <b>${npcIcon}${npcName}</b> at bottom-right anytime, I'll give you useful tips, or tap 💬 to chat with me~`:`随时点右下角 <b>${npcIcon}${npcName}</b>，我会给你有用的提示，或者点💬和我聊天~`);
+    ?(LANG==="en"?`Tap <b>${npcIcon}${npcName}</b> at bottom-right anytime, I'll tell you an interesting story about crafting~`:`随时点右下角 <b>${npcIcon}${npcName}</b>，老朽给你讲一个关于合成的有趣故事~`)
+    :(LANG==="en"?`Tap <b>${npcIcon}${npcName}</b> at bottom-right anytime, I'll give you useful tips, or tap 💬 to chat with me~`:`随时点右下角 <b>${npcIcon}${npcName}</b>，我给你有用的提示，或者点💬和我聊天~`);
   if(LANG==="en"){
     b.innerHTML=`
-      <span class="step">${npcIcon}「Welcome, traveler! To settle in this town, remember three things——」</span>
+      <span class="step">${npcGreeting}</span>
       <span class="step"><b>① Craft</b>　Tap two elements into the craft bench, craft new elements for free. <small>Examples: 💨Air+🔥Fire=⚡Energy, 🟤Mud+🔥Fire=🧱Brick, ⚡Energy+🌱Seed=🌲Tree, 🌲Tree+⚡Energy=🪵Wood</small></span>
       <span class="step"><b>② Build</b>　Save materials to build houses and shops, they produce coins continuously; coins can buy common elements in the shop <small>(this draw includes some starting coins)</small></span>
       <span class="step"><b>③ Stuck?</b>　${npcHint} 🐾</span>`;
@@ -1822,7 +1832,7 @@ function updateIntroLang(){
     if(btn) btn.textContent="🌐 中";
   }else{
     b.innerHTML=`
-      <span class="step">${npcIcon}「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
+      <span class="step">${npcGreeting}</span>
       <span class="step"><b>① 合成</b>　点两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
       <span class="step"><b>② 建造</b>　攒够建材建房屋商铺，持续产出金币；金币可在商店补货常见元素 <small>（本次抽取含少量启动金币）</small></span>
       <span class="step"><b>③ 卡住了？</b>　${npcHint} 🐾</span>`;
@@ -5563,11 +5573,7 @@ function doReset(){
 $("#resetBtn").addEventListener("click", doReset);
 
 /* ============ NPC 双角色系统 ============ */
-const NPC_TYPES = {
-  elder:  { zh:"长老",   en:"Elder",  icon:"🧙‍♂️" },
-  sprite: { zh:"小精灵", en:"Sprite", icon:"🧚" }
-};
-let currentNPC = localStorage.getItem("synth-town-npc") || null;
+/* NPC 类型已在文件前部定义 */
 updateNPCAppearance();
 
 /* 长老趣事池：故事版合成方式 */
