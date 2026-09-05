@@ -6009,12 +6009,15 @@ function sendNpcChat(){
   input.value="";
   // 匹配关键词
   const lower=msg.toLowerCase();
+  // 按用户输入语言回复：包含中文字符用中文，否则用英文
+  const hasChinese=/[\u4e00-\u9fa5]/.test(msg);
+  const replyLang=hasChinese?"zh":"en";
   let reply=null;
   for(const item of SPRITE_KEYWORDS){
-    if(item.k.some(k=>lower.includes(k.toLowerCase()))){ reply=item[LANG]||item.zh; break; }
+    if(item.k.some(k=>lower.includes(k.toLowerCase()))){ reply=item[replyLang]||item.zh; break; }
   }
   if(!reply){
-    reply=LANG==="en"
+    reply=replyLang==="en"
       ?"Hmm, I don't quite understand that... Try asking about coins, panda, life, buildings, factory, pets, recipes, badges, or click the quick keywords below~"
       :"嗯...这个我不太懂呢...试试问金币、熊猫、生命、建筑、工厂、宠物、配方、徽章，或者点下面的快捷关键词~";
   }
