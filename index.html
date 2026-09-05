@@ -905,6 +905,25 @@
 
 <div id="toast"></div>
 <button id="npcBtn" title="">🧙‍♂️</button>
+<button id="npcChatBtn" style="display:none;position:fixed;bottom:72px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--gold);font-size:16px;cursor:pointer;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.3);" title="和小精灵对话">💬</button>
+
+<!-- 小精灵对话面板 -->
+<div id="npcChatOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;">
+  <div id="npcChatBox" style="width:90%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,.4);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;font-size:16px;">🧚 <span id="npcChatTitle">小精灵对话</span></h3>
+      <button onclick="closeNpcChat()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;">×</button>
+    </div>
+    <div id="npcChatMessages" style="height:280px;overflow-y:auto;background:var(--panel2);border-radius:10px;padding:10px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;">
+      <div style="align-self:flex-start;max-width:85%;background:var(--gold);color:#1a1530;border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:13px;line-height:1.5;" id="npcChatWelcome">你好呀旅行者！有什么想问的吗？比如金币、宝箱、生命、熊猫、建筑、工厂、宠物、配方、徽章、地图、套餐、生病、魔法水晶、万能药、彩虹~</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="npcChatInput" placeholder="输入关键词，比如：金币 / 熊猫 / 配方" style="flex:1;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);font-size:13px;outline:none;">
+      <button onclick="sendNpcChat()" style="background:var(--gold);border:none;color:#1a1530;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">发送</button>
+    </div>
+    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;" id="npcChatQuick"></div>
+  </div>
+</div>
 
 <div id="recipeOverlay">
   <div class="recipeBook">
@@ -963,10 +982,11 @@
   <div id="settingsBox">
     <h2 data-i18n="settings.title">⚙️ 设置</h2>
 
-    <h3 data-i18n="settings.archive">📦 存档副本</h3>
-    <button class="setBtn" id="exportBtn" data-i18n="btn.export">📤 导出存档为文件<small data-i18n="btn.exportSmall">下载 JSON 副本，可保存多个，随时回来继续</small></button>
-    <button class="setBtn" id="importBtn" data-i18n="btn.import">📥 导入存档<small data-i18n="btn.importSmall">选择之前导出的 JSON 副本，覆盖当前进度</small></button>
-    <input type="file" id="importFile" accept="application/json" style="display:none">
+    <h3 data-i18n="settings.npc">🧙 NPC 选择</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="setBtn" id="npcElderBtn" onclick="setNPC('elder')" style="flex:1;">🧙‍♂️ <span data-i18n="settings.npc.elder">长老</span><small data-i18n="settings.npc.elderDesc">点击听合成故事</small></button>
+      <button class="setBtn" id="npcSpriteBtn" onclick="setNPC('sprite')" style="flex:1;">🧚 <span data-i18n="settings.npc.sprite">小精灵</span><small data-i18n="settings.npc.spriteDesc">点击给提示，可对话</small></button>
+    </div>
 
     <h3 data-i18n="settings.theme">🎨 配色主题</h3>
     <div id="themeChips"></div>
@@ -984,8 +1004,13 @@
       <button class="setBtn" id="packExampleBtn" style="width:auto;padding:6px 12px;font-size:11px;" onclick="showPackExample()">📋 格式示例</button>
       <button class="setBtn" id="packResetBtn" data-i18n="btn.packReset" style="width:auto;padding:6px 12px;font-size:11px;" onclick="resetPack()">↩️ 恢复默认</button>
     </div>
-    <button class="setBtn" id="packResetBtn" data-i18n="btn.packReset">↩️ 恢复默认外观</button>
+    <button class="setBtn" id="packResetBtn2" data-i18n="btn.packReset">↩️ 恢复默认外观</button>
     <input type="file" id="packFile" accept="application/json" style="display:none">
+
+    <h3 data-i18n="settings.archive">📦 存档副本</h3>
+    <button class="setBtn" id="exportBtn" data-i18n="btn.export">📤 导出存档为文件<small data-i18n="btn.exportSmall">下载 JSON 副本，可保存多个，随时回来继续</small></button>
+    <button class="setBtn" id="importBtn" data-i18n="btn.import">📥 导入存档<small data-i18n="btn.importSmall">选择之前导出的 JSON 副本，覆盖当前进度</small></button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
 
     <div style="text-align:right;margin-top:10px">
       <button class="setBtn" style="width:auto;display:inline-block;padding:6px 18px" id="settingsClose" data-i18n="btn.close">关闭</button>
@@ -1398,7 +1423,7 @@ const I18N = {
     "btn.parkBgUpload":"📷 上传乐园背景", "btn.parkBgReset":"↩️ 恢复默认乐园背景", "settings.parkBgResetConfirm":"确定恢复默认乐园背景吗？",
     "settings.bgResetConfirm":"确定移除自定义背景？",
     "btn.packUpload":"📂 上传素材包 theme.json", "btn.packReset":"↩️ 恢复默认外观",
-    "settings.title":"⚙️ 设置", "settings.archive":"📦 存档副本", "settings.theme":"🎨 配色主题",
+    "settings.title":"⚙️ 设置", "settings.npc":"🧙 NPC 选择", "settings.npc.elder":"长老", "settings.npc.elderDesc":"点击听合成故事", "settings.npc.sprite":"小精灵", "settings.npc.spriteDesc":"点击给提示，可对话", "settings.archive":"📦 存档副本", "settings.theme":"🎨 配色主题",
     "settings.bg":"🖼️ 自定义背景", "settings.pack":"🖼️ 自定义素材包（高级）",
     "stat.buildings":"🏘️ 总建筑", "stat.output":"💰 产出", "stat.land":"🗺️ 已购地",
     "discovered":"已发现",
@@ -1588,7 +1613,7 @@ const I18N = {
     "btn.parkBgUpload":"📷 Upload Park BG", "btn.parkBgReset":"↩️ Restore Default Park BG", "settings.parkBgResetConfirm":"Restore the default park background?",
     "btn.packUpload":"📂 Upload theme.json", "btn.packReset":"↩️ Reset to Default",
     "settings.bgResetConfirm":"Remove custom background?",
-    "settings.title":"⚙️ Settings", "settings.archive":"📦 Save Files", "settings.theme":"🎨 Themes",
+    "settings.title":"⚙️ Settings", "settings.npc":"🧙 NPC Selection", "settings.npc.elder":"Elder", "settings.npc.elderDesc":"Tap for crafting stories", "settings.npc.sprite":"Sprite", "settings.npc.spriteDesc":"Tap for tips, can chat", "settings.archive":"📦 Save Files", "settings.theme":"🎨 Themes",
     "settings.bg":"🖼️ Custom Background", "settings.pack":"🖼️ Custom Asset Pack (Advanced)",
     "stat.buildings":"🏘️ Buildings", "stat.output":"💰 Output", "stat.land":"🗺️ Land",
     "discovered":"Discovered",
@@ -1776,20 +1801,31 @@ function bldName(b){ if(!b) return ""; return LANG==="en"?(b.en||b.n):b.n; }
 function updateIntroLang(){
   const b=$("#introBubble"), btn=$("#introLangBtn");
   if(!b) return;
+  // 欢迎页随机选择 NPC（长老/小精灵）
+  if(!currentNPC){
+    currentNPC=Math.random()<0.5?"elder":"sprite";
+    localStorage.setItem("synth-town-npc",currentNPC);
+    updateNPCAppearance();
+  }
+  const npcIcon=currentNPC==="elder"?"🧙‍♂️":"🧚";
+  const npcName=currentNPC==="elder"?(LANG==="en"?"Elder":"长老"):(LANG==="en"?"Sprite":"小精灵");
+  const npcHint=currentNPC==="elder"
+    ?(LANG==="en"?`Tap <b>${npcIcon}${npcName}</b> at bottom-right anytime, I'll tell you an interesting story about crafting~`:`随时点右下角 <b>${npcIcon}${npcName}</b>，我会给你讲一个关于合成的有趣故事~`)
+    :(LANG==="en"?`Tap <b>${npcIcon}${npcName}</b> at bottom-right anytime, I'll give you useful tips, or tap 💬 to chat with me~`:`随时点右下角 <b>${npcIcon}${npcName}</b>，我会给你有用的提示，或者点💬和我聊天~`);
   if(LANG==="en"){
     b.innerHTML=`
-      <span class="step">🧙‍♂️「Welcome, traveler! To settle in this town, remember three things——」</span>
+      <span class="step">${npcIcon}「Welcome, traveler! To settle in this town, remember three things——」</span>
       <span class="step"><b>① Craft</b>　Tap two elements into the craft bench, craft new elements for free. <small>Examples: 💨Air+🔥Fire=⚡Energy, 🟤Mud+🔥Fire=🧱Brick, ⚡Energy+🌱Seed=🌲Tree, 🌲Tree+⚡Energy=🪵Wood</small></span>
       <span class="step"><b>② Build</b>　Save materials to build houses and shops, they produce coins continuously; coins can buy common elements in the shop <small>(this draw includes some starting coins)</small></span>
-      <span class="step"><b>③ Stuck?</b>　Tap <b>🧙‍♂️Summon Elder</b> at bottom-right anytime, I'll tell you a hidden recipe you can make with current materials 🐾</span>`;
+      <span class="step"><b>③ Stuck?</b>　${npcHint} 🐾</span>`;
     $("#introBtn").textContent="Accept guidance, start adventure ▶";
     if(btn) btn.textContent="🌐 中";
   }else{
     b.innerHTML=`
-      <span class="step">🧙‍♂️「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
+      <span class="step">${npcIcon}「欢迎，旅行者！想在这个小镇立足，记住三件事——」</span>
       <span class="step"><b>① 合成</b>　点两个元素到合成台，免费合成新元素。<small>举几个例子：💨气+🔥火=⚡能量，🟤泥+🔥火=🧱砖，⚡能量+🌱种子=🌲树，🌲树+⚡能量=🪵木材</small></span>
       <span class="step"><b>② 建造</b>　攒够建材建房屋商铺，持续产出金币；金币可在商店补货常见元素 <small>（本次抽取含少量启动金币）</small></span>
-      <span class="step"><b>③ 卡住了？</b>　随时点右下角 <b>🧙‍♂️召唤长老</b>，我会告诉你一条手头原料就能做的隐藏配方 🐾</span>`;
+      <span class="step"><b>③ 卡住了？</b>　${npcHint} 🐾</span>`;
     $("#introBtn").textContent="接受指引，开始冒险 ▶";
     if(btn) btn.textContent="🌐 EN";
   }
@@ -5526,6 +5562,75 @@ function doReset(){
 }
 $("#resetBtn").addEventListener("click", doReset);
 
+/* ============ NPC 双角色系统 ============ */
+const NPC_TYPES = {
+  elder:  { zh:"长老",   en:"Elder",  icon:"🧙‍♂️" },
+  sprite: { zh:"小精灵", en:"Sprite", icon:"🧚" }
+};
+let currentNPC = localStorage.getItem("synth-town-npc") || null;
+updateNPCAppearance();
+
+/* 长老趣事池：故事版合成方式 */
+const ELDER_STORIES = {
+  zh: [
+    "镇上老铁匠昨晚喝多了，把两块金属当铁块敲了一晚上，早上起来发现多了个宝箱……你说邪门不邪门？",
+    "河边的小孩说，把泥巴丢进篝火里，烧完之后居然变成了砖头……我试过了，是真的。",
+    "村头的花农发现，两朵花种在一起，第二天就长成了一丛花……植物的世界我不懂。",
+    "据说把能量注入玉石里，能创造出有生命的东西……别问我怎么知道的，试试就知道了。",
+    "老渔夫说，水和火碰在一起会变成蒸汽，蒸汽再遇到风就变成了云……我一直以为云是天上长出来的。",
+    "采石匠告诉我，两块石头用力撞在一起就会碎成沙子，沙子丢进火里又能烧出玻璃……这世界真奇妙。",
+    "炼金术士的笔记里写着：金属丢进火里会融化成金币……我一开始不信，直到我穷得叮当响的时候试了一次。",
+    "森林里的精灵说，灰烬和种子混在一起会变成肥料，花遇到肥料就会开成花海……精灵的话有时候还挺靠谱。",
+    "风一吹，火就更旺了，火旺了就会产生能量……能量这东西，是一切的开始。",
+    "泥土遇到水会变软，变软的泥土遇到风又会变硬成石头……所以石头其实是泥巴变的，你信吗？",
+    "种子遇到能量会长成树，树遇到能量又会变成木材……所以木材其实是能量的另一种形态。",
+    "雨是水和风的孩子，雨落到土里就会发芽……所以生命的起点，可能就是一场雨。",
+    "玻璃是沙子烧出来的，沙子是石头撞出来的，石头是泥巴变的……所以玻璃本质上是泥巴，你品品。",
+    "蒸汽往上飘，遇到风就变成了云，云积多了又变成雨落下来……水的旅行，从来没有终点。",
+    "花和花在一起会变成花丛，花丛和花丛在一起会变成花海……所以团结就是力量，花也懂这个道理。"
+  ],
+  en: [
+    "The old blacksmith got drunk last night and banged two pieces of metal together all night. In the morning he found a treasure chest... weird, right?",
+    "The kid by the river says if you throw mud into a campfire, it turns into brick afterwards... I tried it, it's true.",
+    "The florist at the village entrance found that if you plant two flowers together, they grow into a flower bush overnight... I don't understand the plant world.",
+    "They say if you inject energy into jade, you can create something alive... don't ask how I know, just try it.",
+    "The old fisherman says when water and fire meet they become steam, and when steam meets wind it becomes a cloud... I always thought clouds grew in the sky.",
+    "The stonemason told me two stones smashed together break into sand, and sand thrown into fire burns into glass... this world is amazing.",
+    "The alchemist's notebook says: metal thrown into fire melts into coins... I didn't believe it until I tried it when I was broke.",
+    "The forest elf says ash and seeds mixed together become fertilizer, and flowers meeting fertilizer bloom into a sea of flowers... elves are sometimes right.",
+    "When wind blows, fire burns brighter, and bright fire produces energy... energy is the beginning of everything.",
+    "Mud softens when it meets water, and softened mud hardens into stone when it meets wind... so stone is actually mud, do you believe that?",
+    "Seeds grow into trees when they meet energy, and trees become wood when they meet energy... so wood is just another form of energy.",
+    "Rain is the child of water and wind, and when rain falls into soil it sprouts... so the beginning of life might just be a rainstorm.",
+    "Glass is burned from sand, sand is smashed from stone, stone is transformed from mud... so glass is essentially mud, think about it.",
+    "Steam floats up, meets wind and becomes cloud, clouds accumulate and fall back as rain... water's journey never ends.",
+    "Flowers together become a flower bush, flower bushes together become a sea of flowers... so unity is strength, even flowers know that."
+  ]
+};
+
+/* 小精灵关键词对话表 */
+const SPRITE_KEYWORDS = [
+  { k:["金币","coin","钱","赚钱"], zh:"想赚金币呀？🔩金属+🔥火=💰25金币！🏪商铺每10秒自动产金币，3级以上元素还能去置换商店8折卖金币哦~", en:"Want coins? 🔩Metal+🔥Fire=💰25 coins! 🏪Shops produce coins every 10s, and Lv.3+ elements can be traded in for 80% coins at the exchange shop~" },
+  { k:["宝箱","chest","箱子"], zh:"🧰宝箱=🔩金属+🔩金属合成！是🏛️市政厅和🏰豪宅的建造材料，记得囤几个~", en:"🧰Treasure Chest = 🔩Metal+🔩Metal! It's a building material for 🏛️City Hall and 🏰Manor, stock up on a few~" },
+  { k:["生命","life","血","hp"], zh:"🧬生命=⚡能量+任意材料（玉石/砖/玻璃/云/木材/花丛/花海），生命值越高孕育稀有宠物概率越大！", en:"🧬Life = ⚡Energy + any material (Jade/Brick/Glass/Cloud/Wood/Flower Bush/Flower Sea). Higher HP = higher chance of rare pets!" },
+  { k:["熊猫","panda","国宝"], zh:"🐼熊猫不能直接孕育哦！把9只非熊猫宠物的HP/饱食/亲密度全部养满，系统会免费送一只熊猫~", en:"🐼Pandas can't be bred directly! Max out HP/satiety/intimacy on 9 non-panda pets, and the system will reward you with a free panda~" },
+  { k:["建筑","building","房子","造房子"], zh:"建成任意2个建筑解锁小镇全景图！不同区域成本产出不同，🏭工厂区产出×3.5最高，🏛️市政厅全局+10%产出~", en:"Build any 2 buildings to unlock the town panorama! Different regions have different costs/outputs. 🏭Factory District has ×3.5 output (highest), 🏛️City Hall gives +10% global output~" },
+  { k:["工厂","factory"], zh:"🏭工厂需要小屋+商店解锁，成本100金币+5宝箱+10砖！工厂区只能建工厂，产出×3.5全小镇最高~", en:"🏭Factory requires Hut+Shop to unlock, costs 100 coins+5 chests+10 bricks! Factory District can only build factories, ×3.5 output is the highest in town~" },
+  { k:["市政厅","hall","city hall","参议院","众议院"], zh:"🏛️市政厅需要集齐所有建筑类型（含工厂）才能建，全局+10%产出，自己不产金币！最多建2个（众议院+参议院）~", en:"🏛️City Hall requires all building types (including Factory) to unlock. +10% global output, no coins itself! Max 2 (House + Senate)~" },
+  { k:["宠物","pet","动物","养宠物"], zh:"🐾宠物用🧬生命孕育，需要先建🏠小屋！最多10只，不同宠物吃不同食物（猫兔吃肉/胡萝卜，狗牛吃肉/草，马熊猫吃草/竹子）~", en:"🐾Pets are bred from 🧬Life, need 🏠Hut first! Max 10 pets. Different pets eat different food (cats&rabbits: meat/carrot, dogs&cows: meat/grass, horses&pandas: grass/bamboo)~" },
+  { k:["亲密度","intimacy","好感","头像"], zh:"喂食🍖和互动❤️提升亲密度，亲密度满级（100）解锁宠物自定义头像，给你的宠物拍张照吧~", en:"Feed 🍖 and play ❤️ to raise intimacy. Max intimacy (100) unlocks custom pet avatars, take a photo of your pet!" },
+  { k:["置换","卖","trade","exchange","回收"], zh:"♻️置换商店可以把3级以上元素8折卖成金币，多余宠物也能置换金币~", en:"♻️Exchange shop sells Lv.3+ elements for 80% coins, extra pets can also be traded for coins~" },
+  { k:["配方","recipe","合成表","怎么合"], zh:"📖打开右上角配方书，输入密码解锁传奇元素配方（魔法水晶/万能药/彩虹）！基础配方合成过就自动显示~", en:"📖Open the Recipe Book top-right, enter passwords to unlock legendary recipes (Magic Crystal/Elixir/Rainbow)! Basic recipes auto-show once crafted~" },
+  { k:["徽章","成就","badge","achievement"], zh:"🏆徽章有：元素之王（集齐所有元素）、动物大王（集齐6种宠物）、地产大亨（所有地皮建成）、万元户（资产1万）、百万富翁（资产100万）~", en:"🏆Badges: Element Master (all elements), Animal King (6 pet species), Real Estate Tycoon (all plots built), Ten-Thousandaire (10k net worth), Millionaire (1M net worth)~" },
+  { k:["地图","map","全景","地皮"], zh:"🗺️建成任意2个建筑解锁小镇全景图！地皮买全的区域可以自由拖拽摆放建筑位置~", en:"🗺️Build any 2 buildings to unlock the town panorama! Regions with all plots bought can freely drag and arrange building positions~" },
+  { k:["套餐","bundle","一键购买"], zh:"📦建筑套餐栏需要元素之王徽章解锁，一键购买任意建筑所需全部材料，省得一个个买~", en:"📦Building Bundle tab unlocks with the Element Master badge. Buy all materials for any building in one click, no need to buy one by one~" },
+  { k:["生病","sick","病","治疗","医院"], zh:"⚠️宠物生病了不能喂食和互动！建🏥宠物医院治疗，或者在商店买对应HP的💊万能药~", en:"⚠️Sick pets can't be fed or played with! Build 🏥Pet Hospital to heal, or buy a matching-HP 💊Elixir from the shop~" },
+  { k:["饥饿","饿","饱食","satiety","喂食"], zh:"宠物饱食度<=50就饿了，饿了不能互动！🍖食物在宠物驿站解锁的商店里买，不同宠物吃不同的~", en:"Pets get hungry when satiety <=50, can't play when hungry! 🍖Food is bought at the shop unlocked by Pet Station, different pets eat different food~" },
+  { k:["魔法水晶","crystal","水晶"], zh:"🔮魔法水晶=💎玉石+🧬生命+💨气，合成过才能在商店买（50金币），可以把宠物转成其他物种（熊猫除外）~", en:"🔮Magic Crystal = 💎Jade+🧬Life+💨Air. Buyable in shop after crafting (50 coins), can transform pets into other species (except panda)~" },
+  { k:["万能药","elixir","药","复活"], zh:"💊万能药=🧬生命+💎玉石+🔥火，合成过才能买，用于同HP宠物满血复活~", en:"💊Elixir = 🧬Life+💎Jade+🔥Fire. Buyable after crafting, used to fully revive a pet with matching HP~" },
+  { k:["彩虹","rainbow","口粮"], zh:"🌈彩虹=💧水+💨气+🔥火，相当于一份万能宠物口粮，任何宠物都能吃~", en:"🌈Rainbow = 💧Water+💨Air+🔥Fire. Acts as a universal pet food, any pet can eat it~" }
+];
+
 /* ============ NPC 长老：按 Tab 差异化提示 ============ */
 const NPC_LINES = {
   craft: {
@@ -5831,9 +5936,104 @@ function npcHint(){
     line=pool[idx];
   }
   _lastNpcHint=line;
-  toast(`🧙‍♂️「${line}」`,5200);
+  const icon=currentNPC==="elder"?"🧙‍♂️":"🧚";
+  toast(`${icon}「${line}」`,5200);
 }
-$("#npcBtn").addEventListener("click", npcHint);
+/* NPC 点击：长老讲故事 / 小精灵智能提示 */
+$("#npcBtn").addEventListener("click", function(){
+  if(currentNPC==="elder"){
+    const pool=ELDER_STORIES[LANG]||ELDER_STORIES.zh;
+    let line=pool[Math.floor(Math.random()*pool.length)];
+    while(pool.length>1&&line===_lastNpcHint){ line=pool[Math.floor(Math.random()*pool.length)]; }
+    _lastNpcHint=line;
+    toast(`🧙‍♂️「${line}」`,6500);
+  }else{
+    npcHint();
+  }
+});
+
+/* 更新 NPC 外观（emoji + 对话按钮显示） */
+function updateNPCAppearance(){
+  const btn=$("#npcBtn");
+  const chatBtn=$("#npcChatBtn");
+  if(!btn) return;
+  if(currentNPC==="elder"){
+    btn.textContent="🧙‍♂️";
+    btn.title=LANG==="en"?"Elder - tap for stories":"长老 - 点击听故事";
+    if(chatBtn) chatBtn.style.display="none";
+  }else{
+    btn.textContent="🧚";
+    btn.title=LANG==="en"?"Sprite - tap for tips":"小精灵 - 点击给提示";
+    if(chatBtn) chatBtn.style.display="";
+  }
+  // 设置页面按钮高亮
+  const elderBtn=$("#npcElderBtn"), spriteBtn=$("#npcSpriteBtn");
+  if(elderBtn) elderBtn.style.outline=currentNPC==="elder"?"2px solid var(--gold)":"none";
+  if(spriteBtn) spriteBtn.style.outline=currentNPC==="sprite"?"2px solid var(--gold)":"none";
+}
+function setNPC(type){
+  currentNPC=type;
+  localStorage.setItem("synth-town-npc",type);
+  updateNPCAppearance();
+  const name=NPC_TYPES[type][LANG]||NPC_TYPES[type].zh;
+  const icon=NPC_TYPES[type].icon;
+  toast(LANG==="en"?`${icon} NPC switched to ${name}!`:`${icon} 已切换为${name}！`);
+}
+
+/* ============ 小精灵对话面板 ============ */
+function openNpcChat(){
+  const ov=$("#npcChatOverlay");
+  ov.style.display="flex";
+  // 快捷关键词按钮
+  const quick=$("#npcChatQuick");
+  const keywords=LANG==="en"?["coins","panda","life","recipe","badge","factory","sick","crystal"]:["金币","熊猫","生命","配方","徽章","工厂","生病","魔法水晶"];
+  quick.innerHTML=keywords.map(k=>`<button onclick="document.getElementById('npcChatInput').value='${k}';sendNpcChat();" style="background:var(--panel2);border:1px solid var(--line);color:var(--dim);border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;">${k}</button>`).join("");
+  // 欢迎语
+  $("#npcChatWelcome").textContent=LANG==="en"
+    ?"Hi traveler! Ask me anything~ like coins, chest, life, panda, building, factory, pet, recipe, badge, map, bundle, sick, magic crystal, elixir, rainbow~"
+    :"你好呀旅行者！有什么想问的吗？比如金币、宝箱、生命、熊猫、建筑、工厂、宠物、配方、徽章、地图、套餐、生病、魔法水晶、万能药、彩虹~";
+  $("#npcChatTitle").textContent=LANG==="en"?"Chat with Sprite":"小精灵对话";
+  setTimeout(()=>$("#npcChatInput").focus(),100);
+}
+function closeNpcChat(){ $("#npcChatOverlay").style.display="none"; }
+function sendNpcChat(){
+  const input=$("#npcChatInput");
+  const msg=input.value.trim();
+  if(!msg) return;
+  const msgs=$("#npcChatMessages");
+  // 用户消息
+  const userDiv=document.createElement("div");
+  userDiv.style.cssText="align-self:flex-end;max-width:85%;background:var(--gold);color:#1a1530;border-radius:12px 12px 4px 12px;padding:8px 12px;font-size:13px;line-height:1.5;";
+  userDiv.textContent=msg;
+  msgs.appendChild(userDiv);
+  input.value="";
+  // 匹配关键词
+  const lower=msg.toLowerCase();
+  let reply=null;
+  for(const item of SPRITE_KEYWORDS){
+    if(item.k.some(k=>lower.includes(k.toLowerCase()))){ reply=item[LANG]||item.zh; break; }
+  }
+  if(!reply){
+    reply=LANG==="en"
+      ?"Hmm, I don't quite understand that... Try asking about coins, panda, life, buildings, factory, pets, recipes, badges, or click the quick keywords below~"
+      :"嗯...这个我不太懂呢...试试问金币、熊猫、生命、建筑、工厂、宠物、配方、徽章，或者点下面的快捷关键词~";
+  }
+  // 小精灵回复（延迟一点更自然）
+  setTimeout(()=>{
+    const spriteDiv=document.createElement("div");
+    spriteDiv.style.cssText="align-self:flex-start;max-width:85%;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:13px;line-height:1.6;";
+    spriteDiv.innerHTML="🧚 "+reply;
+    msgs.appendChild(spriteDiv);
+    msgs.scrollTop=msgs.scrollHeight;
+  },300);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+$("#npcChatBtn").addEventListener("click", openNpcChat);
+$("#npcChatOverlay").addEventListener("click", function(e){ if(e.target===this) closeNpcChat(); });
+document.addEventListener("keydown", function(e){
+  if(e.key==="Enter" && document.activeElement===$("#npcChatInput")) sendNpcChat();
+  if(e.key==="Escape" && $("#npcChatOverlay").style.display==="flex") closeNpcChat();
+});
 
 /* ============ NPC按钮可拖拽移动 ============ */
 (function(){
