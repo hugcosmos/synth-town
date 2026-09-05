@@ -3550,7 +3550,7 @@ function checkBadges(){
       showBadgeUnlock(b);
     }
   });
-  if(unlockedAny){ renderBadges(); updateTabLockState(); save(); }
+  if(unlockedAny){ renderAll(); save(); }
   // 三枚大师徽章集齐 → 神秘礼物解锁，NPC 提示
   if(isMysteryUnlocked()&&!S.mysteryGift){
     setTimeout(()=>{
