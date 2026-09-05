@@ -63,7 +63,7 @@
   .hdr-top{display:flex; justify-content:center; align-items:center;}
   .hdr-top h1{font-size:17px; font-weight:700; letter-spacing:1.5px; margin:0;}
   .hdr-bottom{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;}
-  .stats{display:flex; gap:6px; flex-wrap:wrap; margin-left:0; flex:1; overflow-x:auto;}
+  .stats{display:flex; gap:6px; flex-wrap:wrap; margin-left:0; flex:1; overflow-x:auto; min-width:0;}
   .stat{
     background:var(--panel); border:1px solid var(--line); border-radius:14px;
     padding:4px 12px; font-size:12px; font-weight:500; white-space:nowrap;
@@ -74,7 +74,7 @@
   #resetBtn,#settingsBtn,#langBtn,#recipeBtn{
     background:none; border:1px solid var(--line); color:var(--dim); border-radius:14px;
     padding:4px 12px; font-size:12px; font-weight:500; cursor:pointer; white-space:nowrap;
-    transition:all .15s;
+    transition:all .15s; position:relative; z-index:101;
   }
   #resetBtn:hover,#settingsBtn:hover,#langBtn:hover,#recipeBtn:hover{color:var(--text); border-color:var(--gold);}
 
@@ -2005,6 +2005,88 @@ function save(){
 
 /* ============ 工具 ============ */
 const $ = s=>document.querySelector(s);
+
+/* ============ 全局错误捕获（方便排查） ============ */
+window.onerror = function(msg, url, line, col, err){
+  console.error("[Global Error]", msg, "at", url+":"+line+":"+col, err?.stack);
+  return false;
+};
+
+/* ============ 关键按钮前置绑定（确保一定执行，不受前面代码出错影响） ============ */
+(function bindCriticalButtons(){
+  // 1. 配方按钮
+  try{
+    $("#recipeBtn").addEventListener("click", ()=>{ renderRecipeBook(); $("#recipeOverlay").classList.add("show"); });
+  }catch(e){ console.error("bind recipeBtn error:",e); }
+  // 2. 设置按钮
+  try{
+    $("#settingsBtn").addEventListener("click", ()=>{ renderThemeChips(); $("#settingsOverlay").classList.add("show"); });
+  }catch(e){ console.error("bind settingsBtn error:",e); }
+  // 3. 重置按钮
+  try{
+    $("#resetBtn").addEventListener("click", doReset);
+  }catch(e){ console.error("bind resetBtn error:",e); }
+  // 4. 语言切换按钮
+  try{
+    $("#langBtn").addEventListener("click", function(){ toggleLang(); });
+  }catch(e){ console.error("bind langBtn error:",e); }
+  // 5. 欢迎页开始按钮
+  try{
+    $("#introBtn").addEventListener("click", function(){
+      $("#introOverlay").classList.remove("show");
+      $("#introOverlay").style.display="none";
+      showDraw();
+    });
+  }catch(e){ console.error("bind introBtn error:",e); }
+  // 6. 欢迎页语言按钮
+  try{
+    $("#introLangBtn").addEventListener("click", function(e){ e.stopPropagation(); toggleLang(); updateIntroLang(); });
+  }catch(e){ console.error("bind introLangBtn error:",e); }
+  // 7. 抽奖按钮
+  try{
+    $("#drawBtn").addEventListener("click", ()=>{
+      console.log("drawBtn clicked, drawnCounts=", drawnCounts);
+      if(!drawnCounts){
+        console.error("drawnCounts is null, re-initializing...");
+        drawnCounts={};
+        BASE.forEach(id=>{ drawnCounts[id]=10+Math.floor(Math.random()*90); });
+        drawnCounts.coin=50+Math.floor(Math.random()*51);
+      }
+      try{
+        BASE.forEach(id=>{ S.unlocked[id]=drawnCounts[id]; });
+        S.coin=drawnCounts.coin;
+        S.drawn=true;
+        S.lastTick=Date.now();
+        const drawOv=$("#drawOverlay");
+        drawOv.classList.remove("show");
+        drawOv.style.display="none";
+        drawOv.style.visibility="hidden";
+        drawOv.style.opacity="0";
+        $("#drawBtn").classList.remove("on");
+        renderAll(); save();
+        toast(LANG==="en"?`🎰 Initial elements + 💰${S.coin} starting coins credited!`:`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
+      }catch(e){
+        console.error("drawBtn error:", e);
+        toast("Error: " + e.message);
+      }
+    });
+  }catch(e){ console.error("bind drawBtn error:",e); }
+  // 8. NPC按钮
+  try{
+    $("#npcBtn").addEventListener("click", function(){
+      if(currentNPC==="elder"){
+        const pool=ELDER_STORIES[LANG]||ELDER_STORIES.zh;
+        let line=pool[Math.floor(Math.random()*pool.length)];
+        while(pool.length>1&&line===_lastNpcHint){ line=pool[Math.floor(Math.random()*pool.length)]; }
+        _lastNpcHint=line;
+        toast(`🧙‍♂️「${line}」`,6500);
+      }else{
+        openNpcChat();
+      }
+    });
+  }catch(e){ console.error("bind npcBtn error:",e); }
+})();
+
 function toast(msg, dur=2200){
   const t=$("#toast"); t.textContent=msg; t.classList.add("show");
   // 清除 tooltip 残留的定位样式，普通 toast 永远回到顶部居中
@@ -4799,7 +4881,6 @@ function renderNewLegendRecipes(u, crafted){
   html+=`</div></div>`;
   sec.innerHTML=html;
 }
-$("#recipeBtn").addEventListener("click", ()=>{ renderRecipeBook(); $("#recipeOverlay").classList.add("show"); });
 $("#recipeCloseBtn").addEventListener("click", ()=>$("#recipeOverlay").classList.remove("show"));
 $("#recipeOverlay").addEventListener("click", e=>{ if(e.target.id==="recipeOverlay") $("#recipeOverlay").classList.remove("show"); });
 /* 密码格子构建 */
@@ -4860,11 +4941,6 @@ $("#newLegendUnlockBtn").addEventListener("click", ()=>{
 $("#basicLockCard").addEventListener("mouseover", ()=>{ if($("#basicLockCard").style.display!=="none") tooltipTopRight($("#basicUnlockBtn"), t("recipe.hoverHint")); });
 $("#advancedLockCard").addEventListener("mouseover", ()=>{ if($("#advancedLockCard").style.display!=="none") tooltipTopRight($("#advancedUnlockBtn"), t("recipe.hoverHint")); });
 /* ============ 设置面板 ============ */
-$("#langBtn").addEventListener("click", function(){ toggleLang(); });
-$("#settingsBtn").addEventListener("click", ()=>{
-  renderThemeChips();
-  $("#settingsOverlay").classList.add("show");
-});
 $("#settingsClose").addEventListener("click", ()=>$("#settingsOverlay").classList.remove("show"));
 $("#settingsOverlay").addEventListener("click", e=>{
   if(e.target.id==="settingsOverlay") $("#settingsOverlay").classList.remove("show");
@@ -5628,7 +5704,6 @@ function doReset(){
     save();
   }
 }
-$("#resetBtn").addEventListener("click", doReset);
 
 /* ============ NPC 双角色系统 ============ */
 /* NPC 类型已在文件前部定义 */
@@ -6004,18 +6079,6 @@ function npcHint(){
   const icon=currentNPC==="elder"?"🧙‍♂️":"🧚";
   toast(`${icon}「${line}」`,5200);
 }
-/* NPC 点击：长老讲故事 / 小精灵打开对话面板 */
-$("#npcBtn").addEventListener("click", function(){
-  if(currentNPC==="elder"){
-    const pool=ELDER_STORIES[LANG]||ELDER_STORIES.zh;
-    let line=pool[Math.floor(Math.random()*pool.length)];
-    while(pool.length>1&&line===_lastNpcHint){ line=pool[Math.floor(Math.random()*pool.length)]; }
-    _lastNpcHint=line;
-    toast(`🧙‍♂️「${line}」`,6500);
-  }else{
-    openNpcChat();
-  }
-});
 
 /* 更新 NPC 外观（emoji + 对话按钮显示） */
 function updateNPCAppearance(){
@@ -6217,47 +6280,12 @@ function showDraw(){
   setTimeout(()=>$("#drawBtn").classList.add("on"), 300+DRAW_ITEMS.length*350+400);
   ov.classList.add("show");
 }
-$("#drawBtn").addEventListener("click", ()=>{
-  console.log("drawBtn clicked, drawnCounts=", drawnCounts);
-  if(!drawnCounts){
-    console.error("drawnCounts is null, re-initializing...");
-    // 如果drawnCounts为null，重新初始化
-    drawnCounts={};
-    BASE.forEach(id=>{ drawnCounts[id]=10+Math.floor(Math.random()*90); });
-    drawnCounts.coin=50+Math.floor(Math.random()*51);
-  }
-  try{
-    BASE.forEach(id=>{ S.unlocked[id]=drawnCounts[id]; });
-    S.coin=drawnCounts.coin;
-    S.drawn=true;
-    S.lastTick=Date.now();
-    // 完全关闭drawOverlay，确保不覆盖页面
-    const drawOv=$("#drawOverlay");
-    drawOv.classList.remove("show");
-    drawOv.style.display="none";
-    drawOv.style.visibility="hidden";
-    drawOv.style.opacity="0";
-    $("#drawBtn").classList.remove("on");
-    renderAll(); save();
-    toast(LANG==="en"?`🎰 Initial elements + 💰${S.coin} starting coins credited!`:`🎰 初始元素 + 💰${S.coin} 启动金币已到账！`);
-  }catch(e){
-    console.error("drawBtn error:", e);
-    toast("Error: " + e.message);
-  }
-});
 
 /* ============ 总渲染（每个函数独立try-catch，单个报错不影响其他） ============ */
 function renderAll(){
   const fns=[applyTheme,renderStats,renderElements,renderElShop,renderShop,renderPets,renderMap,renderPark,renderBadges,updateTabLockState,updateBatchInput,checkBadges];
   fns.forEach(fn=>{ try{ fn(); }catch(e){ console.error("renderAll error in",fn.name,":",e); } });
 }
-// 事件直接绑定在元素上（更可靠），放在最前面确保一定执行
-$("#introLangBtn").addEventListener("click", function(e){ e.stopPropagation(); toggleLang(); updateIntroLang(); });
-$("#introBtn").addEventListener("click", function(){
-  $("#introOverlay").classList.remove("show");
-  $("#introOverlay").style.display="none";
-  showDraw();
-});
 try{ renderAll(); }catch(e){ console.error("init renderAll error:",e); }
 try{ checkPandaReward(); }catch(e){ console.error("checkPandaReward error:",e); } // 加载后立即检查熊猫保底（宠物已养满但不再喂食/互动时也能触发）
 try{ applyLang(); }catch(e){ console.error("applyLang error:",e); }
