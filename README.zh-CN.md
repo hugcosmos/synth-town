@@ -6,7 +6,7 @@
 > **已停止维护，代码不再开源。本仓库为最终开源版本。**
 
 请通过以下方式试玩最新游戏：
-- [Element Craft Town(itch.io)](shturl.cc/vLJsMEoTgjVdZ6pxMBaJFzDkd0gCE8PBGMn)
+- Game: [Element Craft Town(itch.io)](https://hugcosmos.itch.io/element-craft-town)
 - 小红书小工具「我的小镇」
 
 
