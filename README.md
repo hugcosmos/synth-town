@@ -5,7 +5,8 @@
 A cozy alchemy-and-city-building game that runs entirely in **one zero-dependency HTML file** — no framework, no build step, no server. Just open `index.html` and play.
 > **No longer maintained — source closed. This repo is the final open-source version.**
 
-- Game: [Element Craft Town](https://hugcosmos.itch.io/element-craft-town)
+Please play the latest game through:
+- Game: [Element Craft Town(itch.io)](https://hugcosmos.itch.io/element-craft-town)
 - Xiaohongshu mini-tool: "我的小镇"
 
 
