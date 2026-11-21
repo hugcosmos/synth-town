@@ -3,6 +3,12 @@
 [English](./README.md) | **简体中文**
 
 一个单文件、零依赖的浏览器合成经营小游戏。双击 `index.html` 即可游玩，无需安装任何东西。
+> **已停止维护，代码不再开源。本仓库为最终开源版本。**
+
+请通过以下方式试玩最新游戏：
+- [Element Craft Town(itch.io)](shturl.cc/vLJsMEoTgjVdZ6pxMBaJFzDkd0gCE8PBGMn)
+- 小红书小工具「我的小镇」
+
 
 ## 玩法
 
